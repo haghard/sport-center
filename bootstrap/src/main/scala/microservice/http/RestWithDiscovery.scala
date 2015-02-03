@@ -2,18 +2,18 @@ package microservice.http
 
 import akka.http.model.HttpEntity.Strict
 import akka.http.model.StatusCodes._
-import akka.http.model.headers.{RawHeader, Host}
-import akka.http.model.{HttpResponse, MediaTypes, StatusCodes}
+import akka.http.model.headers.{ RawHeader, Host }
+import akka.http.model.{ HttpResponse, MediaTypes, StatusCodes }
 import akka.http.server._
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
 import microservice.http.RestService.BasicHttpResponse
-import spray.json.{JsonWriter, DefaultJsonProtocol, JsonFormat}
+import spray.json.{ JsonWriter, DefaultJsonProtocol, JsonFormat }
 
 import scala.concurrent.Future
 import spray.json._
-import akka.http.model.Uri.{Host => HostHeader}
+import akka.http.model.Uri.{ Host => HostHeader }
 
 object RestWithDiscovery {
 
@@ -26,9 +26,9 @@ object RestWithDiscovery {
 }
 
 trait RestWithDiscovery extends BootableRestService
-  with Directives {
+    with Directives {
 
-  self : MicroserviceKernel =>
+  self: MicroserviceKernel =>
 
   /**
    *
@@ -68,10 +68,8 @@ trait RestWithDiscovery extends BootableRestService
         HttpResponse(StatusCodes.BadRequest, List(Host(HostHeader(localAddress), port = httpPort)),
           Strict(contentType = MediaTypes.`application/json`, data = ByteString(resp.toJson.prettyPrint))))
 
-
   protected def fail(error: String) =
     HttpResponse(InternalServerError, List(Host(HostHeader(localAddress), port = httpPort)), error)
-
 
   protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
     HttpResponse(StatusCodes.OK, List(Host(HostHeader(localAddress), port = httpPort)),

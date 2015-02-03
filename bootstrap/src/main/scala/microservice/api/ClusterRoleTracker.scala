@@ -2,7 +2,7 @@ package microservice.api
 
 import akka.actor._
 import akka.cluster.ClusterEvent._
-import akka.cluster.{Member, MemberStatus}
+import akka.cluster.{ Member, MemberStatus }
 
 import scala.collection.mutable
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -26,7 +26,7 @@ trait ClusterRoleTracker {
   private def ++(m: Member) = {
     if (m.hasRole(trackableRole)) {
       trackableNodes += m.address
-      if(!available) {
+      if (!available) {
         scheduleJob
       }
     }
@@ -43,7 +43,7 @@ trait ClusterRoleTracker {
   }
 
   protected def randomTrackableNodes: Option[Address] = {
-    if(!trackableNodes.isEmpty)
+    if (!trackableNodes.isEmpty)
       Some(trackableNodes.toIndexedSeq(ThreadLocalRandom.current.nextInt(trackableNodes.size)))
     else
       None
@@ -58,7 +58,7 @@ trait ClusterRoleTracker {
         }
       }
 
-    case MemberUp(m)          ⇒ ++(m)
-    case MemberRemoved(m, _)  ⇒ --(m)
+    case MemberUp(m)         ⇒ ++(m)
+    case MemberRemoved(m, _) ⇒ --(m)
   }
 }

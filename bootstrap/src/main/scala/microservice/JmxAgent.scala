@@ -2,9 +2,9 @@ package microservice
 
 import java.rmi.registry.LocateRegistry
 import java.lang.management.ManagementFactory
-import javax.management.remote.{JMXConnectorServerFactory, JMXServiceURL}
-import microservice.api.{BootableMicroservice, ClusterNetworkSupport}
-import scala.util.{Failure, Success, Try}
+import javax.management.remote.{ JMXConnectorServerFactory, JMXServiceURL }
+import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
+import scala.util.{ Failure, Success, Try }
 
 trait JmxAgent extends BootableMicroservice {
   self: ClusterNetworkSupport ⇒

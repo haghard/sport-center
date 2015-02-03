@@ -2,7 +2,7 @@ package microservice
 
 import akka.actor._
 import com.github.nscala_time.time.Imports._
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{ DateTime, DateTimeZone }
 
 object settings {
 

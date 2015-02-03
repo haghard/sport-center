@@ -1,9 +1,9 @@
 package microservice.http
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{ Actor, ActorLogging, Props }
 import akka.http.Http
-import akka.http.server.{Directives, Route}
-import akka.stream.{FlowMaterializer, MaterializerSettings}
+import akka.http.server.{ Directives, Route }
+import akka.stream.{ FlowMaterializer, MaterializerSettings }
 import microservice.api.MicroserviceKernel
 import spray.json.DefaultJsonProtocol
 
@@ -30,10 +30,10 @@ object RestService {
     Props(new RestService(route, interface, port))
 }
 
-class RestService private(route: Route, interface: String, port: Int)(implicit ex: ExecutionContext)
-  extends Actor with ActorLogging
-  with DefaultJsonProtocol
-  with Directives {
+class RestService private (route: Route, interface: String, port: Int)(implicit ex: ExecutionContext)
+    extends Actor with ActorLogging
+    with DefaultJsonProtocol
+    with Directives {
 
   implicit val materializer =
     FlowMaterializer(MaterializerSettings(context.system)
@@ -42,7 +42,6 @@ class RestService private(route: Route, interface: String, port: Int)(implicit e
   Http()(context.system)
     .bind(interface, port)
     .startHandlingWith(route)
-
 
   override def receive: Receive = Actor.emptyBehavior
 }

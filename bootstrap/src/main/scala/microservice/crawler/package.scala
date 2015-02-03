@@ -1,9 +1,9 @@
 package microservice
 
 import java.text.SimpleDateFormat
-import java.util.{TimeZone, Date}
-import org.joda.time.{DateTimeZone, DateTime}
-import spray.json.{JsString, JsNumber, JsObject, JsValue}
+import java.util.{ TimeZone, Date }
+import org.joda.time.{ DateTimeZone, DateTime }
+import spray.json.{ JsString, JsNumber, JsObject, JsValue }
 
 import scalaz.Monoid
 
@@ -16,7 +16,7 @@ package object crawler {
   case class CollectedResultBlock(dt: DateTime, results: List[NbaResult])
 
   val SCENTER_TIME_ZONE = DateTimeZone.forID("EST")
-  val TIME_ZONE         = TimeZone.getTimeZone("EST")
+  val TIME_ZONE = TimeZone.getTimeZone("EST")
 
   def searchFormatter() = {
     val local = new SimpleDateFormat("yyyy-MM-dd")
@@ -47,14 +47,12 @@ package object crawler {
   case class SuccessCollected(list: List[NbaResult])
   case class NbaResult(homeTeam: String, homeScore: Int, roadTeam: String, roadScore: Int, dt: Date)
 
-
   case class CrawledNbaResult(opponent: String, homeScore: Int, awayScore: Int, dt: Date, lct: Location.Value)
 
   implicit object Sort extends Ordering[CrawledNbaResult] {
     override def compare(x: CrawledNbaResult, y: CrawledNbaResult): Int =
       x.dt.compareTo(y.dt)
   }
-
 
   implicit def M(teams: List[String]) = new Monoid[JsValue] {
     override def zero: JsValue =

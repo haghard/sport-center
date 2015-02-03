@@ -3,7 +3,7 @@ package microservice.api
 import akka.actor.ActorSystem
 import java.net.NetworkInterface
 import microservice.http.BootableRestService
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
 
 import scala.collection.JavaConverters._
 import BootableClusterNode._
@@ -15,15 +15,15 @@ object MicroserviceKernel {
 }
 
 abstract class MicroserviceKernel(override val akkaSystemPort: String,
-                                  override val environment: String,
-                                  override val httpPort: Int = BootableClusterNode.DefaultCloudHttpPort,
-                                  override val jmxPort: Int = BootableClusterNode.DefaultJmxPort,
-                                  override val clusterRole: String = BootableClusterNode.MicroserviceRole,
-                                  override val ethName: String = BootableClusterNode.CloudEth)
-  extends BootableMicroservice
-  with ClusterNetworkSupport 
-  with SeedNodesSupport
-  with BootableRestService {
+  override val environment: String,
+  override val httpPort: Int = BootableClusterNode.DefaultCloudHttpPort,
+  override val jmxPort: Int = BootableClusterNode.DefaultJmxPort,
+  override val clusterRole: String = BootableClusterNode.MicroserviceRole,
+  override val ethName: String = BootableClusterNode.CloudEth)
+    extends BootableMicroservice
+    with ClusterNetworkSupport
+    with SeedNodesSupport
+    with BootableRestService {
   import microservice.api.MicroserviceKernel._
 
   override lazy val localAddress = NetworkInterface.getNetworkInterfaces.asScala.flatMap { x ⇒
@@ -62,7 +62,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
   override def startup(): Unit = {
     system
-    
+
     val message = new StringBuilder()
       .append('\n')
       .append("=====================================================================================================================================")

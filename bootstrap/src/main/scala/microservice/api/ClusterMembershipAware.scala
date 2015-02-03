@@ -2,7 +2,7 @@ package microservice.api
 
 import akka.actor.Actor
 import akka.cluster.ClusterEvent._
-import akka.cluster.{Cluster, Member}
+import akka.cluster.{ Cluster, Member }
 import scala.collection.mutable
 
 trait ClusterMembershipAware {

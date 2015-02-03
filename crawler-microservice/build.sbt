@@ -1,10 +1,16 @@
 import Dependencies._
-
-import scalariform.formatter.preferences.{AlignSingleLineCaseStatements, AlignParameters, RewriteArrowSymbols}
+import scalariform.formatter.preferences._
 
 name := "crawler-microservice"
 
 scalaVersion := Scala
+
+scalariformSettings
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(PreserveDanglingCloseParenthesis, true)
 
 libraryDependencies ++= Seq(
   jsoup,

@@ -4,13 +4,13 @@ import java.net.InetAddress
 
 import akka.http.Http
 import akka.http.model._
-import akka.http.model.headers.{Authorization, OAuth2BearerToken}
+import akka.http.model.headers.{ Authorization, OAuth2BearerToken }
 import akka.stream.FlowMaterializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{ Sink, Source }
 import microservice.SystemSettings
 
 import scala.collection.JavaConverters._
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 trait DigitaloceanClient extends SeedNodesSupport with SystemSettings {
   self: ClusterNetworkSupport with BootableMicroservice ⇒
@@ -40,13 +40,13 @@ object DigitaloceanClient {
     Source.single(req).via(connection.flow).runWith(Sink.head).value match {
       case Some(Success(HttpResponse(StatusCodes.OK, h, entity, _))) =>
         ResponseParser(entity, seedPrefix).fold(
-        { error ⇒
-          system.log.error("CloudProvider error: {}", error)
-          List.empty
-        }, { droplets ⇒
-          system.log.info("Frontend droplet's addresses: {}", droplets)
-          droplets.map(d ⇒ InetAddress.getByName(d.hostIP))
-        })
+          { error ⇒
+            system.log.error("CloudProvider error: {}", error)
+            List.empty
+          }, { droplets ⇒
+            system.log.info("Frontend droplet's addresses: {}", droplets)
+            droplets.map(d ⇒ InetAddress.getByName(d.hostIP))
+          })
       case None =>
         system.log.error("CloudProvider error")
         List.empty

@@ -1,12 +1,12 @@
 package microservice.http
 
-import akka.http.server.{Directives, Route}
+import akka.http.server.{ Directives, Route }
 import scala.concurrent.ExecutionContext
 
 case class RestApi(route: Option[ExecutionContext => Route] = None,
-                   preAction: Option[() => Unit] = None, 
-                   postAction: Option[() => Unit] = None)
-  extends Directives {
+  preAction: Option[() => Unit] = None,
+  postAction: Option[() => Unit] = None)
+    extends Directives {
 
   private def cmbRoutes(r0: ExecutionContext => Route, r1: ExecutionContext => Route) =
     (ec: ExecutionContext) =>

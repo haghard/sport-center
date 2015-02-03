@@ -1,10 +1,17 @@
 import sbt._
 import Dependencies._
-import sbtassembly.Plugin.AssemblyKeys._
+import scalariform.formatter.preferences._
 
 name := "bootstrap"
 
 scalaVersion := Scala
+
+scalariformSettings
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(PreserveDanglingCloseParenthesis, true)
 
 libraryDependencies ++= Seq(
   akka.cluster,

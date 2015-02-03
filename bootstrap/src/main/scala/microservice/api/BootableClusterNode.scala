@@ -8,9 +8,9 @@ object BootableClusterNode {
   val MicroserviceRole = "microservice"
   val LoadBalancerRole = "load-balancer"
 
-  val TweeterFeedRole  = "tweeter-feed"
+  val TweeterFeedRole = "tweeter-feed"
 
-  val CloudEth  = "eth0"
-  val LocalEth  = "en0"
+  val CloudEth = "eth0"
+  val LocalEth = "en0"
   val LocalEth4 = "en4"
 }
