@@ -5,7 +5,7 @@ object Dependencies {
   val Scala = "2.11.5"
   val Akka = "2.3.9"
   val AkkaDataReplication = "0.9"
-  val AkkaStreamsVersion = "1.0-M2"
+  val AkkaStreamsVersion = "1.0-M3"
 
   object akka {
     val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()

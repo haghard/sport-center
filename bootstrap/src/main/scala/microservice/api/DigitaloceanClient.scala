@@ -5,7 +5,7 @@ import java.net.InetAddress
 import akka.http.Http
 import akka.http.model._
 import akka.http.model.headers.{ Authorization, OAuth2BearerToken }
-import akka.stream.FlowMaterializer
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer, FlowMaterializer }
 import akka.stream.scaladsl.{ Sink, Source }
 import microservice.SystemSettings
 
@@ -33,7 +33,7 @@ object DigitaloceanClient {
   val dropletsUrl = "https://api.digitalocean.com/v2/droplets?page=1&per_page=10"
 
   def apply(apiToken: String)(implicit system: akka.actor.ActorSystem): List[InetAddress] = {
-    implicit val fm = FlowMaterializer()
+    implicit val fm = ActorFlowMaterializer(ActorFlowMaterializerSettings(system))
     val req = HttpRequest(HttpMethods.GET, dropletsUrl, List(Authorization(OAuth2BearerToken(apiToken))))
 
     val connection = Http().outgoingConnection("api.digitalocean.com", 8080)

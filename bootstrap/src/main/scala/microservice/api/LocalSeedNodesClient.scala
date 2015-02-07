@@ -12,7 +12,7 @@ trait LocalSeedNodesClient extends SeedNodesSupport {
 
   override lazy val seedAddresses =
     NetworkInterface.getNetworkInterfaces.asScala.toList
-      .find(_.getName == LocalEth4)
+      .find(_.getName == LocalEth)
       .flatMap(x ⇒ x.getInetAddresses.asScala.toList.find(_.getHostAddress.matches(ipExpression))) :: Nil flatten
 
   override lazy val akkaSeedNodes =

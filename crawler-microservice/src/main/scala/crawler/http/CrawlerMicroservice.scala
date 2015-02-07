@@ -28,8 +28,8 @@ object CrawlerMicroservice {
    * Response
    */
   case class CrawlerResponse(url: String, view: Option[String] = None,
-                             body: Option[ResponseBody] = None,
-                             error: Option[String] = None) extends BasicHttpResponse
+    body: Option[ResponseBody] = None,
+    error: Option[String] = None) extends BasicHttpResponse
 
   case class CrawlerResultsBody(last: LastUpdateDate, override val count: Int = 1) extends ResponseBody
 

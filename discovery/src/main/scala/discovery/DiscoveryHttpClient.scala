@@ -5,7 +5,7 @@ import java.io.IOException
 import akka.http.Http
 import akka.http.model._
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.{ FlowMaterializer, MaterializerSettings }
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer, FlowMaterializer }
 import akka.util.ByteString
 import discovery.DiscoveryHttpClient.Protocols
 import microservice.http.{ RestWithDiscovery, SprayJsonMarshalling }
@@ -35,8 +35,9 @@ trait DiscoveryHttpClient extends DiscoveryClient
   import akka.http.model.HttpMethods._
   import akka.http.model.MediaTypes._
 
-  implicit val materializer = FlowMaterializer(MaterializerSettings(system)
-    .withDispatcher(discoveryDispatcherName))(system)
+  implicit val materializer = ActorFlowMaterializer(
+    ActorFlowMaterializerSettings(system)
+      .withDispatcher(discoveryDispatcherName))(system)
 
   implicit val discoveryClientEc = system.dispatchers.lookup(discoveryDispatcherName)
 

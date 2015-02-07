@@ -33,7 +33,7 @@ object StandingMicroservice {
    * Response
    */
   case class StandingsResponse(val url: String, val view: Option[String] = None, val error: Option[String] = None,
-                               val body: Option[ResponseBody] = None) extends BasicHttpResponse
+    val body: Option[ResponseBody] = None) extends BasicHttpResponse
 
   implicit object StandingResponseWriter extends JsonWriter[StandingsResponse] with DefaultJsonProtocol {
     import spray.json._

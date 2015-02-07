@@ -16,10 +16,10 @@ object StandingMaterializedView {
   case class StandingLine(team: String, data: SeasonMetrics)
 
   case class SeasonMetrics(w: Int = 0, l: Int = 0, pct: Float = 0f, homeW: Int = 0, homeL: Int = 0,
-                           roadW: Int = 0, roadL: Int = 0)
+    roadW: Int = 0, roadL: Int = 0)
 
   case class SeasonStandingResponse(west: Seq[StandingLine] = Seq.empty, east: Seq[StandingLine] = Seq.empty,
-                                    count: Int = 0) extends ResponseBody
+    count: Int = 0) extends ResponseBody
 
   case class PlayOffStandingResponse(stages: mutable.Map[String, List[NbaResult]], count: Int = 0) extends ResponseBody
 

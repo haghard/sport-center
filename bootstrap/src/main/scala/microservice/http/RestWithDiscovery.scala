@@ -2,8 +2,8 @@ package microservice.http
 
 import akka.http.model.HttpEntity.Strict
 import akka.http.model.StatusCodes._
-import akka.http.model.headers.{ RawHeader, Host }
-import akka.http.model.{ HttpResponse, MediaTypes, StatusCodes }
+import akka.http.model.headers.Host
+import akka.http.model.{ HttpResponse, MediaTypes }
 import akka.http.server._
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
@@ -62,16 +62,41 @@ trait RestWithDiscovery extends BootableRestService
    */
   def servicePathPostfix: String
 
+  /**
+   *
+   * @param resp
+   * @param writer
+   * @tparam T
+   * @return
+   */
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
-        HttpResponse(StatusCodes.BadRequest, List(Host(HostHeader(localAddress), port = httpPort)),
-          Strict(contentType = MediaTypes.`application/json`, data = ByteString(resp.toJson.prettyPrint))))
+        HttpResponse(
+          BadRequest,
+          List(Host(HostHeader(localAddress), httpPort)),
+          Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
+  /**
+   *
+   * @param error
+   * @return
+   */
   protected def fail(error: String) =
-    HttpResponse(InternalServerError, List(Host(HostHeader(localAddress), port = httpPort)), error)
+    HttpResponse(
+      InternalServerError,
+      List(Host(HostHeader(localAddress), httpPort)), error)
 
+  /**
+   *
+   * @param resp
+   * @param writer
+   * @tparam T
+   * @return
+   */
   protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
-    HttpResponse(StatusCodes.OK, List(Host(HostHeader(localAddress), port = httpPort)),
-      Strict(contentType = MediaTypes.`application/json`, data = ByteString(resp.toJson.prettyPrint)))
+    HttpResponse(
+      OK,
+      List(Host(HostHeader(localAddress), httpPort)),
+      Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
 }

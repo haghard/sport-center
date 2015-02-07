@@ -7,7 +7,7 @@ import akka.http.model.{ HttpCharsets, HttpResponse, StatusCodes }
 import akka.http.server.Directives
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
-import akka.stream.{ FlowMaterializer, MaterializerSettings }
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer, FlowMaterializer }
 import discovery.ServiceDiscovery
 import discovery.ServiceDiscovery._
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
@@ -60,8 +60,8 @@ trait DiscoveryMicroservice extends BootableRestService
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
   import services.discovery.DiscoveryMicroservice._
 
-  implicit val materializer = FlowMaterializer(MaterializerSettings(system)
-    .withDispatcher(httpDispatcher))(system)
+  implicit val materializer = ActorFlowMaterializer(
+    ActorFlowMaterializerSettings(system).withDispatcher(httpDispatcher))(system)
 
   abstract override def configureApi() =
     super.configureApi() ~

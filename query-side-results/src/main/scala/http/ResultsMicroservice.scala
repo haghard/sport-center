@@ -27,9 +27,9 @@ object ResultsMicroservice {
   case class GetResultsByTeam(url: String, name: String, size: Int, location: Location.Value) extends BasicHttpRequest
 
   case class ResultsResponse(url: String,
-                             view: Option[String] = None,
-                             body: Option[ResponseBody] = None,
-                             error: Option[String] = None) extends BasicHttpResponse
+    view: Option[String] = None,
+    body: Option[ResponseBody] = None,
+    error: Option[String] = None) extends BasicHttpResponse
 
   case class ResultsParams(size: Option[Int] = None, loc: Option[String] = None)
 

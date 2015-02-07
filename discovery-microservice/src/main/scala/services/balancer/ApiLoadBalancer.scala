@@ -8,9 +8,9 @@ import akka.contrib.datareplication.Replicator.Changed
 import akka.http.Http
 import akka.http.model.HttpMethods._
 import akka.http.model.headers.Host
-import akka.http.model.{ HttpEntity, HttpRequest, HttpResponse, StatusCodes }
+import akka.http.model.{ HttpEntity, HttpRequest, HttpResponse }
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.{ FlowMaterializer, MaterializerSettings }
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer, FlowMaterializer }
 import discovery.ServiceDiscovery.DiscoveryLine
 import akka.http.model.StatusCodes._
 
@@ -21,24 +21,6 @@ object ApiLoadBalancer {
   val fragmentExp = """http://(\d{0,3}.\d{0,3}.\d{0,3}.\d{0,3}.):(\d{4,})([\d|/|\w|\{|\}]+)""".r
 
   case class Route(host: String, port: Int, pathRegex: String)
-
-  def props(dispatcher: String, localAddress: String, httpPort: Int) =
-    Props(new ApiLoadBalancer(dispatcher, localAddress, httpPort)).withDispatcher(dispatcher)
-}
-
-class ApiLoadBalancer private (dispatcher: String, localAddress: String, httpPort: Int) extends Actor with ActorLogging {
-  import services.balancer.ApiLoadBalancer._
-
-  implicit val materializer = FlowMaterializer(MaterializerSettings(context.system)
-    .withDispatcher(dispatcher))(context.system)
-
-  implicit val ex = context.system.dispatchers.lookup(dispatcher)
-
-  private var routees: Option[Map[String, List[Route]]] = None
-
-  override def preRestart(reason: scala.Throwable, message: scala.Option[scala.Any]): scala.Unit = {
-    log.info("Balancer was restarted and lost all routees {}", reason.getMessage)
-  }
 
   private def updateRoutees(map: LWWMap) = {
     map.entries.values.toList.asInstanceOf[List[DiscoveryLine]].map(_.urls)
@@ -51,8 +33,27 @@ class ApiLoadBalancer private (dispatcher: String, localAddress: String, httpPor
             val param = path.substring(path.indexOf('{') + 1, path.indexOf('}'))
             Route(host, port.toInt, path.replaceAll("\\{" + param + "\\}", "(.*)"))
           }
-        case other ⇒ Route("localhost", 2000, "/none")
+        case other ⇒ Route("localhost", 8000, "/empty")
       }.groupBy(_.pathRegex)
+  }
+
+  def props(dispatcher: String, localAddress: String, httpPort: Int) =
+    Props(new ApiLoadBalancer(dispatcher, localAddress, httpPort)).withDispatcher(dispatcher)
+}
+
+class ApiLoadBalancer private (dispatcher: String, localAddress: String, httpPort: Int) extends Actor with ActorLogging {
+  import services.balancer.ApiLoadBalancer._
+
+  implicit val materializer = ActorFlowMaterializer(
+    ActorFlowMaterializerSettings(context.system)
+      .withDispatcher(dispatcher))(context.system)
+
+  implicit val ex = context.system.dispatchers.lookup(dispatcher)
+
+  private var routees: Option[Map[String, List[Route]]] = None
+
+  override def preRestart(reason: scala.Throwable, message: scala.Option[scala.Any]): scala.Unit = {
+    log.info("Balancer was restarted and lost all routees {}", reason.getMessage)
   }
 
   override def receive: Receive = {
@@ -71,12 +72,13 @@ class ApiLoadBalancer private (dispatcher: String, localAddress: String, httpPor
         val redirectedUri = reqUri.withHost(route.host).withPort(route.port)
         log.info("Redirection {} -> {}", reqUri.toString(), redirectedUri.toString())
         val connection = Http(context.system).outgoingConnection(route.host, route.port)
-        val req = HttpRequest(GET, uri = redirectedUri)
+        val req = HttpRequest(GET, uri = redirectedUri, headers = r.headers)
         Source.single(req)
           .via(connection.flow)
           .runWith(Sink.head)
           .onComplete {
-            case Success(response) ⇒ replyTo ! response
+            case Success(response) ⇒
+              replyTo ! response
             case Failure(error) ⇒
               replyTo ! HttpResponse(InternalServerError, List(Host(akka.http.model.Uri.Host(localAddress), port = httpPort)),
                 error.getMessage)

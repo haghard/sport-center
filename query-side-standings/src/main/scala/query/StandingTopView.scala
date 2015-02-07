@@ -17,7 +17,7 @@ object StandingTopView {
   val playoff = "playoff-view"
 
   case class StandingBody(val body: Option[SeasonStandingResponse \/ PlayOffStandingResponse] = None,
-                          viewName: Option[String] = None, error: Option[String] = None, val count: Int = 0)
+    viewName: Option[String] = None, error: Option[String] = None, val count: Int = 0)
       extends ResponseBody with State
 
   case class QueryStandingByDate(date: DateTime) extends QueryCommand

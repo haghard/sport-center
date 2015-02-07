@@ -46,9 +46,9 @@ object TeamAggregate {
   }
 
   case class TeamState(name: Option[String] = None,
-                       results: immutable.SortedMap[String, CrawledNbaResult] = immutable.TreeMap[String, CrawledNbaResult](),
-                       lastDate: Option[Date] = None,
-                       error: Option[Throwable] = None) extends State {
+      results: immutable.SortedMap[String, CrawledNbaResult] = immutable.TreeMap[String, CrawledNbaResult](),
+      lastDate: Option[Date] = None,
+      error: Option[Throwable] = None) extends State {
     def withName(name: String) = copy(name = Option(name))
     def withName(name: Option[String]) = copy(name = name)
     def withLastDate(dt: Date) = copy(lastDate = Option(dt))

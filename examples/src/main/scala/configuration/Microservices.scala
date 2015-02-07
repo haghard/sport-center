@@ -71,7 +71,7 @@ object Microservices extends Microservices {
 
   implicit object LocalLoadBalancer extends LocalClusterNode[LoadBalancerCfg] {
     override def create(desc: LoadBalancerCfg) = {
-      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, LoadBalancerRole, LocalEth4)
+      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, LoadBalancerRole, LocalEth)
         with LocalSeedNodesClient
         with LoadBalancerMicroservice
       LocalLoadBalancerNode
@@ -80,7 +80,7 @@ object Microservices extends Microservices {
 
   implicit object LocalResultsQuerySide extends LocalClusterNode[ResultsQuerySideCfg] {
     override def create(cfg: ResultsQuerySideCfg) = {
-      object LocalBackend extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, ethName = LocalEth4)
+      object LocalBackend extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, ethName = LocalEth)
         with LocalSeedNodesClient
         with ResultsMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
@@ -92,7 +92,7 @@ object Microservices extends Microservices {
 
   implicit object LocalStandingQuerySide extends LocalClusterNode[StandingCfg] {
     override def create(cfg: StandingCfg) = {
-      object LocalStanding extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, ethName = LocalEth4)
+      object LocalStanding extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, ethName = LocalEth)
         with LocalSeedNodesClient
         with StandingMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
@@ -104,7 +104,7 @@ object Microservices extends Microservices {
 
   implicit object LocalCrawlerWriteSide extends LocalClusterNode[CrawlerCfg] {
     override def create(cfg: CrawlerCfg) = {
-      object LocalCrawler extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, CrawlerRole, LocalEth4)
+      object LocalCrawler extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, CrawlerRole, LocalEth)
         with LocalSeedNodesClient
         with CrawlerMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
@@ -116,10 +116,11 @@ object Microservices extends Microservices {
   }
 
   /**
-   * with DigitaloceanClient
-   * @param desc
-   * @tparam T
-   * @return
+   *
+   * This signature means that method ``microservice`` is parameterized by a T,
+   * which is required to be a subtype of NodeIdentity.
+   * Also an instances of MicroserviceFactory[T] and ClassTag[T] must be implicitly available.
+   *
    */
   def microservice[T <: NodeIdentity: MicroserviceFactory: ClassTag](implicit desc: T) =
     implicitly[MicroserviceFactory[T]].create(desc)
