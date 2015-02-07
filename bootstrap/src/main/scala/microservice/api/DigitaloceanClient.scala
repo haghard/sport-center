@@ -5,7 +5,7 @@ import java.net.InetAddress
 import akka.http.Http
 import akka.http.model._
 import akka.http.model.headers.{ Authorization, OAuth2BearerToken }
-import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer, FlowMaterializer }
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
 import akka.stream.scaladsl.{ Sink, Source }
 import microservice.SystemSettings
 
