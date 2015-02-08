@@ -5,7 +5,7 @@ import java.io.IOException
 import akka.http.Http
 import akka.http.model._
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer, FlowMaterializer }
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
 import akka.util.ByteString
 import discovery.DiscoveryHttpClient.Protocols
 import microservice.http.{ RestWithDiscovery, SprayJsonMarshalling }
