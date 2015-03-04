@@ -1,7 +1,11 @@
 package http
 
+import java.io.File
+import java.nio.file.Paths
+
 import akka.http.model.HttpResponse
 import akka.http.server.{ Directives, Route }
+import com.netflix.config.{ DynamicPropertyFactory, DynamicLongProperty }
 import discovery.DiscoveryClientSupport
 import domain.DomainSupport
 import http.ResultsMicroservice._
@@ -42,16 +46,14 @@ object ResultsMicroservice {
         val url = JsString(obj.url.toString)
         val v = obj.view.fold(JsString("none")) { view ⇒ JsString(view) }
         val e = obj.error.fold(JsString("none")) { error ⇒ JsString(error) }
-        val body = obj.body match {
+        obj.body match {
           case Some(ResultsBody(count, list)) ⇒
-            JsObject("count" -> JsNumber(count), "results" -> JsArray(list.map(r ⇒ r.toJson)))
-          case other ⇒ throw new SerializationException(s"Serialization error $other in ResultsMicroservice")
+            val b = JsObject("count" -> JsNumber(count), "results" -> JsArray(list.map(r ⇒ r.toJson)))
+            JsObject("url" -> url, "view" -> v, "body" -> b, "error" -> e)
+          case None => JsObject("url" -> url, "view" -> v, "error" -> e)
         }
-
-        JsObject("url" -> url, "view" -> v, "body" -> body, "error" -> e)
       }
     }
-
   }
 
   def errorLocation(value: String): String = s"'$value' is not a valid value for 'loc' parameter. We have support only for [home, away]"
@@ -65,7 +67,18 @@ object ResultsMicroservice {
   val failbackWithDefaultSize = { (error: String) ⇒ if (validationMessage == error) \/-(defaultSize) else -\/(error) }
 
   val dtVname = "results-by-date-view"
-  val teamVname = "results-by-team-view"
+  val teamVname = "last-results-by-team-view"
+
+  private val hystrixSettings = Paths.get(new File("").getAbsoluteFile + "/query-side-results/settings/archaius.properties")
+  System.setProperty("archaius.fixedDelayPollingScheduler.delayMills", "1000")
+  System.setProperty("archaius.fixedDelayPollingScheduler.initialDelayMills", "1000")
+  System.setProperty("archaius.configurationSource.additionalUrls", "file:///" + hystrixSettings.toString)
+
+  private val resultsByDateProps = "hystrix.api.resultsByDate.injectable.latency"
+  private val resultsByDateLatency = DynamicPropertyFactory.getInstance().getLongProperty(resultsByDateProps, 0)
+
+  private val lastResultsProps = "hystrix.api.lastResults.injectable.latency"
+  private val lastResultsLatency = DynamicPropertyFactory.getInstance().getLongProperty(lastResultsProps, 0)
 }
 
 trait ResultsMicroservice extends RestWithDiscovery
@@ -73,6 +86,7 @@ trait ResultsMicroservice extends RestWithDiscovery
     with SystemSettings
     with AskManagment {
   mixin: MicroserviceKernel with DiscoveryClientSupport with DomainSupport ⇒
+  import ResultsMicroservice._
 
   private val formatter = searchFormatter()
 
@@ -91,14 +105,9 @@ trait ResultsMicroservice extends RestWithDiscovery
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(route = Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
-        Option { () ⇒
-          system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")
-        },
-        Option { () ⇒
-          system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")
-        }
-      )
+      RestApi(Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
+        Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")),
+        Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def resultsRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPrefix) {
@@ -106,12 +115,14 @@ trait ResultsMicroservice extends RestWithDiscovery
         withUri { uri ⇒
           complete {
             system.log.info(s"[$name] - incoming request $uri")
+
+            Thread.sleep(resultsByDateLatency.get)
+            //fail("fake error")
             Try {
               formatter parse date
             } match {
-              case Success(dt) ⇒ competeWithDate(uri, date)
-              case Failure(error) ⇒
-                fail(ResultsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
+              case Success(dt)    ⇒ competeWithDate(uri, date)
+              case Failure(error) ⇒ fail(ResultsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
             }
           }
         }
@@ -123,6 +134,7 @@ trait ResultsMicroservice extends RestWithDiscovery
                 import scalaz.Scalaz._
                 import scalaz._
 
+                Thread.sleep(lastResultsLatency.get)
                 system.log.info(s"[$name] - incoming request $uri")
                 val complete = completeWithTeam(uri, team)
                 val loc = (for { l ← params.loc \/> (validationMessage) } yield l)
@@ -135,7 +147,7 @@ trait ResultsMicroservice extends RestWithDiscovery
 
                 (for { l ← loc; s ← size } yield (l, s))
                   .fold(error ⇒
-                    fail(ResultsResponse(uri, error = Option(error))).apply(error),
+                    fail(ResultsResponse(uri, view = Option(teamVname), error = Option(error))).apply(error),
                     complete(_)
                   )
               }

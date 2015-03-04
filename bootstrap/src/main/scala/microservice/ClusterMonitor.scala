@@ -3,7 +3,6 @@ package microservice
 import akka.actor.{ Props, Actor }
 import microservice.ClusterMonitor.GetNodes
 import microservice.api.ClusterMembershipAware
-
 import scala.collection.mutable
 
 object ClusterMonitor {
@@ -20,7 +19,7 @@ class ClusterMonitor private (val role: Option[String],
 
   private def read: Receive = {
     case GetNodes =>
-      //Convention: http port for loadbalancer nodes is akka system port + 10
+      //Convention: http port for gateway nodes is akka system port + 10
       sender() ! (nodes.map(a => a.copy(port = a.port.map(_ + 10)))).toVector
   }
 

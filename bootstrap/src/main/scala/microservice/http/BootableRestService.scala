@@ -1,21 +1,19 @@
 package microservice.http
 
-import akka.http.server._
 import akka.actor.ActorSystem
-import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
 
 trait BootableRestService {
 
-  protected val pathPrefix = "api"
-
-  protected val httpDispatcher = microserviceDispatcher
-
   protected def name: String
+
+  protected val pathPrefix = "api"
 
   protected def httpPrefixAddress: String
 
   protected def configureApi() = RestApi()
+
+  protected val httpDispatcher = microserviceDispatcher
 
   protected def installApi(api: RestApi)(implicit system: ActorSystem, interface: String, httpPort: Int) = {
     api.route.foreach { api =>

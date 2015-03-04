@@ -1,9 +1,12 @@
 package http
 
+import java.io.File
+import java.nio.file.Paths
+
 import akka.http.model.HttpResponse
 import akka.http.server.Route
+import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
-import http.StandingMicroservice.{ GetStandingByDate, StandingsResponse }
 import microservice.api.MicroserviceKernel
 import microservice.crawler.NbaResult
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
@@ -24,22 +27,16 @@ import microservice.crawler.searchFormatter
 
 object StandingMicroservice {
 
-  /**
-   * Request
-   */
   case class GetStandingByDate(url: String, date: DateTime) extends BasicHttpRequest
 
-  /**
-   * Response
-   */
   case class StandingsResponse(val url: String, val view: Option[String] = None, val error: Option[String] = None,
     val body: Option[ResponseBody] = None) extends BasicHttpResponse
 
   implicit object StandingResponseWriter extends JsonWriter[StandingsResponse] with DefaultJsonProtocol {
     import spray.json._
 
-    implicit val jsonFormatResl = jsonFormat5(NbaResult)
-    implicit val jsonFormatMetr = jsonFormat7(SeasonMetrics)
+    implicit val jsonFormatResults = jsonFormat5(NbaResult)
+    implicit val jsonFormatMetrics = jsonFormat7(SeasonMetrics)
     implicit val jsonFormatLine = jsonFormat2(StandingLine)
 
     override def write(obj: StandingsResponse): JsValue = {
@@ -53,12 +50,21 @@ object StandingMicroservice {
       }
     }
   }
+
+  val hystrixSettings = Paths.get(new File("").getAbsoluteFile + "/query-side-standings/settings/archaius.properties")
+  System.setProperty("archaius.fixedDelayPollingScheduler.delayMills", "1000")
+  System.setProperty("archaius.fixedDelayPollingScheduler.initialDelayMills", "1000")
+  System.setProperty("archaius.configurationSource.additionalUrls", "file:///" + hystrixSettings.toString)
+
+  private val standingsProps = "hystrix.api.standings.injectable.latency"
+  private val standingsLatency = DynamicPropertyFactory.getInstance().getLongProperty(standingsProps, 0)
 }
 
 trait StandingMicroservice extends RestWithDiscovery
     with SystemSettings
     with AskManagment {
   mixin: MicroserviceKernel with DiscoveryClientSupport ⇒
+  import StandingMicroservice._
 
   val formatter = searchFormatter()
 
@@ -75,13 +81,8 @@ trait StandingMicroservice extends RestWithDiscovery
   abstract override def configureApi() =
     super.configureApi() ~
       RestApi(route = Option { ec: ExecutionContext ⇒ standingRoute(ec) },
-        preAction = Option { () ⇒
-          system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")
-        },
-        postAction = Option { () ⇒
-          system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")
-        }
-      )
+        preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")),
+        postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def standingRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPrefix) {
@@ -89,6 +90,8 @@ trait StandingMicroservice extends RestWithDiscovery
         withUri { uri ⇒
           complete {
             system.log.info(s"[$name] - incoming request $uri")
+            //for latency injection
+            Thread.sleep(standingsLatency.get())
             Try {
               new DateTime(formatter parse date)
             } match {

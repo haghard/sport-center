@@ -15,20 +15,18 @@ object StandingMaterializedView {
 
   case class StandingLine(team: String, data: SeasonMetrics)
 
-  case class SeasonMetrics(w: Int = 0, l: Int = 0, pct: Float = 0f, homeW: Int = 0, homeL: Int = 0,
-    roadW: Int = 0, roadL: Int = 0)
+  case class SeasonMetrics(w: Int = 0, l: Int = 0, pct: Float = 0f, homeW: Int = 0, homeL: Int = 0, roadW: Int = 0, roadL: Int = 0)
 
-  case class SeasonStandingResponse(west: Seq[StandingLine] = Seq.empty, east: Seq[StandingLine] = Seq.empty,
-    count: Int = 0) extends ResponseBody
+  case class SeasonStandingResponse(west: Seq[StandingLine] = Seq.empty, east: Seq[StandingLine] = Seq.empty, count: Int = 0) extends ResponseBody
 
   case class PlayOffStandingResponse(stages: mutable.Map[String, List[NbaResult]], count: Int = 0) extends ResponseBody
 
-  private trait ViewBuilder {
-    def put: NbaResult ⇒ Unit
-    def get(replyTo: ActorRef, vName: Option[String])
+  private[StandingMaterializedView] trait ViewBuilder {
+    def add: NbaResult ⇒ Unit
+    def query(replyTo: ActorRef, vName: Option[String]): Unit
   }
 
-  private final class PlayoffViewBuilder extends ViewBuilder {
+  private[StandingMaterializedView] final class PlayoffViewBuilder extends ViewBuilder {
     private val stagesD = mutable.HashMap[Set[String], Date]()
     private val stagesR = mutable.HashMap[Set[String], List[NbaResult]]()
     private val first = List.range(1, 9).map(_ + ". first round")
@@ -38,7 +36,7 @@ object StandingMaterializedView {
 
     private def hash(homeTeam: String, roadTeam: String): Set[String] = Set(homeTeam, roadTeam)
 
-    override def put =
+    override def add =
       r ⇒ {
         val set = hash(r.homeTeam, r.roadTeam)
         stagesD += (set -> r.dt)
@@ -47,7 +45,7 @@ object StandingMaterializedView {
         stagesR += (set -> newList)
       }
 
-    override def get(replyTo: ActorRef, vName: Option[String]) = {
+    override def query(replyTo: ActorRef, vName: Option[String]) = {
       vName.fold(replyTo ! "Can't write based on empty view") { name ⇒
         val temp = stagesD.toSeq.sortWith { (l, r) ⇒
           l._2.compareTo(r._2) match {
@@ -64,7 +62,7 @@ object StandingMaterializedView {
     }
   }
 
-  private final class SeasonViewBuilder(settings: CustomSettings) extends ViewBuilder {
+  private[StandingMaterializedView] final class SeasonViewBuilder(settings: CustomSettings) extends ViewBuilder {
 
     private var storage = {
       val local = mutable.HashMap[String, SeasonMetrics]()
@@ -74,7 +72,7 @@ object StandingMaterializedView {
       local
     }
 
-    override def put =
+    override def add =
       r ⇒ for {
         hm ← storage.get(r.homeTeam)
         rm ← storage.get(r.roadTeam)
@@ -88,7 +86,7 @@ object StandingMaterializedView {
         }
       }
 
-    override def get(replyTo: ActorRef, vName: Option[String]) = {
+    override def query(replyTo: ActorRef, vName: Option[String]) = {
       vName.fold(replyTo ! "Can't write based on empty view") { name ⇒
         val table = (storage.toSeq.sortWith(_._2.w > _._2.w) partition { item ⇒
           settings.teamConferences(item._1) match {
@@ -136,12 +134,12 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
   }
 
   private def activate(r: NbaResult) = {
-    view foreach (_.put(r))
+    view.foreach(_.add(r))
     active
   }
 
   private def active: Actor.Receive = {
-    case r: NbaResult            ⇒ view foreach (_.put(r))
-    case QueryStandingByDate(dt) ⇒ view foreach (_.get(sender(), viewName))
+    case r: NbaResult            ⇒ view.foreach(_.add(r))
+    case QueryStandingByDate(dt) ⇒ view.foreach(_.query(sender(), viewName))
   }
 }

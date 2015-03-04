@@ -25,7 +25,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   private implicit val discoveryTimeout = akka.util.Timeout(duration)
 
   private val clusterMonitor =
-    system.actorOf(ClusterMonitor.props(Some(BootableClusterNode.LoadBalancerRole)),
+    system.actorOf(ClusterMonitor.props(Option(BootableClusterNode.GatewayRole)),
       name = "cluster-monitor")
 
   protected def askForDiscoveryNodeAddresses(): Future[String \/ Vector[Address]] =

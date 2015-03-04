@@ -7,9 +7,11 @@ import crawler.http.CrawlerMicroservice
 import discovery.{ DiscoveryClientSupport, DiscoveryHttpClient }
 import domain.DomainSupport
 import http.{ StandingMicroservice, ResultsMicroservice }
+import microservice.JmxAgent
 import microservice.api.BootableClusterNode._
 import microservice.api.{ BootableMicroservice, LocalSeedNodesClient, MicroserviceKernel }
-import services.balancer.LoadBalancerMicroservice
+import services.gateway.ApiGatewayMicroservice
+import services.hystrix.HystrixTurbineSupport
 
 import scala.reflect.ClassTag
 
@@ -42,8 +44,7 @@ trait Microservices {
 
     implicit def localNode[T <: NodeIdentity: LocalClusterNode: ClassTag]: MicroserviceFactory[T] = {
       new MicroserviceFactory[T] {
-        override def create(desc: T) =
-          implicitly[LocalClusterNode[T]].create(desc)
+        override def create(desc: T) = implicitly[LocalClusterNode[T]].create(desc)
       }
     }
   }
@@ -56,8 +57,7 @@ trait Microservices {
 
     implicit def cloudNode[T <: NodeIdentity: CloudClusterNode: ClassTag]: MicroserviceFactory[T] = {
       new MicroserviceFactory[T] {
-        override def create(desc: T) =
-          implicitly[CloudClusterNode[T]].create(desc)
+        override def create(desc: T) = implicitly[CloudClusterNode[T]].create(desc)
       }
     }
   }
@@ -71,9 +71,11 @@ object Microservices extends Microservices {
 
   implicit object LocalLoadBalancer extends LocalClusterNode[LoadBalancerCfg] {
     override def create(desc: LoadBalancerCfg) = {
-      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, LoadBalancerRole, LocalEth)
+      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, GatewayRole, LocalEth)
         with LocalSeedNodesClient
-        with LoadBalancerMicroservice
+        with ApiGatewayMicroservice
+        with HystrixTurbineSupport
+        with JmxAgent
       LocalLoadBalancerNode
     }
   }

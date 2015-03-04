@@ -6,6 +6,7 @@ object Dependencies {
   val Akka = "2.3.9"
   val AkkaDataReplication = "0.9"
   val AkkaStreamsVersion = "1.0-M3"
+  val Hystrix = "1.4.0"
 
   object akka {
     val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()
@@ -31,7 +32,7 @@ object Dependencies {
 
   val json4s = "org.json4s"             %%    "json4s-native"   % "3.2.10"
 
-  val spray_json = "io.spray"           %%    "spray-json"        % "1.2.6" withSources()
+  val spray_json = "io.spray"           %%    "spray-json"      % "1.2.6" withSources()
 
   val jsoup = "org.jsoup"               %     "jsoup"           % "1.7.3"
 
@@ -54,4 +55,13 @@ object Dependencies {
   val scalaz           = "org.scalaz"             %% "scalaz-core"            % "7.1.0" withSources()
 
   val guava            = "com.google.guava"       % "guava"                   % "18.0" withSources()
+
+  val hystrix          = "com.netflix.hystrix"    %  "hystrix-core"           % Hystrix
+
+  val hystrix_stream   = "com.netflix.hystrix"    %  "hystrix-metrics-event-stream" % Hystrix
+  
+  val turbine          = "com.netflix.turbine"    %   "turbine-core"          % "2.0.0-DP.2"
+
+  //val dispatch         = "net.databinder.dispatch"  %%  "dispatch-core"       % "0.11.2"
+  val rxscala          = "io.reactivex"           %% "rxscala"                % "0.23.1"
 }

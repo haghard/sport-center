@@ -2,14 +2,13 @@ package query
 
 import org.joda.time.DateTime
 import akka.actor.ActorDSL._
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import microservice.settings.CustomSettings
+import microservice.crawler.searchFormatter
+import microservice.http.RestService.ResponseBody
 import http.StandingMicroservice.GetStandingByDate
 import microservice.domain.{ QueryCommand, State }
-import microservice.http.RestService.ResponseBody
-import microservice.settings.CustomSettings
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonStandingResponse }
-import microservice.crawler.searchFormatter
-
 import scalaz.{ -\/, \/, \/- }
 
 object StandingTopView {
@@ -22,8 +21,7 @@ object StandingTopView {
 
   case class QueryStandingByDate(date: DateTime) extends QueryCommand
 
-  def props(settings: CustomSettings): Props =
-    Props(new StandingTopView(settings))
+  def props(settings: CustomSettings): Props = Props(new StandingTopView(settings))
 }
 
 class StandingTopView private (val settings: CustomSettings) extends Actor
@@ -50,8 +48,9 @@ class StandingTopView private (val settings: CustomSettings) extends Actor
   override def receive: Receive = {
     case GetStandingByDate(uri, dateTime) ⇒
       getChildView(dateTime).fold {
-        sender() ! StandingBody(error =
-          Option(s"Can't find view for requested date ${formatter format dateTime}"))
+        val error = s"Can't find view for requested date ${formatter.format(dateTime.toDate)}"
+        log.debug(error)
+        sender() ! StandingBody(error = Option(error))
       } { view ⇒ view.tell(QueryStandingByDate(dateTime), receiver(sender())) }
   }
 }

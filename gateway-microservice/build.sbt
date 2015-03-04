@@ -1,7 +1,7 @@
 import Dependencies._
 import scalariform.formatter.preferences._
 
-name := "discovery-microservice"
+name := "gateway-microservice"
 
 scalaVersion := Scala
 
@@ -11,3 +11,12 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(AlignSingleLineCaseStatements, true)
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
+
+libraryDependencies ++= Seq(
+  hystrix,
+  hystrix_stream,
+  turbine,
+  //dispatch,
+  //hystrix_dash,
+  rxscala
+)

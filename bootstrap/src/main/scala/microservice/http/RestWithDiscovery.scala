@@ -27,7 +27,6 @@ object RestWithDiscovery {
 
 trait RestWithDiscovery extends BootableRestService
     with Directives {
-
   self: MicroserviceKernel =>
 
   /**

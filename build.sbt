@@ -19,13 +19,13 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 lazy val bootstrap = project.in(file("bootstrap"))
 
-lazy val examples = project.in(file("examples")).dependsOn(discoveryMicroservices, microservices, querySideResults, querySideStandings, crawlerMicroservices)
+lazy val examples = project.in(file("examples")).dependsOn(gatewayMicroservices, microservices, querySideResults, querySideStandings, crawlerMicroservices)
 
 lazy val discovery = project.in(file("discovery")).dependsOn(bootstrap)
 
 lazy val domain = project.in(file("domain")).dependsOn(bootstrap)
 
-lazy val discoveryMicroservices = project.in(file("discovery-microservice")).dependsOn(discovery)
+lazy val gatewayMicroservices = project.in(file("gateway-microservice")).dependsOn(discovery)
 
 lazy val querySideResults = project.in(file("query-side-results")).dependsOn(bootstrap, domain, discovery)
 
@@ -37,7 +37,7 @@ lazy val crawlerMicroservices = project.in(file("crawler-microservice")).depends
 lazy val microservices = project.in(file("microservices")).dependsOn(discovery, domain)
 
 lazy val sportcenter = project.in(file(".")).aggregate(microservices, discovery, bootstrap,
-  examples, domain, discoveryMicroservices, querySideResults, querySideStandings, crawlerMicroservices)
+  examples, domain, gatewayMicroservices, querySideResults, querySideStandings, crawlerMicroservices)
 
 
 /**

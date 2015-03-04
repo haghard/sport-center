@@ -20,5 +20,4 @@ trait LocalSeedNodesClient extends SeedNodesSupport {
       s"akka.tcp://${ActorSystemName}@${s.getHostAddress}:${knownPorts(0)}" ::
         s"akka.tcp://${ActorSystemName}@${s.getHostAddress}:${knownPorts(1)}" :: Nil
     }.asJava
-
 }

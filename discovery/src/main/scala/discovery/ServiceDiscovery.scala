@@ -44,7 +44,7 @@ object ServiceDiscovery extends ExtensionKey[ServiceDiscovery] {
 
 class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   import discovery.ServiceDiscovery._
-  import BootableClusterNode.{ LoadBalancerRole, MicroserviceRole }
+  import BootableClusterNode.{ GatewayRole, MicroserviceRole }
 
   private val config = system.settings.config.getConfig("discovery")
   private val timeout = config.getDuration("ops-timeout", SECONDS).second
@@ -62,7 +62,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
     singletonProps = Props(new ServiceDiscoveryGuardian(timeout, Some(MicroserviceRole), replicator) with OnClusterLeaveKeysCleaner),
     singletonName = "keys-guardian",
     terminationMessage = PoisonPill,
-    role = Some(LoadBalancerRole)),
+    role = Some(GatewayRole)),
     name = "keys-guardian-singleton")
 
   private def --(map: LWWMap, kv: KV): LWWMap = {

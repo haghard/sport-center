@@ -4,7 +4,7 @@ import java.rmi.registry.LocateRegistry
 import java.lang.management.ManagementFactory
 import javax.management.remote.{ JMXConnectorServerFactory, JMXServiceURL }
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Success, Failure, Try }
 
 trait JmxAgent extends BootableMicroservice {
   self: ClusterNetworkSupport ⇒
@@ -21,17 +21,8 @@ trait JmxAgent extends BootableMicroservice {
 
     val address = new JMXServiceURL(s"service:jmx:rmi:///jndi/rmi://$localAddress:$jmxPort/jmxrmi")
     val connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(address, env, server)
-    Try(connectorServer.start) match {
-      case Success(_) ⇒
-        val message = new StringBuilder()
-          .append('\n')
-          .append("====================================================================================================").append('\n')
-          .append(s"★ ★ ★ ★ ★ ★  JMX server available on $localAddress:$jmxPort  ★ ★ ★ ★ ★ ★")
-          .append('\n')
-          .append("====================================================================================================").append('\n')
-          .toString()
-        system.log.info(message)
-      case Failure(ex) ⇒ system.log.info("JMX server start error {}", ex.getMessage)
+    Try(connectorServer.start) recover {
+      case ex: Throwable ⇒ system.log.info("JMX server start error {}", ex.getMessage)
     }
 
     super.startup()
