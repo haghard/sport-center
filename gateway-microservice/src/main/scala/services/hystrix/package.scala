@@ -21,7 +21,8 @@ package object hystrix {
           case "/api/results/(.*)"      => GetResultsByDateCommand(replyTo, uri)
           case "/api/results/(.*)/last" => GetResultsLastCommand(replyTo, uri)
           case "/api/standings/(.*)"    => GetStandingsCommand(replyTo, uri)
-          case other                    => GetStandingsCommand(replyTo, uri) //default
+          case "/api/crawler"           => GetSomeColdResultsCommand(replyTo, uri)
+          case other                    => GetSomeColdResultsCommand(replyTo, uri) //default
         }
       }
 
@@ -149,6 +150,28 @@ package object hystrix {
     def apply(replyTo: ActorRef, uri: String) = new GetResultsByDateCommand(replyTo, uri)
   }
 
+  object GetSomeColdResultsCommand {
+    private val circuitBreakerSleepWindow = 5000
+    private val circuitBreakerErrorThresholdPercentage = 40
+
+    private val timeoutInMilliseconds = 200
+    private val poolSize = 3
+
+    private val key = Setter
+      .withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetCrawlerResultsCommandKey"))
+      .andCommandKey(HystrixCommandKey.Factory.asKey("GetCrawlerResultsCommand"))
+      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("get-crawler-results-pool"))
+      .andCommandPropertiesDefaults(
+        HystrixCommandProperties.Setter()
+          .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
+          .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
+          .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
+          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
+      .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
+
+    def apply(replyTo: ActorRef, uri: String) = new GetSomeColdResultsCommand(replyTo, uri)
+  }
+
   private[hystrix] class GetResultsByDateCommand(val replyTo: ActorRef, val uri: String)
     extends HystrixCommand[Unit](GetResultsByDateCommand.key)
     with BlockingCall
@@ -159,5 +182,9 @@ package object hystrix {
 
   private[hystrix] class GetResultsLastCommand(val replyTo: ActorRef, val uri: String)
     extends HystrixCommand[Unit](GetResultsLastCommand.key)
+    with BlockingCall
+
+  private[hystrix] class GetSomeColdResultsCommand(val replyTo: ActorRef, val uri: String)
+    extends HystrixCommand[Unit](GetSomeColdResultsCommand.key)
     with BlockingCall
 }

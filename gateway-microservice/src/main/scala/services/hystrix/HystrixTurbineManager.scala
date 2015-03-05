@@ -18,7 +18,7 @@ class HystrixTurbineManager extends Actor
 
   private var nodes = immutable.Set.empty[Address]
 
-  private val watched = BootableClusterNode.GatewayRole
+  private val watched = BootableClusterNode.RoutingLayerRole
 
   implicit val cluster = Cluster(context.system)
 

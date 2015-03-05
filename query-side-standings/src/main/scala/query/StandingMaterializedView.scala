@@ -1,21 +1,26 @@
 package query
 
 import java.util.Date
-
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
-import com.github.nscala_time.time.Imports._
+import java.math.MathContext
 import microservice.crawler.NbaResult
-import microservice.http.RestService.ResponseBody
+import com.github.nscala_time.time.Imports._
 import microservice.settings.CustomSettings
 import query.StandingTopView.QueryStandingByDate
+import microservice.http.RestService.ResponseBody
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 
 import scala.collection.mutable
 
 object StandingMaterializedView {
 
+  private val mc = new MathContext(2)
+  private val season = "season-(.*)".r
+  private val playoff = "playoff-(.*)".r
+  private val summer = "summer-(.*)".r
+
   case class StandingLine(team: String, data: SeasonMetrics)
 
-  case class SeasonMetrics(w: Int = 0, l: Int = 0, pct: Float = 0f, homeW: Int = 0, homeL: Int = 0, roadW: Int = 0, roadL: Int = 0)
+  case class SeasonMetrics(w: Int = 0, l: Int = 0, pct: BigDecimal = 0, homeW: Int = 0, homeL: Int = 0, roadW: Int = 0, roadL: Int = 0)
 
   case class SeasonStandingResponse(west: Seq[StandingLine] = Seq.empty, east: Seq[StandingLine] = Seq.empty, count: Int = 0) extends ResponseBody
 
@@ -78,11 +83,11 @@ object StandingMaterializedView {
         rm ← storage.get(r.roadTeam)
       } yield {
         if (r.homeScore > r.roadScore) {
-          storage += (r.homeTeam -> hm.copy(w = hm.w + 1, pct = (hm.w + 1).toFloat / ((hm.w + 1) + hm.l), homeW = hm.homeW + 1))
-          storage += (r.roadTeam -> rm.copy(l = rm.l + 1, pct = rm.w.toFloat / (rm.w + rm.l + 1), roadL = rm.roadL + 1))
+          storage += (r.homeTeam -> hm.copy(w = hm.w + 1, pct = BigDecimal.decimal(((hm.w + 1).toFloat / ((hm.w + 1) + hm.l)), mc), homeW = hm.homeW + 1))
+          storage += (r.roadTeam -> rm.copy(l = rm.l + 1, pct = BigDecimal.decimal((rm.w.toFloat / (rm.w + rm.l + 1)), mc), roadL = rm.roadL + 1))
         } else {
-          storage += (r.homeTeam -> hm.copy(l = hm.l + 1, pct = (hm.w + 1).toFloat / ((hm.w + 1) + hm.l), homeL = hm.homeL + 1))
-          storage += (r.roadTeam -> rm.copy(w = rm.w + 1, pct = rm.w.toFloat / (rm.w + rm.l + 1), roadW = rm.roadW + 1))
+          storage += (r.homeTeam -> hm.copy(l = hm.l + 1, pct = BigDecimal.decimal(((hm.w + 1).toFloat / ((hm.w + 1) + hm.l)), mc), homeL = hm.homeL + 1))
+          storage += (r.roadTeam -> rm.copy(w = rm.w + 1, pct = BigDecimal.decimal((rm.w.toFloat / (rm.w + rm.l + 1)), mc), roadW = rm.roadW + 1))
         }
       }
 
@@ -98,10 +103,6 @@ object StandingMaterializedView {
       }
     }
   }
-
-  val season = "season-(.*)".r
-  val playoff = "playoff-(.*)".r
-  val summer = "summer-(.*)".r
 
   def props(settings: CustomSettings) = Props(new StandingMaterializedView(settings))
 }
@@ -129,8 +130,7 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
       })
       context become activate(r)
     }
-    case QueryStandingByDate(dt) ⇒
-      sender() ! "View does not ready yet. Please try later"
+    case QueryStandingByDate(dt) ⇒ sender() ! "View does not ready yet. Please try later"
   }
 
   private def activate(r: NbaResult) = {
@@ -139,7 +139,9 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
   }
 
   private def active: Actor.Receive = {
-    case r: NbaResult            ⇒ view.foreach(_.add(r))
-    case QueryStandingByDate(dt) ⇒ view.foreach(_.query(sender(), viewName))
+    case r: NbaResult ⇒ view.foreach(_.add(r))
+    case QueryStandingByDate(dt) ⇒
+      val replyTo = sender()
+      view.foreach(_.query(replyTo, viewName))
   }
 }

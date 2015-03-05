@@ -1,14 +1,14 @@
 package services.gateway
 
 import akka.http.model.StatusCodes._
-import akka.http.model.Uri.{ Host ⇒ HostHeader }
 import akka.http.model.headers.Host
 import akka.http.model.HttpResponse
 import discovery.ServiceDiscovery
-import microservice.http.RestApi
-import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
+import microservice.http.RestApiJunction
 import services.discovery.DiscoveryMicroservice
+import akka.http.model.Uri.{ Host ⇒ HostHeader }
 import services.hystrix.HystrixMetricsMicroservice
+import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -33,7 +33,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(Option { ec: ExecutionContext ⇒ gatewayRoute(ec) },
+      RestApiJunction(Option { ec: ExecutionContext ⇒ gatewayRoute(ec) },
         Option { () ⇒
           ServiceDiscovery(system).subscribe(gateway)
           system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress  ★ ★ ★")
@@ -59,14 +59,13 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
       get { ctx ⇒
         import DiscoveryMicroservice._
         import HystrixMetricsMicroservice._
-        ctx.complete(OK, List(
-          curl("GET", s"$servicePrefix/$scalarResponce"),
-          curl("GET", s"$servicePrefix/$streamResponse"),
-          curl("GET", s"$hystrixStream"),
-          curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
-          curl("""PUT -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
-          curl("DELETE", s"$servicePrefix/akka.tcp://SportCenter@192.168.0.62:3561")
-        ))
+
+        ctx.complete(OK,
+          curl("GET", s"$hystrixStream") :: curl("GET", s"$pathPrefix/crawler") ::
+            curl("GET", s"$servicePrefix/$scalarResponce") :: curl("GET", s"$servicePrefix/$streamResponse") ::
+            curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix) ::
+            curl("""PUT -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix) ::
+            curl("DELETE", s"$servicePrefix/akka.tcp://SportCenter@192.168.0.62:3561") :: Nil)
       }
     }
 

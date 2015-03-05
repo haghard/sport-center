@@ -1,16 +1,17 @@
 package crawler.http
 
 import akka.http.server._
-import crawler.{ CampaignView, ChangeSetWriterSupport }
+import spray.json.JsonWriter
+import crawler.CampaignView
 import CampaignView.LastUpdateDate
 import crawler.ChangeSetWriterSupport
 import discovery.DiscoveryClientSupport
 import microservice.AskManagment
 import microservice.api.MicroserviceKernel
-import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import microservice.http.RestWithDiscovery.DateFormatToJson
-import microservice.http.{ RestApi, RestWithDiscovery }
-import spray.json.JsonWriter
+import microservice.http.{ RestApiJunction, RestWithDiscovery }
+
+import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -36,34 +37,35 @@ object CrawlerMicroservice {
   implicit object CampaignProtocols extends JsonWriter[CrawlerResponse] {
     import spray.json._
     implicit val dtFormat = DateFormatToJson
-    private val empty = JsObject("lastIterationDate" -> JsString("empty"), "count" -> JsNumber(1))
+    private val empty = JsObject("lastIterationDate" -> JsString("empty"))
 
     override def write(obj: CrawlerResponse): JsValue = {
-      val url = JsString(obj.url.toString)
-      val v = obj.view.fold(JsString("none")) { view ⇒ JsString(view) }
-      val e = obj.error.fold(JsString("none")) { error ⇒ JsString(error) }
-      val body = obj.body match {
+      obj.body match {
         case Some(CrawlerResultsBody(last, count)) ⇒
           last.lastIterationDate.fold(empty) { dt ⇒
-            JsObject("lastIterationDate" -> dt.toDate.toJson(dtFormat), "count" -> JsNumber(count))
+            val body = JsObject("lastIterationDate" -> dt.toDate.toJson(dtFormat))
+            JsObject("url" -> JsString(obj.url.toString),
+              "view" -> obj.view.fold(JsString("none")) { view ⇒ JsString(view) },
+              "body" -> body)
           }
+        case None => throw new Exception("Empty body for CrawlerResponse")
       }
-      JsObject("url" -> url, "view" -> v, "body" -> body, "error" -> e)
     }
   }
+
+  private val viewName = "last-crawl-date"
 }
 
 trait CrawlerMicroservice extends RestWithDiscovery
     with AskManagment {
   mixin: MicroserviceKernel with DiscoveryClientSupport with ChangeSetWriterSupport ⇒
-
   import crawler.http.CrawlerMicroservice._
 
-  override def name: String = "CrawlerMicroservice"
+  override def name = "CrawlerMicroservice"
 
   override val servicePathPostfix = "crawler"
 
-  implicit override val timeout = akka.util.Timeout(3 seconds)
+  implicit override val timeout = akka.util.Timeout(2 seconds)
 
   override lazy val endpoints = List(s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix")
 
@@ -71,19 +73,13 @@ trait CrawlerMicroservice extends RestWithDiscovery
 
   /**
    *
-   *
    * @return
    */
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(route = Option { ec: ExecutionContext ⇒ crawlerRoute(ec) },
-        preAction = Option { () ⇒
-          system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")
-        },
-        postAction = Option { () ⇒
-          system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")
-        }
-      )
+      RestApiJunction(route = Option { ec: ExecutionContext ⇒ crawlerRoute(ec) },
+        preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was deploed $httpPrefixAddress ★ ★ ★")),
+        postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def crawlerRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPrefix) {
@@ -91,11 +87,10 @@ trait CrawlerMicroservice extends RestWithDiscovery
         withUri { uri ⇒
           system.log.info(s"[$name] - incoming request $uri")
           complete {
-            fetch[LastUpdateDate](GetLastCrawlDate(uri), view)
-              .map {
-                case \/-(resp)  ⇒ success(CrawlerResponse(url = uri, view = Option("last-crawl-date"), body = Some(CrawlerResultsBody(resp))))
-                case -\/(error) ⇒ fail(error)
-              }
+            fetch[LastUpdateDate](GetLastCrawlDate(uri), view) map {
+              case \/-(resp)  ⇒ success(CrawlerResponse(uri, view = Option(viewName), body = Option(CrawlerResultsBody(resp))))
+              case -\/(error) ⇒ fail(error)
+            }
           }
         }
       }

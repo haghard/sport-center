@@ -10,7 +10,7 @@ import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
 import discovery.ServiceDiscovery
 import discovery.ServiceDiscovery._
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
-import microservice.http.{ BootableRestService, RestApi, SprayJsonMarshalling }
+import microservice.http.{ BootableRestService, RestApiJunction, SprayJsonMarshalling }
 import spray.json.{ DefaultJsonProtocol, _ }
 import akka.http.model.StatusCodes._
 
@@ -43,7 +43,7 @@ trait DiscoveryMicroservice extends BootableRestService
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(route = Option { ec: ExecutionContext ⇒ discoveryRoute(ec) })
+      RestApiJunction(route = Option { ec: ExecutionContext ⇒ discoveryRoute(ec) })
 
   private def streamPublisher() = system.actorOf(ServiceRegistryPublisher.props(httpDispatcher))
 

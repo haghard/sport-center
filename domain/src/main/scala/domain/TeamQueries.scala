@@ -1,11 +1,13 @@
+/*
 package domain
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.ActorLogging
+import akka.persistence.PersistentActor
 import domain.TeamAggregate.{ TeamState, _ }
 import microservice.crawler.{ CrawledNbaResult, Location, NbaResult }
 
 trait TeamQueries {
-  mixin: Actor with ActorLogging { def state: TeamState } ⇒
+  mixin: PersistentActor with ActorLogging { def state: TeamState } ⇒
 
   private val mapper: CrawledNbaResult ⇒ NbaResult =
     r ⇒
@@ -23,8 +25,8 @@ trait TeamQueries {
 
     case q @ QueryTeamStateByDate(id, dt) ⇒
       sender() ! TeamStateSingle(Some(id), state.results.get(dt)
-        filter { _.lct == Location.Home }
-        map { r ⇒ NbaResult(state.name.get, r.homeScore, r.opponent, r.awayScore, r.dt) })
+        .filter(_.lct == Location.Home)
+        .map(r ⇒ NbaResult(state.name.get, r.homeScore, r.opponent, r.awayScore, r.dt)))
 
     case q @ QueryTeamStateLast(id, size, location) ⇒
       location match {
@@ -32,13 +34,13 @@ trait TeamQueries {
           val list = state.results.values.takeRight(size)
           sender() ! TeamStateSet(Some(id), list.map(mapper).toList)
         case Location.Home ⇒
-          val results = state.results.values
-            .foldRight(List[NbaResult]()) { (c, acc) ⇒
-              if (c.lct == Location.Home && acc.size < size) {
-                NbaResult(state.name.get, c.homeScore, c.opponent, c.awayScore, c.dt) :: acc
-              } else
-                acc
+          val results = state.results.values.foldRight(List[NbaResult]()) { (c, acc) ⇒
+            if (c.lct == Location.Home && acc.size < size) {
+              NbaResult(state.name.get, c.homeScore, c.opponent, c.awayScore, c.dt) :: acc
+            } else {
+              acc
             }
+          }
           sender() ! TeamStateSet(Some(id), results)
         case Location.Away ⇒
           val results = state.results.values
@@ -52,4 +54,4 @@ trait TeamQueries {
           sender() ! TeamStateSet(Some(id), results)
       }
   }
-}
+}*/

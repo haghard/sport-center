@@ -65,16 +65,6 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension
   def askQuery[T <: State](command: QueryCommand)(implicit timeout: Timeout, sender: ActorRef, ec: ExecutionContext): Future[T] =
     askEntry(command)
 
-  /**
-   *
-   * @param seqNumber
-   * @param results
-   * @param sender
-   * @param factory
-   * @param ec
-   * @tparam T
-   * @return
-   */
   def tellBatchWrite[T <: State](seqNumber: Long, results: Map[String, SortedSet[WriteResult]])(implicit sender: ActorRef, factory: ActorRefFactory, ec: ExecutionContext) = {
 
     def atLeastOnceWriter(replyTo: ActorRef, seqNumber: Long, results: Map[String, SortedSet[WriteResult]])(implicit factory: ActorRefFactory, ec: ExecutionContext) =

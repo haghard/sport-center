@@ -22,8 +22,8 @@ object MaterializedViewStreamSupport {
 trait MaterializedViewStreamSupport {
   self: Actor with ActorLogging { def settings: CustomSettings } ⇒
   import streamz.akka._
-  import query.MaterializedViewStreamSupport._
   import scalaz.stream.Process._
+  import query.MaterializedViewStreamSupport._
 
   private lazy val executor =
     scalaz.concurrent.Strategy.Executor(microservice.executor("materialized-view-executor", 2))
@@ -45,7 +45,9 @@ trait MaterializedViewStreamSupport {
       }
 
   private val childViewRouter: Sink[Task, NbaResult] = io.channel(result ⇒ Task.delay {
-    getChildView(new DateTime(result.dt)).fold { log.info("StandingMaterializedView wasn't found for {}", result.dt) } { view ⇒ view ! result }
+    getChildView(new DateTime(result.dt)).fold { log.info("StandingMaterializedView wasn't found for {}", result.dt) } {
+      view ⇒ view ! result
+    }
   })
 
   private def pull() = {

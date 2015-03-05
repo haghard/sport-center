@@ -12,12 +12,10 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
 object ChangeSetBatchWriter {
-
   def props(settings: CustomSettings) = Props(new ChangeSetBatchWriter(settings))
 }
 
 class ChangeSetBatchWriter private (settings: CustomSettings) extends Actor with ActorLogging {
-
   private val crawlDaysAtOnce = 7
   private val formatter = searchFormatter()
 

@@ -2,16 +2,16 @@ package configuration
 
 import java.util.concurrent.ThreadLocalRandom
 
+import domain.DomainSupport
+import microservice.JmxAgent
 import crawler.ChangeSetWriterSupport
 import crawler.http.CrawlerMicroservice
-import discovery.{ DiscoveryClientSupport, DiscoveryHttpClient }
-import domain.DomainSupport
-import http.{ StandingMicroservice, ResultsMicroservice }
-import microservice.JmxAgent
 import microservice.api.BootableClusterNode._
-import microservice.api.{ BootableMicroservice, LocalSeedNodesClient, MicroserviceKernel }
-import services.gateway.ApiGatewayMicroservice
 import services.hystrix.HystrixTurbineSupport
+import services.gateway.ApiGatewayMicroservice
+import http.{ StandingMicroservice, ResultsMicroservice }
+import discovery.{ DiscoveryClientSupport, DiscoveryHttpClient }
+import microservice.api.{ BootableMicroservice, LocalSeedNodesClient, MicroserviceKernel }
 
 import scala.reflect.ClassTag
 
@@ -71,7 +71,7 @@ object Microservices extends Microservices {
 
   implicit object LocalLoadBalancer extends LocalClusterNode[LoadBalancerCfg] {
     override def create(desc: LoadBalancerCfg) = {
-      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, GatewayRole, LocalEth)
+      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, RoutingLayerRole, LocalEth)
         with LocalSeedNodesClient
         with ApiGatewayMicroservice
         with HystrixTurbineSupport

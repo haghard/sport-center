@@ -11,7 +11,7 @@ import microservice.api.MicroserviceKernel
 import microservice.crawler.NbaResult
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import microservice.http.RestWithDiscovery._
-import microservice.http.{ RestApi, RestWithDiscovery }
+import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
 import org.joda.time.DateTime
 import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonMetrics, SeasonStandingResponse, StandingLine }
@@ -42,8 +42,7 @@ object StandingMicroservice {
     override def write(obj: StandingsResponse): JsValue = {
       obj.body match {
         case Some(response) ⇒ response match {
-          case r: SeasonStandingResponse ⇒
-            JsObject("west-conf" -> r.west.toJson, "east-conf" -> r.east.toJson, "count" -> JsNumber(r.west.size))
+          case r: SeasonStandingResponse  ⇒ JsObject("west-conf" -> r.west.toJson, "east-conf" -> r.east.toJson, "count" -> JsNumber(r.west.size))
           case r: PlayOffStandingResponse ⇒ JsObject("stages" -> r.stages.toMap.toJson, "count" -> JsNumber(r.stages.keySet.size))
         }
         case None ⇒ JsString(obj.error.get)
@@ -66,13 +65,13 @@ trait StandingMicroservice extends RestWithDiscovery
   mixin: MicroserviceKernel with DiscoveryClientSupport ⇒
   import StandingMicroservice._
 
-  val formatter = searchFormatter()
-
-  override implicit val timeout = akka.util.Timeout(3 seconds)
+  private val formatter = searchFormatter()
 
   override def name = "StandingMicroservice"
 
   override lazy val servicePathPostfix = "standings"
+
+  override implicit val timeout = akka.util.Timeout(3 seconds)
 
   override lazy val endpoints = List(s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{dt}")
 
@@ -80,7 +79,7 @@ trait StandingMicroservice extends RestWithDiscovery
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(route = Option { ec: ExecutionContext ⇒ standingRoute(ec) },
+      RestApiJunction(route = Option { ec: ExecutionContext ⇒ standingRoute(ec) },
         preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")),
         postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
@@ -105,15 +104,14 @@ trait StandingMicroservice extends RestWithDiscovery
   }
 
   private def compete(uri: String, dt: DateTime)(implicit ex: ExecutionContext): Future[HttpResponse] =
-    fetch[StandingBody](GetStandingByDate(uri, dt), standingView)
-      .map {
-        case \/-(body) ⇒
-          body.error.fold {
-            body.body match {
-              case Some(\/-(b)) ⇒ success(StandingsResponse(uri, view = body.viewName, body = Option(b)))
-              case Some(-\/(b)) ⇒ success(StandingsResponse(uri, view = body.viewName, body = Option(b)))
-            }
-          } { error ⇒ fail(error) }
-        case -\/(error) ⇒ fail(error)
-      }
+    fetch[StandingBody](GetStandingByDate(uri, dt), standingView).map {
+      case \/-(body) ⇒
+        body.error.fold {
+          body.body match {
+            case Some(\/-(b)) ⇒ success(StandingsResponse(uri, view = body.viewName, body = Option(b)))
+            case Some(-\/(b)) ⇒ success(StandingsResponse(uri, view = body.viewName, body = Option(b)))
+          }
+        } { error ⇒ fail(error) }
+      case -\/(error) ⇒ fail(error)
+    }
 }

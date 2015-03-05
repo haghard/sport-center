@@ -1,3 +1,4 @@
+/*
 package query
 
 import akka.actor.ActorDSL._
@@ -87,4 +88,4 @@ class DomainFinder private (settings: CustomSettings) extends Actor
         Domains(context.system).tellQuery(QueryTeamStateLast(t, size, l))(handler)
       }
   }
-}
+}*/

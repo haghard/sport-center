@@ -17,34 +17,46 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
-lazy val bootstrap = project.in(file("bootstrap"))
+lazy val sportcenter = project.in(file("."))
+  .aggregate(`discovery`, `core`, `bootstrap`, `domain`,
+             `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
 
-lazy val examples = project.in(file("examples")).dependsOn(gatewayMicroservices, microservices, querySideResults, querySideStandings, crawlerMicroservices)
+lazy val `core` = project.in(file("core"))
 
-lazy val discovery = project.in(file("discovery")).dependsOn(bootstrap)
+lazy val `bootstrap` = project.in(file("bootstrap"))
+  .dependsOn(`gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
 
-lazy val domain = project.in(file("domain")).dependsOn(bootstrap)
+lazy val `discovery` = project.in(file("discovery")).dependsOn(`core`)
 
-lazy val gatewayMicroservices = project.in(file("gateway-microservice")).dependsOn(discovery)
+lazy val `domain` = project.in(file("domain")).dependsOn(`core`)
 
-lazy val querySideResults = project.in(file("query-side-results")).dependsOn(bootstrap, domain, discovery)
+lazy val `gatewayMicroservices` = project.in(file("gateway-microservice")).dependsOn(`discovery`)
 
-lazy val querySideStandings = project.in(file("query-side-standings")).dependsOn(bootstrap, domain, discovery)
+lazy val `querySideResults` = project.in(file("query-side-results")).dependsOn(`core`, `domain`, `discovery`)
 
-lazy val crawlerMicroservices = project.in(file("crawler-microservice")).dependsOn(bootstrap, domain, discovery)
+lazy val `querySideStandings` = project.in(file("query-side-standings")).dependsOn(`core`, `domain`, `discovery`)
+
+lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).dependsOn(`core`, `domain`, `discovery`)
 
 //should be deleted
-lazy val microservices = project.in(file("microservices")).dependsOn(discovery, domain)
+//lazy val microservices = project.in(file("microservices")).dependsOn(discovery, domain)
 
-lazy val sportcenter = project.in(file(".")).aggregate(microservices, discovery, bootstrap,
-  examples, domain, gatewayMicroservices, querySideResults, querySideStandings, crawlerMicroservices)
 
 
 /**
  *
  *  Project sbt commands
- *         nodes: lb1, lb2, lb3                           http GET 192.168.0.143:2561/routes
- *         nodes: lresults1, lresults2, lresults3,        http GET 192.168.0.143:2561/api/results/2014-01-29
- *         nodes: lstandings1 lstandings2 lstandings3     http GET 192.168.0.143:2561/api/standings/2015-01-28
- *         nodes: lcrawler1 lcrawler2 lcrawler3           http GET 192.168.0.143:2561/api/crawler
+ *         nodes: lb1, lb2, lb3                       http GET 192.168.0.143:2561/routes
+ *         nodes: lresults1, lresults2, lresults3,    http GET 192.168.0.143:2561/api/results/2014-01-29 | http GET 192.168.0.143:2561/api/results/okc/last
+ *         nodes: lstandings1 lstandings2 lstandings3 http GET 192.168.0.143:2561/api/standings/2015-01-28
+ *         nodes: lcrawler1 lcrawler2 lcrawler3       http GET 192.168.0.143:2561/api/crawler
  */
+
+ /**
+  *
+  * cd /Volumes/Data/Code/Netflix/Hystrix/hystrix-dashboard
+  * ../gradlew jettyRun
+  * http://localhost:7979/hystrix-dashboard
+  *
+  * To connect hystrix-dashboard to gateway-turbine use http://localhost:6500/turbine.stream
+  */

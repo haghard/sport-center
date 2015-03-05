@@ -1,7 +1,7 @@
 package services.hystrix
 
 import akka.http.server.Route
-import microservice.http.RestApi
+import microservice.http.RestApiJunction
 import akka.stream.scaladsl.Source
 import akka.stream.actor.ActorPublisher
 import akka.http.marshalling.ToResponseMarshallable
@@ -30,7 +30,7 @@ trait HystrixMetricsMicroservice extends DiscoveryMicroservice {
    */
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(Option { ec: ExecutionContext ⇒ metricsStreamRoute(ec) })
+      RestApiJunction(Option { ec: ExecutionContext ⇒ metricsStreamRoute(ec) })
 
   private def metricsPublisher() = system.actorOf(HystrixMetricsPublisher.props.withDispatcher(dispatcher))
 

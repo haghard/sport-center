@@ -11,11 +11,11 @@ trait BootableRestService {
 
   protected def httpPrefixAddress: String
 
-  protected def configureApi() = RestApi()
+  protected def configureApi() = RestApiJunction()
 
   protected val httpDispatcher = microserviceDispatcher
 
-  protected def installApi(api: RestApi)(implicit system: ActorSystem, interface: String, httpPort: Int) = {
+  protected def installApi(api: RestApiJunction)(implicit system: ActorSystem, interface: String, httpPort: Int) = {
     api.route.foreach { api =>
       val ec = system.dispatchers.lookup(httpDispatcher)
       val route = api(ec)
@@ -25,5 +25,5 @@ trait BootableRestService {
     api.preAction.foreach(action => action())
   }
 
-  protected def uninstallApi(api: RestApi) = api.postAction.foreach(action => action())
+  protected def uninstallApi(api: RestApiJunction) = api.postAction.foreach(action => action())
 }

@@ -5,20 +5,19 @@ import java.nio.file.Paths
 
 import akka.http.model.HttpResponse
 import akka.http.server.{ Directives, Route }
-import com.netflix.config.{ DynamicPropertyFactory, DynamicLongProperty }
+import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
 import domain.DomainSupport
 import http.ResultsMicroservice._
 import microservice.api.MicroserviceKernel
 import microservice.crawler.{ Location, NbaResult }
-import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import microservice.http.RestWithDiscovery.DateFormatToJson
-import microservice.http.{ RestApi, RestWithDiscovery }
+import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
-import query.DomainFinder
-import query.DomainFinder.ResultsBody
 import spray.json._
-
+import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
+import view.ResultsView
+import view.ResultsView.{ ResultsByTeamBody, ResultsByDateBody }
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
@@ -30,16 +29,13 @@ object ResultsMicroservice {
   case class GetResultsByDate(url: String, dt: String) extends BasicHttpRequest
   case class GetResultsByTeam(url: String, name: String, size: Int, location: Location.Value) extends BasicHttpRequest
 
-  case class ResultsResponse(url: String,
-    view: Option[String] = None,
-    body: Option[ResponseBody] = None,
-    error: Option[String] = None) extends BasicHttpResponse
+  case class ResultsResponse(url: String, view: Option[String] = None,
+    body: Option[ResponseBody] = None, error: Option[String] = None) extends BasicHttpResponse
 
   case class ResultsParams(size: Option[Int] = None, loc: Option[String] = None)
 
   trait ResultsProtocols extends DefaultJsonProtocol {
     implicit val resultFormat = jsonFormat5(NbaResult.apply)
-
     implicit object ResultsResponseWriter extends JsonWriter[ResultsResponse] {
       import spray.json._
       override def write(obj: ResultsResponse): spray.json.JsValue = {
@@ -47,9 +43,12 @@ object ResultsMicroservice {
         val v = obj.view.fold(JsString("none")) { view ⇒ JsString(view) }
         val e = obj.error.fold(JsString("none")) { error ⇒ JsString(error) }
         obj.body match {
-          case Some(ResultsBody(count, list)) ⇒
-            val b = JsObject("count" -> JsNumber(count), "results" -> JsArray(list.map(r ⇒ r.toJson)))
-            JsObject("url" -> url, "view" -> v, "body" -> b, "error" -> e)
+          case Some(ResultsByDateBody(c, list)) ⇒
+            JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
+              "results" -> JsArray(list.toList.map(r ⇒ r.toJson))), "error" -> e)
+          case Some(ResultsByTeamBody(c, list)) =>
+            JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
+              "results" -> JsArray(list.map(r ⇒ r.toJson))), "error" -> e)
           case None => JsObject("url" -> url, "view" -> v, "error" -> e)
         }
       }
@@ -66,8 +65,8 @@ object ResultsMicroservice {
   val failbackWithDefaultLocation = { (error: String) ⇒ if (validationMessage == error) \/-(Location.All) else -\/(error) }
   val failbackWithDefaultSize = { (error: String) ⇒ if (validationMessage == error) \/-(defaultSize) else -\/(error) }
 
-  val dtVname = "results-by-date-view"
-  val teamVname = "last-results-by-team-view"
+  val dtViewName = "results-by-date-view"
+  val teamViewName = "last-results-by-team-view"
 
   private val hystrixSettings = Paths.get(new File("").getAbsoluteFile + "/query-side-results/settings/archaius.properties")
   System.setProperty("archaius.fixedDelayPollingScheduler.delayMills", "1000")
@@ -101,11 +100,14 @@ trait ResultsMicroservice extends RestWithDiscovery
       s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{dt}",
       s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{team}/last")
 
-  private lazy val finder = system.actorOf(DomainFinder.props(settings), name = "domain-finder")
+  //import query.DomainFinder
+  //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
+
+  private val view = system.actorOf(ResultsView.props(settings), "results-view")
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApi(Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
+      RestApiJunction(Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
         Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")),
         Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
@@ -115,7 +117,6 @@ trait ResultsMicroservice extends RestWithDiscovery
         withUri { uri ⇒
           complete {
             system.log.info(s"[$name] - incoming request $uri")
-
             Thread.sleep(resultsByDateLatency.get)
             //fail("fake error")
             Try {
@@ -134,8 +135,8 @@ trait ResultsMicroservice extends RestWithDiscovery
                 import scalaz.Scalaz._
                 import scalaz._
 
-                Thread.sleep(lastResultsLatency.get)
                 system.log.info(s"[$name] - incoming request $uri")
+                Thread.sleep(lastResultsLatency.get)
                 val complete = completeWithTeam(uri, team)
                 val loc = (for { l ← params.loc \/> (validationMessage) } yield l)
                   .flatMap(x ⇒ Location.values.find(_.toString == x) \/> (s"Wrong location $x"))
@@ -147,7 +148,7 @@ trait ResultsMicroservice extends RestWithDiscovery
 
                 (for { l ← loc; s ← size } yield (l, s))
                   .fold(error ⇒
-                    fail(ResultsResponse(uri, view = Option(teamVname), error = Option(error))).apply(error),
+                    fail(ResultsResponse(uri, view = Option(teamViewName), error = Option(error))).apply(error),
                     complete(_)
                   )
               }
@@ -159,18 +160,15 @@ trait ResultsMicroservice extends RestWithDiscovery
 
   private def completeWithTeam(uri: String, team: String)(implicit ex: ExecutionContext): ((Location.Value, Int)) ⇒ Future[HttpResponse] =
     tuple ⇒ {
-      fetch[ResultsBody](GetResultsByTeam(uri, team, tuple._2, tuple._1), finder)
-        .map {
-          case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(teamVname), body = Option(res)))
-          case -\/(error) ⇒ fail(error)
-        }
-    }
-
-  private def competeWithDate(uri: String, date: String)(implicit ex: ExecutionContext): Future[HttpResponse] = {
-    fetch[ResultsBody](GetResultsByDate(uri, date), finder)
-      .map {
-        case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(dtVname), body = Option(res)))
+      fetch[ResultsByTeamBody](GetResultsByTeam(uri, team, tuple._2, tuple._1), view) map {
+        case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(teamViewName), body = Option(res)))
         case -\/(error) ⇒ fail(error)
       }
-  }
+    }
+
+  private def competeWithDate(uri: String, date: String)(implicit ex: ExecutionContext): Future[HttpResponse] =
+    fetch[ResultsByDateBody](GetResultsByDate(uri, date), view) map {
+      case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(dtViewName), body = Option(res)))
+      case -\/(error) ⇒ fail(error)
+    }
 }

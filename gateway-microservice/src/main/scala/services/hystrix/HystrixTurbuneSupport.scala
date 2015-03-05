@@ -17,7 +17,7 @@ trait HystrixTurbineSupport extends BootableMicroservice {
         singletonProps = HystrixTurbineManager.props,
         singletonName = "hystrix-turbine-manager",
         terminationMessage = PoisonPill,
-        role = Some(BootableClusterNode.GatewayRole)),
+        role = Some(BootableClusterNode.RoutingLayerRole)),
         name = "singleton-hystrix-turbine-manager")
     }
     super.startup()

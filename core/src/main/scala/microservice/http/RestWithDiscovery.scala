@@ -25,14 +25,11 @@ object RestWithDiscovery {
   }
 }
 
-trait RestWithDiscovery extends BootableRestService
-    with Directives {
+trait RestWithDiscovery extends BootableRestService with Directives {
   self: MicroserviceKernel =>
 
   /**
    *
-   *
-   * @return
    */
   implicit def timeout: akka.util.Timeout
 
@@ -61,13 +58,6 @@ trait RestWithDiscovery extends BootableRestService
    */
   def servicePathPostfix: String
 
-  /**
-   *
-   * @param resp
-   * @param writer
-   * @tparam T
-   * @return
-   */
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
@@ -76,23 +66,11 @@ trait RestWithDiscovery extends BootableRestService
           List(Host(HostHeader(localAddress), httpPort)),
           Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
-  /**
-   *
-   * @param error
-   * @return
-   */
   protected def fail(error: String) =
     HttpResponse(
       InternalServerError,
       List(Host(HostHeader(localAddress), httpPort)), error)
 
-  /**
-   *
-   * @param resp
-   * @param writer
-   * @tparam T
-   * @return
-   */
   protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
     HttpResponse(
       OK,
