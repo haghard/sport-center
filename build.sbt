@@ -46,7 +46,7 @@ lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).depen
 /**
  *
  *  Project sbt commands
- *         nodes: lb1, lb2, lb3                       http GET 192.168.0.143:2561/routes
+ *         nodes: lrouter1, lrouter2, lrouter3        http GET 192.168.0.143:2561/routes
  *         nodes: lresults1, lresults2, lresults3,    http GET 192.168.0.143:2561/api/results/2014-01-29 | http GET 192.168.0.143:2561/api/results/okc/last
  *         nodes: lstandings1 lstandings2 lstandings3 http GET 192.168.0.143:2561/api/standings/2015-01-28
  *         nodes: lcrawler1 lcrawler2 lcrawler3       http GET 192.168.0.143:2561/api/crawler

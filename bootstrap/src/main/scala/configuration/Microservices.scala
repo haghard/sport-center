@@ -4,13 +4,12 @@ import java.util.concurrent.ThreadLocalRandom
 
 import domain.DomainSupport
 import microservice.JmxAgent
+import hystrix.HystrixTurbineSupport
 import crawler.ChangeSetWriterSupport
 import crawler.http.CrawlerMicroservice
 import microservice.api.BootableClusterNode._
-import services.hystrix.HystrixTurbineSupport
-import services.gateway.ApiGatewayMicroservice
-import http.{ StandingMicroservice, ResultsMicroservice }
 import discovery.{ DiscoveryClientSupport, DiscoveryHttpClient }
+import http.{ ApiGatewayMicroservice, StandingMicroservice, ResultsMicroservice }
 import microservice.api.{ BootableMicroservice, LocalSeedNodesClient, MicroserviceKernel }
 
 import scala.reflect.ClassTag
@@ -26,7 +25,7 @@ trait Microservices {
 
   type NodeIdentity = MicroserviceCfg
 
-  case class LoadBalancerCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val envName: String) extends MicroserviceCfg
+  case class RouterCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val envName: String) extends MicroserviceCfg
   case class CrawlerCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val envName: String) extends MicroserviceCfg
 
   case class ResultsQuerySideCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val envName: String) extends MicroserviceCfg
@@ -69,14 +68,14 @@ object Microservices extends Microservices {
   def randomHttpPort = ThreadLocalRandom.current().nextInt(9000, 9050)
   def randomJmxPort = ThreadLocalRandom.current().nextInt(5000, 6000)
 
-  implicit object LocalLoadBalancer extends LocalClusterNode[LoadBalancerCfg] {
-    override def create(desc: LoadBalancerCfg) = {
-      object LocalLoadBalancerNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, RoutingLayerRole, LocalEth)
+  implicit object LocalRouter extends LocalClusterNode[RouterCfg] {
+    override def create(desc: RouterCfg) = {
+      object LocalRouterNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort, desc.jmxPort, RoutingLayerRole, LocalEth)
         with LocalSeedNodesClient
         with ApiGatewayMicroservice
         with HystrixTurbineSupport
         with JmxAgent
-      LocalLoadBalancerNode
+      LocalRouterNode
     }
   }
 

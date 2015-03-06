@@ -1,49 +1,59 @@
-package services.discovery
+package http
 
-import akka.http.marshalling._
-import akka.stream.scaladsl.Source
-import akka.stream.actor.ActorPublisher
 import akka.contrib.datareplication.LWWMap
+import akka.http.marshalling.ToResponseMarshallable
+import akka.http.model.HttpEntity.Strict
+import akka.http.model.{ HttpResponse, HttpRequest }
 import akka.http.server.{ Route, Directives }
-import akka.http.model.HttpResponse
-import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
+import akka.http.unmarshalling.FromRequestUnmarshaller
+import akka.stream.actor.ActorPublisher
+import akka.stream.scaladsl.Source
 import discovery.ServiceDiscovery
-import discovery.ServiceDiscovery._
-import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
-import microservice.http.{ BootableRestService, RestApiJunction, SprayJsonMarshalling }
-import spray.json.{ DefaultJsonProtocol, _ }
+import discovery.ServiceDiscovery.{ UnsetAddress, SetKey, KV, UnsetKey }
+import microservice.api.{ ClusterNetworkSupport, BootableMicroservice }
+import microservice.http.{ RestApiJunction, BootableRestService }
+import discovery.ServiceRegistryPublisher
+import spray.json.DefaultJsonProtocol
 import akka.http.model.StatusCodes._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.Try
+import spray.json._
+
 import scalaz.{ -\/, \/- }
 
 object DiscoveryMicroservice {
   case class KVRequest(key: String, value: String)
 
-  object KVRequest extends DefaultJsonProtocol {
-    implicit val jsonFormat = jsonFormat2(this.apply)
-  }
-
   val scalarResponce = "scalar"
   val streamResponse = "stream"
   val servicePrefix = "discovery"
+
+  trait Protocols extends DefaultJsonProtocol {
+    implicit val kvFormat = jsonFormat2(KVRequest.apply)
+
+    implicit def unmarshaller(implicit ec: ExecutionContext) = new FromRequestUnmarshaller[KVRequest]() {
+      override def apply(req: HttpRequest): Future[KVRequest] = {
+        Try(Future(req.entity.asInstanceOf[Strict].data.decodeString("UTF-8").parseJson.convertTo[KVRequest]))
+          .getOrElse(Future.failed(new Exception("Can't parse KVRequest")))
+      }
+    }
+  }
 }
 
 trait DiscoveryMicroservice extends BootableRestService
     with Directives
-    with SprayJsonMarshalling
+    with DiscoveryMicroservice.Protocols
+    with SSEventsMarshalling
     with DefaultJsonProtocol {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
   import services._
-  import services.discovery.DiscoveryMicroservice._
+  import DiscoveryMicroservice._
 
-  implicit val materializer = ActorFlowMaterializer(
-    ActorFlowMaterializerSettings(system)
-      .withDispatcher(httpDispatcher))(system)
+  implicit val ec = system.dispatchers.lookup(httpDispatcher)
 
   abstract override def configureApi() =
-    super.configureApi() ~
-      RestApiJunction(route = Option { ec: ExecutionContext ⇒ discoveryRoute(ec) })
+    super.configureApi() ~ RestApiJunction(route = Option({ ec: ExecutionContext ⇒ discoveryRoute(ec) }))
 
   private def streamPublisher() = system.actorOf(ServiceRegistryPublisher.props(httpDispatcher))
 
@@ -70,8 +80,7 @@ trait DiscoveryMicroservice extends BootableRestService
         entity(as[KVRequest]) { kv ⇒
           complete {
             system.log.info("Attempt to install {}", kv.toJson.prettyPrint)
-            ServiceDiscovery(system)
-              .setKey(SetKey(KV(kv.key, kv.value)))
+            ServiceDiscovery(system).setKey(SetKey(KV(kv.key, kv.value)))
               .map {
                 case \/-(r) ⇒
                   val message = s"Service kv ${kv.toJson.prettyPrint} was registered"

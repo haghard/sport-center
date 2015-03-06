@@ -1,4 +1,4 @@
-package services.hystrix
+package hystrix
 
 import akka.cluster.ClusterEvent._
 import akka.cluster.{ Cluster, Member }

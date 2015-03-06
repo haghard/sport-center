@@ -13,11 +13,10 @@ name := "bootstrap"
 
 scalaVersion := Scala
 
-
-addCommandAlias("lb1", "bootstrap/run-main configuration.local.LocalLoadBalancer 2551 -Dhttp.port=2561")
-addCommandAlias("lb2", "bootstrap/run-main configuration.local.LocalLoadBalancer 2552 -Dhttp.port=2562")
-addCommandAlias("lb3", "bootstrap/run-main configuration.local.LocalLoadBalancer 2553 -Dhttp.port=2563")
-addCommandAlias("lb4", "bootstrap/run-main configuration.local.LocalLoadBalancer 2554 -Dhttp.port=2564")
+addCommandAlias("lrouter1", "bootstrap/run-main configuration.local.LocalRouter 2551 -Dhttp.port=2561")
+addCommandAlias("lrouter2", "bootstrap/run-main configuration.local.LocalRouter 2552 -Dhttp.port=2562")
+addCommandAlias("lrouter3", "bootstrap/run-main configuration.local.LocalRouter 2553 -Dhttp.port=2563")
+addCommandAlias("lrouter4", "bootstrap/run-main configuration.local.LocalRouter 2554 -Dhttp.port=2564")
 
 
 addCommandAlias("lresults1", "bootstrap/run-main configuration.local.LocalResultsQuerySide 2555 -Dhttp.port=9001")

@@ -1,7 +1,7 @@
-package services.discovery
+package hystrix
 
-import akka.actor.{ Props, ActorLogging }
-import akka.stream.actor.{ ActorPublisherMessage, ActorPublisher }
+import akka.actor.{ ActorLogging, Props }
+import akka.stream.actor.{ ActorPublisher, ActorPublisherMessage }
 import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsPoller
 
 import scala.annotation.tailrec

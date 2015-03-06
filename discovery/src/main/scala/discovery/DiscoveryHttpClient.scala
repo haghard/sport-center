@@ -8,8 +8,10 @@ import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
 import akka.util.ByteString
 import discovery.DiscoveryHttpClient.Protocols
-import microservice.http.{ RestWithDiscovery, SprayJsonMarshalling }
+import microservice.http.RestWithDiscovery
 import spray.json.DefaultJsonProtocol
+import akka.http.model.HttpMethods._
+import akka.http.model.MediaTypes._
 
 import scala.concurrent.Future
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -28,18 +30,14 @@ object DiscoveryHttpClient {
 }
 
 trait DiscoveryHttpClient extends DiscoveryClient
-    with Protocols
-    with SprayJsonMarshalling {
+    with Protocols {
   mixin: RestWithDiscovery with DiscoveryClientSupport ⇒
-
-  import akka.http.model.HttpMethods._
-  import akka.http.model.MediaTypes._
 
   implicit val materializer = ActorFlowMaterializer(
     ActorFlowMaterializerSettings(system)
       .withDispatcher(discoveryDispatcherName))(system)
 
-  implicit val discoveryClientEc = system.dispatchers.lookup(discoveryDispatcherName)
+  implicit val ec = system.dispatchers.lookup(discoveryDispatcherName)
 
   val Path = "/discovery"
   /**
@@ -94,8 +92,8 @@ trait DiscoveryHttpClient extends DiscoveryClient
             Http(system).outgoingConnection(host, port)
           }).fold(Future.failed[StatusCode](new IOException(s"Empty host or port $address"))) { con ⇒
             Source.single(req)
-              .via(con.flow)
-              .runWith(Sink.head)
+              .via(con)
+              .runWith(Sink.head[HttpResponse])
               .flatMap { response ⇒
                 response.status match {
                   case OK    ⇒ Future.successful(OK)

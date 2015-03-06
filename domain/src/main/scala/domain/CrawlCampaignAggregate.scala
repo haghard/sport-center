@@ -20,7 +20,7 @@ object CrawlCampaignAggregate {
   val timeOffset = 1.day + 2.hour
 
   val startDate = new DateTime().withZone(SCENTER_TIME_ZONE)
-    .withDate(2013, 10, 28).withTime(23, 59, 59, 0)
+    .withDate(2012, 10, 29).withTime(23, 59, 59, 0)
 
   type DateTimeProp = org.joda.time.DateTime.Property
   val alignProp: (DateTimeProp) ⇒ String =

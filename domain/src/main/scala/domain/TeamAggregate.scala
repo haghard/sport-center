@@ -9,11 +9,8 @@ import akka.contrib.pattern.ShardRegion
 import akka.actor.{ ActorLogging, Props }
 import com.github.nscala_time.time.Imports
 import com.github.nscala_time.time.Imports._
-import microservice.crawler.{ CrawledNbaResult, Location, NbaResult }
-
-import scala.collection.immutable
 import scala.util.control.NoStackTrace
-import microservice.crawler.searchFormatter
+import microservice.crawler.{ CrawledNbaResult, Location, NbaResult }
 
 object TeamAggregate {
 
@@ -44,14 +41,12 @@ object TeamAggregate {
     override def compare(x: NbaResult, y: NbaResult) = x.dt.compareTo(y.dt)
   }
 
-  case class TeamState(name: Option[String] = None,
-      results: immutable.SortedMap[String, CrawledNbaResult] = immutable.TreeMap[String, CrawledNbaResult](),
-      lastDate: Option[Date] = None, error: Option[Throwable] = None) extends State {
+  case class TeamState(name: Option[String] = None, lastDate: Option[Date] = None,
+      error: Option[Throwable] = None) extends State {
     def withName(name: String) = copy(name = Option(name))
     def withName(name: Option[String]) = copy(name = name)
     def withLastDate(dt: Date) = copy(lastDate = Option(dt))
     def withLastDate(dt: Option[Date]) = copy(lastDate = dt)
-    def withResults(results: immutable.SortedMap[String, CrawledNbaResult]) = copy(results = results)
     def withError(error: Throwable) = copy(error = Option(error))
   }
 
@@ -67,7 +62,7 @@ object TeamAggregate {
   case class WriteAck(val aggregateRootId: String) extends DomainEvent
   case class ResultAdded(team: String, r: CrawledNbaResult) extends DomainEvent
   case class TeamCreated(val teamId: String) extends DomainEvent
-  case class SnapshotCreated(name: Option[String], lastDate: Option[Date], results: immutable.SortedMap[String, CrawledNbaResult]) extends DomainEvent
+  case class SnapshotCreated(name: Option[String], lastDate: Option[Date]) extends DomainEvent
   case class RecoveryError(error: Throwable) extends DomainEvent
 
   case class TeamAggregateState(name: Option[String], results: List[CrawledNbaResult]) extends State
@@ -81,37 +76,34 @@ object TeamAggregate {
   def props = Props(new TeamAggregate)
 }
 
-class TeamAggregate private (var state: TeamState = TeamState()) extends PersistentActor
-    with ActorLogging //with TeamQueries
-    {
+//TODO: Snapshot
+class TeamAggregate private (var state: TeamState = TeamState()) extends PersistentActor with ActorLogging {
   import domain.TeamAggregate._
-
-  private val formatter = searchFormatter()
 
   override def persistenceId = self.path.name
 
-  override def receiveCommand = /*withQueries {*/ persistentOps /*}*/
+  override def receiveCommand = persistentOps
 
-  private def persistAndRespond(from: String, result: CrawledNbaResult) = {
+  private def persistAndAck(from: String, result: CrawledNbaResult) =
     persist(ResultAdded(from, result)) { ev ⇒
       updateState(ev)
       sender() ! WriteAck(from)
     }
-  }
 
   private val persistentOps: Receive = {
-    case cmd @ WriteResult(aggregateRootId, result) ⇒
-      state.lastDate.fold(persistAndRespond(aggregateRootId, result)) { lastDate ⇒
+    case cmd @ WriteResult(team, result) ⇒
+      state.lastDate.fold(persistAndAck(team, result)) { lastDate ⇒
+        //Idempotent receiver
         if (result.dt after lastDate) {
-          persist(ResultAdded(aggregateRootId, result))(updateState)
+          persist(ResultAdded(team, result))(updateState)
         }
-        sender() ! WriteAck(aggregateRootId)
+        sender() ! WriteAck(team)
       }
 
     case "boom"                                     ⇒ throw TestException("TeamAggregate test error")
     case SaveSnapshotSuccess(metadata)              ⇒ log.info("Team {} have been restored from snapshot {}", state.name, metadata)
     case SaveSnapshotFailure(metadata, cause)       ⇒ log.info("Failure restore from snapshot {}", cause.getMessage)
-    case MakeSnapshot                               ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate, state.results))
+    case MakeSnapshot                               ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate))
     case PersistenceFailure(payload, seqNum, cause) ⇒ log.info("Journal fails to write a event: {}", cause.getMessage)
   }
 
@@ -119,18 +111,15 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
     case event: ResultAdded                                     ⇒ updateState(event)
     case SnapshotOffer(m: SnapshotMetadata, s: SnapshotCreated) ⇒ updateState(s)
     case event @ RecoveryFailure(ex)                            ⇒ updateState(RecoveryError(ex))
-    case RecoveryCompleted                                      ⇒ log.info("RecoveryCompleted for {} size {}", persistenceId, state.results.keys.size)
+    case RecoveryCompleted                                      ⇒ log.info("RecoveryCompleted for {} up to {}", persistenceId, state.lastDate)
   }
 
   private def updateState(e: DomainEvent) = e match {
     case event @ ResultAdded(team, result) ⇒
-      val dateForSearch = formatter format result.dt
       state = state.withName(event.team).withLastDate(result.dt)
-        .withResults(state.results + (dateForSearch -> result))
 
     case event: SnapshotCreated ⇒
       state = state.withName(event.name).withLastDate(event.lastDate)
-        .withResults(event.results)
 
     case RecoveryError(cause) ⇒
       log.info("{} was marked as invalid cause {}", state.name, cause.getMessage)

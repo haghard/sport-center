@@ -45,7 +45,7 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
 
   import scala.concurrent.duration._
   import akka.stream.scaladsl._
-  import akka.stream.scaladsl.{ Source, UndefinedSink, UndefinedSource, Flow }
+  //import akka.stream.scaladsl.{ Source, UndefinedSink, UndefinedSource, Flow }
 
   implicit val materializer = ActorFlowMaterializer(
     ActorFlowMaterializerSettings(context.system)
@@ -53,8 +53,12 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
 
   //val v = limitGlobal(context.system.actorOf(Limiter.props(1, 5 seconds, 1)))
 
-  Http()(context.system).bind(interface, port)
-    .startHandlingWith(route)
+  // TODO Once https://github.com/akka/akka/issues/16972 is fixed, simplify this with `bindAndHandle` or such!
+  Http()(context.system)
+    .bind(interface, port)
+    .to(Sink.foreach(_.flow.join(route).run()))
+    .run()
+  //.startHandlingWith(route)
 
   override def receive: Receive = Actor.emptyBehavior
 
@@ -90,6 +94,7 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
     }
   }*/
 
+  /*
   def limitGlobal(limiter: ActorRef): Flow[HttpRequest, HttpResponse] = {
     import akka.pattern.ask
     import akka.util.Timeout
@@ -108,4 +113,5 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
       (in, out)
     }
   }
+  */
 }

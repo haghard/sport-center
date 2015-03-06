@@ -2,10 +2,10 @@ import sbt._
 
 object Dependencies {
 
-  val Scala = "2.11.5"
+  val Scala = "2.11.6"
   val Akka = "2.3.9"
   val AkkaDataReplication = "0.9"
-  val AkkaStreamsVersion = "1.0-M3"
+  val AkkaStreamsVersion = "1.0-M4"
   val Hystrix = "1.4.0"
 
   object akka {

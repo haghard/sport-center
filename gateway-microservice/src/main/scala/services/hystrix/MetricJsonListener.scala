@@ -1,7 +1,9 @@
-package services.discovery
+package hystrix
 
 import java.util.concurrent.atomic.AtomicReference
+
 import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsPoller
+
 import scala.annotation.tailrec
 
 private class MetricJsonListener(capacity: Int) extends HystrixMetricsPoller.MetricsAsJsonPollerListener {

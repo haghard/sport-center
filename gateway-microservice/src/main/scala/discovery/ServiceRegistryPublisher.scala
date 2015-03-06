@@ -1,10 +1,9 @@
-package services.discovery
+package discovery
 
 import akka.actor.{ ActorLogging, Props }
 import akka.contrib.datareplication.LWWMap
 import akka.contrib.datareplication.Replicator.Changed
 import akka.stream.actor.{ ActorPublisher, ActorPublisherMessage }
-import discovery.ServiceDiscovery
 
 object ServiceRegistryPublisher {
 

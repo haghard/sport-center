@@ -10,11 +10,11 @@ import akka.stream.scaladsl.{ Sink, Source }
 import microservice.SystemSettings
 
 import scala.collection.JavaConverters._
-import scala.util.{ Success, Try }
+import scala.concurrent.Await
+import scala.util.Try
 
 trait DigitaloceanClient extends SeedNodesSupport with SystemSettings {
   self: ClusterNetworkSupport with BootableMicroservice ⇒
-
   import MicroserviceKernel._
 
   override lazy val seedAddresses = DigitaloceanClient(settings.cloudToken)(system)
@@ -24,42 +24,54 @@ trait DigitaloceanClient extends SeedNodesSupport with SystemSettings {
 }
 
 object DigitaloceanClient {
+  import MicroserviceKernel._
+
   type Droplets = List[Droplet]
-
-  val seedPrefix = "loadbalancer" //"backend"
-
   case class Droplet(id: BigInt, name: String, hostIP: String)
 
-  val dropletsUrl = "https://api.digitalocean.com/v2/droplets?page=1&per_page=10"
+  private val seedPrefix = "router"
+  private val providerUrl = "https://api.digitalocean.com/v2/droplets?page=1&per_page=10"
 
   def apply(apiToken: String)(implicit system: akka.actor.ActorSystem): List[InetAddress] = {
-    implicit val fm = ActorFlowMaterializer(ActorFlowMaterializerSettings(system))
-    val req = HttpRequest(HttpMethods.GET, dropletsUrl, List(Authorization(OAuth2BearerToken(apiToken))))
+    implicit val ec = system.dispatchers.lookup(microserviceDispatcher)
+    implicit val materializer =
+      ActorFlowMaterializer(ActorFlowMaterializerSettings(system)
+        .withDispatcher(microserviceDispatcher))
 
-    val connection = Http().outgoingConnection("api.digitalocean.com", 8080)
-    Source.single(req).via(connection.flow).runWith(Sink.head).value match {
-      case Some(Success(HttpResponse(StatusCodes.OK, h, entity, _))) =>
-        ResponseParser(entity, seedPrefix).fold(
-          { error ⇒
-            system.log.error("CloudProvider error: {}", error)
-            List.empty
+    val req = HttpRequest(HttpMethods.GET, providerUrl, List(Authorization(OAuth2BearerToken(apiToken))))
+
+    /*Source.single(req)
+      .via(Http().outgoingConnection("api.digitalocean.com", 8080))
+      .mapAsync(response => akka.http.unmarshalling.Unmarshal(response).to[Source[List[InetAddress], Unit]])
+      .runForeach(_.runFold(List.empty[InetAddress]) { (c, acc) => c ::: acc })
+    */
+
+    val f = Source.single(req)
+      .via(Http().outgoingConnection("api.digitalocean.com", 8080))
+      .runWith(Sink.head[HttpResponse])
+      .map {
+        case HttpResponse(StatusCodes.OK, h, entity, _) =>
+          ResponseParser(entity, seedPrefix).fold({ error ⇒
+            system.log.debug("CloudProvider error: {} cause {}", error, entity)
+            List()
           }, { droplets ⇒
             system.log.info("Frontend droplet's addresses: {}", droplets)
             droplets.map(d ⇒ InetAddress.getByName(d.hostIP))
           })
-      case None =>
-        system.log.error("CloudProvider error")
-        List.empty
-    }
+        case HttpResponse(status, h, entity, _) =>
+          system.log.debug("CloudProvider error: {} cause {}", status, entity)
+          List()
+      }
+
+    import scala.concurrent.duration._
+    Await.result(f, 5 seconds)
   }
 
   object ResponseParser {
     import org.json4s._
     import org.json4s.native.JsonMethods._
-
     import scalaz.Scalaz._
     import scalaz._
-
     def apply(entity: HttpEntity, seedPrefix: String): String \/ Droplets = {
       Try {
         parse(entity.dataBytes.toString) match {

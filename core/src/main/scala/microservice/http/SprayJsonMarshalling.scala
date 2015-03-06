@@ -1,3 +1,4 @@
+/*
 package microservice.http
 
 import akka.http.marshalling.{ PredefinedToEntityMarshallers, ToEntityMarshaller => TEM }
@@ -25,3 +26,4 @@ trait SprayJsonMarshalling {
     stringMarshaller.compose(printer).compose(writer.write)
   }
 }
+*/

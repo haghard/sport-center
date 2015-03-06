@@ -1,4 +1,4 @@
-package services.gateway
+package gateway
 
 import akka.actor._
 import akka.contrib.datareplication.LWWMap
@@ -39,7 +39,7 @@ object ApiGateway {
 }
 
 class ApiGateway private (localAddress: String, httpPort: Int) extends Actor with ActorLogging {
-  import services.gateway.ApiGateway._
+  import gateway.ApiGateway._
 
   private var routees: Option[Map[String, List[Route]]] = None
 
@@ -59,7 +59,6 @@ class ApiGateway private (localAddress: String, httpPort: Int) extends Actor wit
       } { route: Route ⇒
         val reqUri = r.uri
         val newUri = reqUri.withHost(route.host).withPort(route.port)
-        //headers(r.headers)
         services.hystrix.command(route.pathRegex, replyTo, newUri.toString()).queue()
       }
   }

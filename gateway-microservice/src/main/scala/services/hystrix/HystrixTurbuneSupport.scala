@@ -1,4 +1,4 @@
-package services.hystrix
+package hystrix
 
 import akka.actor.PoisonPill
 import akka.contrib.pattern.ClusterSingletonManager

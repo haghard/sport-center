@@ -19,7 +19,7 @@ trait BootableRestService {
     api.route.foreach { api =>
       val ec = system.dispatchers.lookup(httpDispatcher)
       val route = api(ec)
-      system.actorOf(RestService.props(route, interface, httpPort)(ec), "http-rest-api")
+      system.actorOf(RestService.props(route, interface, httpPort)(ec), "rest-service")
     }
 
     api.preAction.foreach(action => action())

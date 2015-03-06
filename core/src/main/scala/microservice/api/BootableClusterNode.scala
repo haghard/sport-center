@@ -6,7 +6,7 @@ object BootableClusterNode {
 
   val CrawlerRole = "crawler"
   val MicroserviceRole = "microservice"
-  val RoutingLayerRole = "routing-layer"
+  val RoutingLayerRole = "router"
 
   val CloudEth = "eth0"
   val LocalEth = "en0"

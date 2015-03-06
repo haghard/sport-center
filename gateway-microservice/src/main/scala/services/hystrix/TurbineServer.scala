@@ -1,4 +1,4 @@
-package services.hystrix
+package hystrix
 
 import java.net.URI
 import java.nio.charset.Charset
@@ -7,11 +7,11 @@ import java.util
 import akka.actor.{ Address, ActorLogging }
 import com.netflix.turbine.Turbine
 import com.netflix.turbine.internal.JsonUtility
+import http.{ SSEvents, HystrixMetricsMicroservice }
 import io.netty.buffer.{ Unpooled, ByteBuf }
 import io.reactivex.netty.RxNetty
 import rx.functions.Action0
 import rx.lang.scala.JavaConversions._
-import services.SSEvents
 import scala.collection.immutable
 import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse, HttpServerRequest, RequestHandler }
 

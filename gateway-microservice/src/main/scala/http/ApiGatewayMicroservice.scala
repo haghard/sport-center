@@ -1,18 +1,19 @@
-package services.gateway
+package http
 
+import akka.http.model.HttpResponse
 import akka.http.model.StatusCodes._
 import akka.http.model.headers.Host
-import akka.http.model.HttpResponse
 import discovery.ServiceDiscovery
+import gateway.ApiGateway
 import microservice.http.RestApiJunction
-import services.discovery.DiscoveryMicroservice
-import akka.http.model.Uri.{ Host ⇒ HostHeader }
-import services.hystrix.HystrixMetricsMicroservice
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
+import akka.http.model.Uri.{ Host => HostHeader }
+import akka.pattern.ask
+import spray.json._
+import DefaultJsonProtocol._
+import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-import akka.pattern.ask
 
 trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
@@ -23,14 +24,12 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
 
   private val gateway = system.actorOf(ApiGateway.props(localAddress, httpPort), "gateway")
 
-  private def curl(method: String, resourcePath: String) =
-    s"curl -i -X $method http://$localAddress:$httpPort/$resourcePath"
+  private def curl(method: String, resourcePath: String) = s"curl -i -X $method http://$localAddress:$httpPort/$resourcePath"
 
   /*
    * If this actors failed so we lose all routes
    * We must to provide supervisor with resume strategy
    */
-
   abstract override def configureApi() =
     super.configureApi() ~
       RestApiJunction(Option { ec: ExecutionContext ⇒ gatewayRoute(ec) },
@@ -56,16 +55,16 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
           }
       }
     } ~ path("routes") {
-      get { ctx ⇒
+      get { ctx =>
         import DiscoveryMicroservice._
         import HystrixMetricsMicroservice._
-
-        ctx.complete(OK,
-          curl("GET", s"$hystrixStream") :: curl("GET", s"$pathPrefix/crawler") ::
-            curl("GET", s"$servicePrefix/$scalarResponce") :: curl("GET", s"$servicePrefix/$streamResponse") ::
-            curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix) ::
-            curl("""PUT -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix) ::
-            curl("DELETE", s"$servicePrefix/akka.tcp://SportCenter@192.168.0.62:3561") :: Nil)
+        ctx.complete {
+          List(curl("GET", s"$hystrixStream"), curl("GET", s"$pathPrefix/crawler"),
+            curl("GET", s"$servicePrefix/$scalarResponce"), curl("GET", s"$servicePrefix/$streamResponse"),
+            curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
+            curl("""PUT -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
+            curl("DELETE", s"$servicePrefix/akka.tcp://SportCenter@192.168.0.62:3561")).toJson.prettyPrint
+        }
       }
     }
 

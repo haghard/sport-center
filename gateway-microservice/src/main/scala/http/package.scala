@@ -1,24 +1,12 @@
 import akka.contrib.datareplication.LWWMap
-import akka.http.marshalling._
-import akka.http.model.{ MediaType, ContentType, HttpResponse, HttpCharsets }
-import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import discovery.ServiceDiscovery.DiscoveryLine
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
 
-package object services {
+package object http {
+
   import spray.json._
-
-  type ToMessage[A] = A ⇒ SSEvents.Message
-
-  def messageToResponseMarshaller[A: ToMessage](implicit ec: ExecutionContext): ToResponseMarshaller[Source[A]] =
-    Marshaller.withFixedCharset(SSEvents.`text/event-stream`.mediaType, HttpCharsets.`UTF-8`) { source ⇒
-      import akka.http.model.HttpEntity._
-      val fullEntity = CloseDelimited(SSEvents.`text/event-stream`.mediaType, source.map { _.toByteString })
-      HttpResponse(entity = fullEntity)
-    }
 
   implicit def metrics2Message(metrics: Vector[String]) = {
     metrics.toList match {
@@ -60,10 +48,8 @@ package object services {
             else {
               val c = s.charAt(index)
               builder.append(c)
-              if (c == '\n')
-                index + 1
-              else
-                addLine(index + 1)
+              if (c == '\n') index + 1
+              else addLine(index + 1)
             }
 
           builder.append(label)
@@ -112,12 +98,5 @@ package object services {
        */
       def toByteString: ByteString = ByteString(toString, encoding)
     }
-
-    /**
-     * SSE content type as required by the
-     * [[http://www.w3.org/TR/eventsource/#event-stream-interpretation SSE specification]].
-     */
-    val `text/event-stream`: ContentType =
-      ContentType(MediaType.custom("text", "event-stream"), HttpCharsets.`UTF-8`)
   }
 }

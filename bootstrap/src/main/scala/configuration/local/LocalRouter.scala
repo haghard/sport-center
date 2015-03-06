@@ -4,7 +4,7 @@ import configuration.SystemPropsSupport
 import configuration.Microservices._
 import configuration.Microservices.local._
 
-object LocalLoadBalancer extends SystemPropsSupport {
+object LocalRouter extends SystemPropsSupport {
 
   def main(args: Array[String]) = {
     implicit var akkaPort = "2551"
@@ -14,10 +14,10 @@ object LocalLoadBalancer extends SystemPropsSupport {
       akkaPort = args(0)
     }
 
-    implicit val cfg = LoadBalancerCfg(akkaPort,
+    implicit val cfg = RouterCfg(akkaPort,
       Option(System.getProperty("http.port").toInt).getOrElse(randomHttpPort),
-      randomJmxPort, "[Local]-LoadBalancer-Discovery")
+      randomJmxPort, "[Local]-Router-Registry")
 
-    microservice[LoadBalancerCfg].startup()
+    microservice[RouterCfg].startup()
   }
 }
