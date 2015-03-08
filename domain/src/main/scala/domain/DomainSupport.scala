@@ -1,8 +1,8 @@
 package domain
 
 import akka.actor.PoisonPill
-import akka.contrib.pattern.ClusterSingletonManager
 import domain.update.ChangeSetSubscriber
+import akka.contrib.pattern.ClusterSingletonManager
 import microservice.api.{ BootableClusterNode, BootableMicroservice }
 
 trait DomainSupport extends BootableMicroservice {

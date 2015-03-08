@@ -1,11 +1,10 @@
 package query
 
-import akka.actor.{ Actor, ActorLogging, ActorRef }
-import domain.TeamAggregate.ResultAdded
-import microservice.crawler.{ Location, NbaResult }
-import microservice.settings.CustomSettings
 import org.joda.time.DateTime
-import streamz.akka.persistence._
+import microservice.crawler.NbaResult
+import domain.TeamAggregate.ResultAdded
+import microservice.settings.CustomSettings
+import akka.actor.{ Actor, ActorLogging, ActorRef }
 
 import scala.collection.immutable
 import scalaz.concurrent.Task
@@ -14,9 +13,6 @@ import scalaz.stream._
 object MaterializedViewStreamSupport {
 
   def viewName(name: String): String = s"materialized-view-$name"
-
-  val homeFilter: (Event[Any] ⇒ Boolean) = x ⇒
-    x.data.isInstanceOf[ResultAdded] && x.data.asInstanceOf[ResultAdded].r.lct == Location.Home
 }
 
 trait MaterializedViewStreamSupport {
@@ -37,12 +33,7 @@ trait MaterializedViewStreamSupport {
     }
 
   private def subscriber(domainActorName: String): Process[Task, NbaResult] =
-    persistence.replay(domainActorName)(context.system)
-      .filter(homeFilter)
-      .map { x ⇒
-        val res = x.data.asInstanceOf[ResultAdded].r
-        NbaResult(domainActorName, res.homeScore, res.opponent, res.awayScore, res.dt)
-      }
+    persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
 
   private val childViewRouter: Sink[Task, NbaResult] = io.channel(result ⇒ Task.delay {
     getChildView(new DateTime(result.dt)).fold { log.info("StandingMaterializedView wasn't found for {}", result.dt) } {

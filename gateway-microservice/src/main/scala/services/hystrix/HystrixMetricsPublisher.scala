@@ -11,7 +11,7 @@ object HystrixMetricsPublisher {
 }
 
 class HystrixMetricsPublisher extends ActorPublisher[Vector[String]] with ActorLogging {
-  private val delay: Int = 500
+  private val delay = 500
   private val listener = new MetricJsonListener(1000)
   private val poller = new HystrixMetricsPoller(listener, delay)
 

@@ -2,10 +2,9 @@ package domain.update
 
 import akka.actor._
 import domain.CrawlCampaignAggregate
-import domain.CrawlCampaignAggregate.ChangeSetSaved
+import domain.CrawlCampaignAggregate.CollectedChangeSet
 import domain.TeamAggregate.WriteResult
 import domain.update.CampaignChangesetWriter.{ CompleteBatch, GetLastChangeSetNumber }
-import microservice.crawler.{ CrawledNbaResult, Location }
 import microservice.domain.Command
 import streamz.akka.persistence
 import streamz.akka.persistence.Event
@@ -18,10 +17,8 @@ import scalaz.stream._
 
 object ChangeSetSubscriber {
 
-  case class PersistChangeSet(id: Long, results: Map[String, SortedSet[WriteResult]], cb: Throwable \/ CompleteBatch ⇒ Unit)
-    extends Command
-
-  val executor = microservice.executor("updates-feed-executor", 2)
+  case class PersistChangeSet(id: Long, results: Map[String, SortedSet[WriteResult]],
+    cb: Throwable \/ CompleteBatch ⇒ Unit) extends Command
 
   /*def futureToTask[T](f: Future[T]): Task[T] = {
     Task async { cb =>
@@ -41,7 +38,7 @@ object ChangeSetSubscriber {
 }
 
 class ChangeSetSubscriber private extends Actor with ActorLogging {
-  import domain.update.ChangeSetSubscriber._
+  import ChangeSetSubscriber._
 
   implicit val scheduler = DefaultScheduler
   implicit val logger = log
@@ -55,32 +52,28 @@ class ChangeSetSubscriber private extends Actor with ActorLogging {
 
   private def startWith(updatesPoint: Long): (Event[Any] ⇒ Boolean) =
     event ⇒
-      event.data.isInstanceOf[ChangeSetSaved] && event.sequenceNr >= updatesPoint
+      event.data.isInstanceOf[CollectedChangeSet] && event.sequenceNr >= updatesPoint
 
   private def streamWriter: scalaz.stream.Channel[Task, Event[Any], CompleteBatch] =
-    scalaz.stream.io.channel { event ⇒
+    io.channel { event ⇒
       Task async { cb ⇒
-        val changeSet = event.data.asInstanceOf[ChangeSetSaved]
-        val results = changeSet.results.flatMap { e ⇒
-          WriteResult(e.homeTeam, CrawledNbaResult(e.roadTeam, e.homeScore, e.roadScore, e.dt, Location.Home)) ::
-            WriteResult(e.roadTeam, CrawledNbaResult(e.homeTeam, e.homeScore, e.roadScore, e.dt, Location.Away)) :: Nil
+        val changeSet = event.data.asInstanceOf[CollectedChangeSet]
+        val map = changeSet.results.foldLeft(Map[String, SortedSet[WriteResult]]()) { (map, res) ⇒
+          val set = map.getOrElse(res.homeTeam, SortedSet[WriteResult]())
+          val newSet = set + WriteResult(res.homeTeam, res)
+          map + (res.homeTeam -> newSet)
         }
-
-        val map = results.foldLeft(Map[String, SortedSet[WriteResult]]()) { (map, res) ⇒
-          val set = map.getOrElse(res.aggregateRootId, SortedSet[WriteResult]())
-          val newSet = set + res
-          map + (res.aggregateRootId -> newSet)
-        }
-
         writer ! PersistChangeSet(event.sequenceNr, map, cb)
       }
     }
 
   override def receive: Receive = {
     case sequenceNumber: Long ⇒
-      log.info("Receive last applied Changeset: {}", sequenceNumber)
-      persistence.replay(AggregateId).filter(startWith(sequenceNumber))
-        .flatMap(event ⇒ Process.sleep(pullInterval) ++ Process.emit(event))
-        .through(streamWriter).run.runAsync(_ ⇒ ())
+      log.info("Receive last applied Changeset #: {}", sequenceNumber)
+      (for {
+        event <- persistence.replay(AggregateId).filter(startWith(sequenceNumber))
+        _ <- (Process.sleep(pullInterval) ++ Process.emit(event)) through streamWriter
+      } yield ()).run
+        .runAsync(_ => ())
   }
 }

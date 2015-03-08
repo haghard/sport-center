@@ -2,9 +2,9 @@ package domain.update
 
 import akka.actor._
 import domain.Domains
-import akka.persistence.{ PersistentActor, RecoveryCompleted, RecoveryFailure }
-import domain.update.ChangeSetSubscriber.PersistChangeSet
 import microservice.domain.{ Command, DomainEvent }
+import domain.update.ChangeSetSubscriber.PersistChangeSet
+import akka.persistence.{ PersistentActor, RecoveryCompleted, RecoveryFailure }
 
 import scalaz.{ \/, \/- }
 
@@ -23,19 +23,16 @@ class CampaignChangesetWriter private extends PersistentActor with ActorLogging 
 
   private var currentSequenceNr = 1l
 
+  override def persistenceId = "campaign-change-set-writer"
+
   implicit val ec = context.system.dispatchers.lookup("scheduler-dispatcher")
 
   private var callback: Option[Throwable \/ CompleteBatch ⇒ Unit] = None
 
-  override def persistenceId = "campaign-change-set-writer"
-
   override def receiveRecover: Receive = {
-    case e: ChangeSetAppliedPosition ⇒
-      updateState(e)
-    case RecoveryFailure(ex) ⇒
-      log.info("Recovery failure {}", ex.getMessage)
-    case RecoveryCompleted ⇒
-      log.info("Completely recovered. Last applied changeSet: {}", currentSequenceNr)
+    case e: ChangeSetAppliedPosition ⇒ updateState(e)
+    case RecoveryFailure(ex)         ⇒ log.info("Recovery failure {}", ex.getMessage)
+    case RecoveryCompleted           ⇒ log.info("Completely recovered. Last applied changeSet: {}", currentSequenceNr)
   }
 
   private def updateState(event: DomainEvent) = {

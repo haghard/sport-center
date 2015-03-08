@@ -23,6 +23,7 @@ object CrawlCampaignAggregate {
     .withDate(2012, 10, 29).withTime(23, 59, 59, 0)
 
   type DateTimeProp = org.joda.time.DateTime.Property
+
   val alignProp: (DateTimeProp) ⇒ String =
     prop ⇒
       if (prop.get() < 10) s"0${prop.get()}"
@@ -40,7 +41,7 @@ object CrawlCampaignAggregate {
 
   case class SaveCompletedBatch(dt: DateTime, results: immutable.List[NbaResult]) extends Command
 
-  case class ChangeSetSaved(dt: DateTime, results: immutable.List[NbaResult]) extends DomainEvent
+  case class CollectedChangeSet(dt: DateTime, results: immutable.List[NbaResult]) extends DomainEvent
 
   case class CampaignState(date: DateTime = startDate, results: immutable.List[NbaResult] = List()) extends State
 
@@ -60,7 +61,7 @@ class CrawlCampaignAggregate private (batchSize: Int, var state: CampaignState =
 
   override def receiveCommand: Receive = {
     case cmd @ SaveCompletedBatch(dt, results) ⇒
-      persist(ChangeSetSaved(dt, results)) { e ⇒
+      persist(CollectedChangeSet(dt, results)) { e ⇒
         log.info("ChangeSet {} has been persisted", formatter format (dt.toDate))
         //TODO: remove it. This is for debug only
         //TimeUnit.SECONDS.sleep(4)
@@ -79,14 +80,15 @@ class CrawlCampaignAggregate private (batchSize: Int, var state: CampaignState =
   }
 
   override def receiveRecover: Receive = {
-    case dt: ChangeSetSaved     ⇒ updateState(dt)
+    case dt: CollectedChangeSet ⇒ updateState(dt)
     case RecoveryCompleted      ⇒ log.info("NbaCampaign recovered with: {}", formatter format state.date.toDate)
     case RecoveryFailure(cause) ⇒ log.info(s"NbaCampaignAggregate recovery failure $cause.getMessage")
   }
 
   private def updateState(event: DomainEvent) {
     event match {
-      case ChangeSetSaved(dt, results) ⇒ state = state.copy(dt, results)
+      case CollectedChangeSet(dt, results) ⇒
+        state = state.copy(dt, results)
     }
   }
 
@@ -104,9 +106,7 @@ class CrawlCampaignAggregate private (batchSize: Int, var state: CampaignState =
         val path = s"""${nextDate.year().get()}${alignProp(nextDate.monthOfYear())}${alignProp(nextDate.dayOfMonth())}/"""
         log.info(s"URL $urlPrefix/$path has been formed")
         loop(acc :+ s"$urlPrefix/$path", nextDate, toDate, batchSize - 1)
-      } else {
-        (fromDate, acc)
-      }
+      } else (fromDate, acc)
     }
 
     loop(List[String](), lastCrawlDate, crawlLimitDate, localBatchSize) match {

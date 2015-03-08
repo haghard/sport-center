@@ -52,7 +52,7 @@ object TeamAggregate {
 
   object MakeSnapshot
 
-  case class WriteResult(val aggregateRootId: String, result: CrawledNbaResult) extends Command with TeamMessage
+  case class WriteResult(val aggregateRootId: String, result: NbaResult /*CrawledNbaResult*/ ) extends Command with TeamMessage
 
   case class QueryTeamState(override val aggregateRootId: String) extends QueryCommand with TeamMessage
   case class QueryTeamStateByDate(override val aggregateRootId: String, dt: String) extends QueryCommand with TeamMessage
@@ -60,7 +60,9 @@ object TeamAggregate {
     extends QueryCommand with TeamMessage
 
   case class WriteAck(val aggregateRootId: String) extends DomainEvent
-  case class ResultAdded(team: String, r: CrawledNbaResult) extends DomainEvent
+
+  case class ResultAdded(team: String, r: NbaResult) extends DomainEvent
+
   case class TeamCreated(val teamId: String) extends DomainEvent
   case class SnapshotCreated(name: Option[String], lastDate: Option[Date]) extends DomainEvent
   case class RecoveryError(error: Throwable) extends DomainEvent
@@ -84,7 +86,7 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
 
   override def receiveCommand = persistentOps
 
-  private def persistAndAck(from: String, result: CrawledNbaResult) =
+  private def persistAndAck(from: String, result: NbaResult) =
     persist(ResultAdded(from, result)) { ev ⇒
       updateState(ev)
       sender() ! WriteAck(from)

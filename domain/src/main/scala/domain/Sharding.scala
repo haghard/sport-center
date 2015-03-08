@@ -18,18 +18,16 @@ trait Sharding {
 
   protected def shardCount: Int
 
-  protected def typeName: String = TeamAggregate.shardName
+  protected def typeName = TeamAggregate.shardName
 
-  def start(): Unit = {
-    ClusterSharding(system).start(typeName, Some(props), idExtractor, shardResolver(shardCount))
-  }
+  def start() = ClusterSharding(system).start(typeName, Some(props), idExtractor, shardResolver(shardCount))
 
   protected def tellEntry[T <: QueryCommand](command: T)(implicit sender: ActorRef): Unit = {
     shardRegion ! command
   }
 
-  protected def writeEntry[T <: Command](event: T)(implicit sender: ActorRef): Unit = {
-    shardRegion ! event
+  protected def writeEntry[T <: Command](command: T)(implicit sender: ActorRef): Unit = {
+    shardRegion ! command
   }
 
   protected def askEntry[T <: State](command: QueryCommand)(implicit timeout: Timeout, sender: ActorRef, ec: ExecutionContext, tag: ClassTag[T]): Future[T] =

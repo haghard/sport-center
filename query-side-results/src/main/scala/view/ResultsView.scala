@@ -9,7 +9,6 @@ import akka.actor.{ Props, ActorLogging, Actor }
 import microservice.crawler.{ NbaResult, Location }
 import microservice.http.RestService.ResponseBody
 import microservice.settings.CustomSettings
-import streamz.akka.persistence.Event
 import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
 
 object ResultsView {
@@ -38,15 +37,8 @@ class ResultsView private (settings: CustomSettings) extends Actor with ActorLog
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResult]]()
   private val viewByTeam = mutable.HashMap[String, mutable.SortedSet[NbaResult]]()
 
-  private val homeFilter: (Event[Any] ⇒ Boolean) = x ⇒
-    x.data.isInstanceOf[ResultAdded] && x.data.asInstanceOf[ResultAdded].r.lct == Location.Home
-
   private def subscriber(domainActorName: String): Process[Task, NbaResult] =
-    persistence.replay(domainActorName)(context.system)
-      .filter(homeFilter) map { x ⇒
-        val res = x.data.asInstanceOf[ResultAdded].r
-        NbaResult(domainActorName, res.homeScore, res.opponent, res.awayScore, res.dt)
-      }
+    persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
 
   private val sink: Sink[Task, NbaResult] =
     io.channel(result ⇒ Task.delay { self ! result })

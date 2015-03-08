@@ -77,7 +77,7 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension
             system.log.info("Redeliver changeset {}. Cause expected {} actual {}", seqNumber, size, respNumber)
             respNumber = 0
             for { (k, orderedTeamResults) ← results } yield {
-              orderedTeamResults foreach (r ⇒ writeEntry(r)(self))
+              orderedTeamResults.foreach(r ⇒ writeEntry(r)(self))
             }
           case event: WriteAck ⇒
             respNumber += 1

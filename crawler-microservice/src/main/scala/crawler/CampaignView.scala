@@ -4,7 +4,7 @@ import akka.actor.{ ActorLogging, Props }
 import crawler.CampaignView.LastUpdateDate
 import crawler.http.CrawlerMicroservice.GetLastCrawlDate
 import domain.CrawlCampaignAggregate
-import domain.CrawlCampaignAggregate.ChangeSetSaved
+import domain.CrawlCampaignAggregate.CollectedChangeSet
 import microservice.domain.State
 import org.joda.time.DateTime
 
@@ -29,7 +29,7 @@ private class CampaignView extends akka.persistence.PersistentView with ActorLog
   override def persistenceId = CrawlCampaignAggregate.AggregateId
 
   override def receive: Receive = {
-    case ChangeSetSaved(dt, _) ⇒ state = state.copy(Some(dt))
-    case q: GetLastCrawlDate   ⇒ sender() ! state
+    case CollectedChangeSet(dt, _) ⇒ state = state.copy(Some(dt))
+    case q: GetLastCrawlDate       ⇒ sender() ! state
   }
 }
