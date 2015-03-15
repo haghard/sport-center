@@ -15,7 +15,7 @@ object ApiGateway {
 
   case class Route(host: String, port: Int, pathRegex: String)
 
-  private def updateRoutees(map: LWWMap) = {
+  private def updateRoutees(map: LWWMap[DiscoveryLine]) = {
     map.entries.values.toList.asInstanceOf[List[DiscoveryLine]].map(_.urls)
       .flatten
       .map {
@@ -47,8 +47,8 @@ class ApiGateway private (localAddress: String, httpPort: Int) extends Actor wit
     log.info("Balancer was restarted and lost all routees {}", reason.getMessage)
 
   override def receive: Receive = {
-    case Changed(key, replica) if replica.isInstanceOf[LWWMap] ⇒
-      routees = Option(updateRoutees(replica.asInstanceOf[LWWMap]))
+    case Changed(key, replica) if replica.isInstanceOf[LWWMap[DiscoveryLine]] ⇒
+      routees = Option(updateRoutees(replica.asInstanceOf[LWWMap[DiscoveryLine]]))
       log.info("Cluster configuration has changed {}", routees)
 
     case r: HttpRequest ⇒

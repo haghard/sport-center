@@ -9,7 +9,7 @@ import akka.http.unmarshalling.FromRequestUnmarshaller
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import discovery.ServiceDiscovery
-import discovery.ServiceDiscovery.{ UnsetAddress, SetKey, KV, UnsetKey }
+import discovery.ServiceDiscovery._
 import microservice.api.{ ClusterNetworkSupport, BootableMicroservice }
 import microservice.http.{ RestApiJunction, BootableRestService }
 import discovery.ServiceRegistryPublisher
@@ -62,7 +62,7 @@ trait DiscoveryMicroservice extends BootableRestService
       path(streamResponse) {
         get {
           complete {
-            ToResponseMarshallable(Source(ActorPublisher[LWWMap](streamPublisher())))(messageToResponseMarshaller)
+            ToResponseMarshallable(Source(ActorPublisher[LWWMap[DiscoveryLine]](streamPublisher())))(messageToResponseMarshaller)
           }
         }
       } ~ path(scalarResponce) {

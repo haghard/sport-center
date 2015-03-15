@@ -15,7 +15,7 @@ package object http {
     }
   }
 
-  implicit def mapToMessage(replica: LWWMap) =
+  implicit def mapToMessage(replica: LWWMap[DiscoveryLine]) =
     SSEvents.Element(replica.entries.asInstanceOf[Map[String, DiscoveryLine]].values.toList.toJson.prettyPrint)
 
   object SSEvents {

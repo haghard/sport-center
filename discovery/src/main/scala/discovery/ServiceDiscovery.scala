@@ -65,7 +65,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
     role = Some(RoutingLayerRole)),
     name = "keys-guardian-singleton")
 
-  private def --(map: LWWMap, kv: KV): LWWMap = {
+  private def --(map: LWWMap[DiscoveryLine], kv: KV): LWWMap[DiscoveryLine] = {
     map.get(kv.address) match {
       case Some(DiscoveryLine(_, urls)) ⇒
         val restUrls = urls - kv.url
@@ -77,7 +77,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
     }
   }
 
-  private def --(map: LWWMap, key: String): LWWMap = {
+  private def --(map: LWWMap[DiscoveryLine], key: String): LWWMap[DiscoveryLine] = {
     map.get(key) match {
       case Some(DiscoveryLine(_, urls)) ⇒ map - key
       case None ⇒
@@ -86,7 +86,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
     }
   }
 
-  private def ++(map: LWWMap, k: KV): LWWMap =
+  private def ++(map: LWWMap[DiscoveryLine], k: KV): LWWMap[DiscoveryLine] =
     map.get(k.address) match {
       case Some(DiscoveryLine(_, existingUrls)) ⇒ map + (k.address -> DiscoveryLine(k.address, existingUrls + k.url))
       case None                                 ⇒ map + (k.address -> DiscoveryLine(k.address, Set(k.url)))
@@ -149,7 +149,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   }
 
   private def respond: PartialFunction[Replicator.GetResponse, Future[String \/ Registry]] = {
-    case Replicator.GetSuccess(DataKey, registry: LWWMap, _) ⇒
+    case Replicator.GetSuccess(DataKey, registry: LWWMap[DiscoveryLine], _) ⇒
       Future.successful {
         \/-(Registry((registry.entries.values map { case line: DiscoveryLine ⇒ line })
           .foldLeft(new mutable.HashMap[String, Set[String]]()) { (acc, c) ⇒
@@ -169,10 +169,10 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   private def readLocal: Replicator.Get =
     Replicator.Get(DataKey, Replicator.ReadLocal)
 
-  private def update(modify: LWWMap ⇒ LWWMap): Replicator.Update[LWWMap] = {
+  private def update(modify: LWWMap[DiscoveryLine] ⇒ LWWMap[DiscoveryLine]): Replicator.Update[LWWMap[DiscoveryLine]] = {
     Replicator.Update(
       DataKey,
-      LWWMap(),
+      LWWMap.empty[DiscoveryLine],
       Replicator.ReadQuorum(readTimeout),
       Replicator.WriteQuorum(writeTimeout)
     )(modify)

@@ -22,9 +22,9 @@ object Project {
       "Scalaz Bintray Repo"      at "http://dl.bintray.com/scalaz/releases",
       "spray repo"               at "http://repo.spray.io",
       "krasserm at bintray"      at "http://dl.bintray.com/krasserm/maven",
+      "patriknw at bintray"      at "http://dl.bintray.com/patriknw/maven",
       "Local Maven Repository"   at "file:///" + localMvnRepo,
-      "Local Ivy Repository"     at "file:///" + ivy,
-      "patriknw at bintray"      at "http://dl.bintray.com/patriknw/maven"),
+      "Local Ivy Repository"     at "file:///" + ivy),
 
     publishMavenStyle := true,
     publishTo := Some(Resolver.file("file",  new File(localMvnRepo))),

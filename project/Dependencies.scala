@@ -2,9 +2,9 @@ import sbt._
 
 object Dependencies {
 
-  val Scala = "2.11.6"
+  val Scala = "2.11.5"
   val Akka = "2.3.9"
-  val AkkaDataReplication = "0.9"
+  val AkkaDataReplication = "0.10"
   val AkkaStreamsVersion = "1.0-M4"
   val Hystrix = "1.4.0"
   val AkkaDDD = "1.0.2-SNAPSHOT"
@@ -18,9 +18,7 @@ object Dependencies {
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
     val persistence_mongo     = "com.github.ironfish"     %%    "akka-persistence-mongo-casbah" % "0.7.6" withSources()
 
-    val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication intransitive()
-
-    //val akka_ddd_core         =  "ddd-cqrs-leaven-akka" %% "ddd-cqrs-leaven-akka"             % "1.0"
+    val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication
     
     object streams {
       val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"    % "0.2"              withSources()
