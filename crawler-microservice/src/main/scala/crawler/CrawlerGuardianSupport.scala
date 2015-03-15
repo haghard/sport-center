@@ -1,21 +1,21 @@
 package crawler
 
 import akka.actor._
-import akka.contrib.pattern.ClusterSingletonManager
-import crawler.writer.ChangeSetBatchWriter
+import crawler.writer.CrawlerGuardian
 import microservice.SystemSettings
 import microservice.api.BootableClusterNode._
 import microservice.api.BootableMicroservice
+import akka.contrib.pattern.ClusterSingletonManager
 
-trait ChangeSetWriterSupport extends BootableMicroservice with SystemSettings {
+trait CrawlerGuardianSupport extends BootableMicroservice with SystemSettings {
 
   abstract override def startup(): Unit = {
     system.actorOf(ClusterSingletonManager.props(
-      singletonProps = ChangeSetBatchWriter.props(settings),
-      singletonName = "campaign-writer",
+      singletonProps = CrawlerGuardian.props(settings),
+      singletonName = "crawler-guardian",
       terminationMessage = PoisonPill,
       role = Some(CrawlerRole)),
-      name = "singleton-campaign-writer")
+      name = "singleton-crawler-guardian")
 
     super.startup()
   }

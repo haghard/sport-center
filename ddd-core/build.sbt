@@ -2,13 +2,9 @@ import Dependencies._
 
 import scalariform.formatter.preferences._
 
-import com.typesafe.sbt.SbtGit._
-
-name := "domain"
+name := "ddd-core"
 
 scalaVersion := Scala
-
-parallelExecution in Test := false
 
 scalariformSettings
 
@@ -16,6 +12,7 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(AlignSingleLineCaseStatements, true)
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
+
 
 libraryDependencies ++= Seq(
   akka.actor,

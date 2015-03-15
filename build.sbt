@@ -17,7 +17,7 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
-lazy val sportcenter = project.in(file("."))
+lazy val root = project.in(file("."))
   .aggregate(`discovery`, `core`, `bootstrap`, `domain`,
              `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
 
@@ -28,7 +28,7 @@ lazy val `bootstrap` = project.in(file("bootstrap"))
 
 lazy val `discovery` = project.in(file("discovery")).dependsOn(`core`)
 
-lazy val `domain` = project.in(file("domain")).dependsOn(`core`)
+lazy val `domain` = project.in(file("domain")).dependsOn(`core`, `dddCore`)
 
 lazy val `gatewayMicroservices` = project.in(file("gateway-microservice")).dependsOn(`discovery`)
 
@@ -36,7 +36,9 @@ lazy val `querySideResults` = project.in(file("query-side-results")).dependsOn(`
 
 lazy val `querySideStandings` = project.in(file("query-side-standings")).dependsOn(`core`, `domain`, `discovery`)
 
-lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).dependsOn(`core`, `domain`, `discovery`)
+lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).dependsOn(`core`, `domain`, `discovery`, `dddCore`)
+
+lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
 
 //should be deleted
 //lazy val microservices = project.in(file("microservices")).dependsOn(discovery, domain)

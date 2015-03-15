@@ -17,8 +17,8 @@ object Project {
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
     resolvers ++= Seq(
       "Sonatype Snapshots Repo"  at "https://oss.sonatype.org/content/groups/public",
-      "Sonatype Snapshots Repo"  at "https://oss.sonatype.org/content/groups/public",
-      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/releases",
+      "Sonatype OSS Snapshots"   at "https://oss.sonatype.org/content/repositories/snapshots",
+      "Sonatype OSS Releases"    at "https://oss.sonatype.org/content/repositories/releases",
       "Scalaz Bintray Repo"      at "http://dl.bintray.com/scalaz/releases",
       "spray repo"               at "http://repo.spray.io",
       "krasserm at bintray"      at "http://dl.bintray.com/krasserm/maven",

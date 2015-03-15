@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom
 import domain.DomainSupport
 import microservice.JmxAgent
 import hystrix.HystrixTurbineSupport
-import crawler.ChangeSetWriterSupport
+import crawler.CrawlerGuardianSupport
 import crawler.http.CrawlerMicroservice
 import microservice.api.BootableClusterNode._
 import discovery.{ DiscoveryClientSupport, DiscoveryHttpClient }
@@ -109,7 +109,7 @@ object Microservices extends Microservices {
         with LocalSeedNodesClient
         with CrawlerMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
-        with ChangeSetWriterSupport
+        with CrawlerGuardianSupport
       //with JmxAgent
       //with DigitaloceanClient
       LocalCrawler

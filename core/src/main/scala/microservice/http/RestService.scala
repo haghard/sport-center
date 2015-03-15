@@ -56,8 +56,9 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
   // TODO Once https://github.com/akka/akka/issues/16972 is fixed, simplify this with `bindAndHandle` or such!
   Http()(context.system)
     .bind(interface, port)
-    .to(Sink.foreach(_.flow.join(route).run()))
-    .run()
+    //.to(Sink.foreach(_.flow.join(route).run()))
+    .runForeach(_.flow.join(route).run())
+  //.run()
   //.startHandlingWith(route)
 
   override def receive: Receive = Actor.emptyBehavior

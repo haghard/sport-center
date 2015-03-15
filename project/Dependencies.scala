@@ -7,6 +7,7 @@ object Dependencies {
   val AkkaDataReplication = "0.9"
   val AkkaStreamsVersion = "1.0-M4"
   val Hystrix = "1.4.0"
+  val AkkaDDD = "1.0.2-SNAPSHOT"
 
   object akka {
     val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()
@@ -19,6 +20,8 @@ object Dependencies {
 
     val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication intransitive()
 
+    //val akka_ddd_core         =  "ddd-cqrs-leaven-akka" %% "ddd-cqrs-leaven-akka"             % "1.0"
+    
     object streams {
       val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"    % "0.2"              withSources()
       val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"    % AkkaStreamsVersion withSources()
@@ -46,9 +49,11 @@ object Dependencies {
 
   val scalacompiler    = "org.scala-lang"         %  "scala-compiler"        % Scala
 
-  val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"
-  val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.1"
-  val scalacheck       = "org.scalacheck"         %% "scalacheck"            % "1.11.6" % "test" exclude("org.scala-lang", "*")
+  val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
+  val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.0"    %   "test"
+  val scalacheck       = "org.scalacheck"         %% "scalacheck"            % "1.11.6"   %   "test" exclude("org.scala-lang", "*")
+
+  val embedMongo       = "de.flapdoodle.embed"    %  "de.flapdoodle.embed.mongo"  % "1.43"    % "test"
 
   val typesafe_config  = "com.typesafe"           %  "config"                % "1.2.1"
 

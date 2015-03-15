@@ -52,8 +52,7 @@ object TeamAggregate {
 
   object MakeSnapshot
 
-  case class WriteResult(val aggregateRootId: String, result: NbaResult /*CrawledNbaResult*/ ) extends Command with TeamMessage
-
+  case class CreateResult(val aggregateRootId: String, result: NbaResult) extends Command with TeamMessage
   case class QueryTeamState(override val aggregateRootId: String) extends QueryCommand with TeamMessage
   case class QueryTeamStateByDate(override val aggregateRootId: String, dt: String) extends QueryCommand with TeamMessage
   case class QueryTeamStateLast(override val aggregateRootId: String, size: Int, location: Location.Value)
@@ -93,9 +92,10 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
     }
 
   private val persistentOps: Receive = {
-    case cmd @ WriteResult(team, result) ⇒
+    case cmd @ CreateResult(team, result) ⇒
       state.lastDate.fold(persistAndAck(team, result)) { lastDate ⇒
         //Idempotent receiver
+        //Relay on time ordered event stream
         if (result.dt after lastDate) {
           persist(ResultAdded(team, result))(updateState)
         }

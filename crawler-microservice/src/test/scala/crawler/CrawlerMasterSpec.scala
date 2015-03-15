@@ -1,13 +1,13 @@
 package crawler
 
-import akka.actor.{Props, ActorRef, Actor, ActorSystem}
-import akka.cluster.routing.{ClusterRouterPoolSettings, ClusterRouterPool}
+import akka.actor.{ Props, ActorRef, Actor, ActorSystem }
+import akka.cluster.routing.{ ClusterRouterPoolSettings, ClusterRouterPool }
 import akka.routing.RoundRobinPool
-import akka.testkit.{TestKit, TestProbe}
+import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
-import microservice.crawler.{CollectedResultBlock, CrawlerJob}
+import microservice.crawler.{ CollectedResultBlock, CrawlerJob }
 import org.joda.time.DateTime
-import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpecLike}
+import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpecLike }
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -25,9 +25,9 @@ class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", ConfigFactory.par
  |   executor = thread-pool-executor
  | }
 """.stripMargin)).withFallback(ConfigFactory.load("app-setting"))))
-  with WordSpecLike
-  with MustMatchers
-  with BeforeAndAfterAll {
+    with WordSpecLike
+    with MustMatchers
+    with BeforeAndAfterAll {
 
   val teams = asScalaBuffer(system.settings.config
     .getConfig("app-settings")

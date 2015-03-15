@@ -2,9 +2,8 @@ package crawler.http
 
 import akka.http.server._
 import spray.json.JsonWriter
-import crawler.CampaignView
-import CampaignView.LastUpdateDate
-import crawler.ChangeSetWriterSupport
+import crawler.{ NbaCampaignView, CrawlerGuardianSupport }
+import NbaCampaignView.LastUpdateDate
 import discovery.DiscoveryClientSupport
 import microservice.AskManagment
 import microservice.api.MicroserviceKernel
@@ -43,7 +42,7 @@ object CrawlerMicroservice {
       obj.body match {
         case Some(CrawlerResultsBody(last, count)) ⇒
           last.lastIterationDate.fold(empty) { dt ⇒
-            val body = JsObject("lastIterationDate" -> dt.toDate.toJson(dtFormat))
+            val body = JsObject("lastIterationDate" -> dt.toJson(dtFormat))
             JsObject("url" -> JsString(obj.url.toString),
               "view" -> obj.view.fold(JsString("none")) { view ⇒ JsString(view) },
               "body" -> body)
@@ -58,7 +57,7 @@ object CrawlerMicroservice {
 
 trait CrawlerMicroservice extends RestWithDiscovery
     with AskManagment {
-  mixin: MicroserviceKernel with DiscoveryClientSupport with ChangeSetWriterSupport ⇒
+  mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport ⇒
   import crawler.http.CrawlerMicroservice._
 
   override def name = "CrawlerMicroservice"
@@ -69,7 +68,7 @@ trait CrawlerMicroservice extends RestWithDiscovery
 
   override lazy val endpoints = List(s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix")
 
-  private val view = system.actorOf(CampaignView.props(httpDispatcher), name = "campaign-view")
+  private val view = system.actorOf(NbaCampaignView.props(httpDispatcher), name = "campaign-view")
 
   /**
    *
@@ -78,7 +77,7 @@ trait CrawlerMicroservice extends RestWithDiscovery
   abstract override def configureApi() =
     super.configureApi() ~
       RestApiJunction(route = Option { ec: ExecutionContext ⇒ crawlerRoute(ec) },
-        preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was deploed $httpPrefixAddress ★ ★ ★")),
+        preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was deployed $httpPrefixAddress ★ ★ ★")),
         postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def crawlerRoute(implicit ec: ExecutionContext): Route = {

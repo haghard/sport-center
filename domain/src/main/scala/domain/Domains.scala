@@ -5,7 +5,7 @@ import akka.actor.Extension
 import akka.actor._
 import akka.persistence.PersistentActor
 import akka.util.Timeout
-import domain.TeamAggregate.{ WriteResult, WriteAck }
+import domain.TeamAggregate.{ CreateResult, WriteAck }
 import microservice.domain._
 
 import scala.collection.immutable.SortedSet
@@ -65,9 +65,9 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension
   def askQuery[T <: State](command: QueryCommand)(implicit timeout: Timeout, sender: ActorRef, ec: ExecutionContext): Future[T] =
     askEntry(command)
 
-  def tellBatchWrite[T <: State](seqNumber: Long, results: Map[String, SortedSet[WriteResult]])(implicit sender: ActorRef, factory: ActorRefFactory, ec: ExecutionContext) = {
+  def tellBatchWrite[T <: State](seqNumber: Long, results: Map[String, SortedSet[CreateResult]])(implicit sender: ActorRef, factory: ActorRefFactory, ec: ExecutionContext) = {
 
-    def atLeastOnceWriter(replyTo: ActorRef, seqNumber: Long, results: Map[String, SortedSet[WriteResult]])(implicit factory: ActorRefFactory, ec: ExecutionContext) =
+    def atLeastOnceWriter(replyTo: ActorRef, seqNumber: Long, results: Map[String, SortedSet[CreateResult]])(implicit factory: ActorRefFactory, ec: ExecutionContext) =
       actor(new Act {
         val size = results.size
         var respNumber = 0
