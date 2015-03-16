@@ -8,7 +8,7 @@ import hystrix.HystrixTurbineSupport
 import crawler.CrawlerGuardianSupport
 import crawler.http.CrawlerMicroservice
 import microservice.api.BootableClusterNode._
-import discovery.{ DiscoveryClientSupport, DiscoveryHttpClient }
+import discovery.{ ServiceRegistryCleanerSupport, DiscoveryClientSupport, DiscoveryHttpClient }
 import http.{ ApiGatewayMicroservice, StandingMicroservice, ResultsMicroservice }
 import microservice.api.{ BootableMicroservice, LocalSeedNodesClient, MicroserviceKernel }
 
@@ -74,6 +74,7 @@ object Microservices extends Microservices {
         with LocalSeedNodesClient
         with ApiGatewayMicroservice
         with HystrixTurbineSupport
+        with ServiceRegistryCleanerSupport
         with JmxAgent
       LocalRouterNode
     }

@@ -3,6 +3,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 import sbt.Keys._
 import sbt._
+import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
 name := "Sport Center"
 
@@ -26,7 +27,7 @@ lazy val `core` = project.in(file("core"))
 lazy val `bootstrap` = project.in(file("bootstrap"))
   .dependsOn(`gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
 
-lazy val `discovery` = project.in(file("discovery")).dependsOn(`core`)
+lazy val `discovery` = project.in(file("discovery")).dependsOn(`core`).configs(MultiJvm)
 
 lazy val `domain` = project.in(file("domain")).dependsOn(`core`, `dddCore`)
 

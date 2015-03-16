@@ -29,6 +29,7 @@ object Dependencies {
 
     val slf4j                 = "com.typesafe.akka"       %%    "akka-slf4j"                    % Akka
     val testkit               = "com.typesafe.akka"       %%    "akka-testkit"                  % Akka
+    val multi_node_testkit    = "com.typesafe.akka"       %%    "akka-multi-node-testkit"       % Akka
   }
 
   val json4s = "org.json4s"             %%    "json4s-native"   % "3.2.10"

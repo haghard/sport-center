@@ -16,11 +16,11 @@ trait OnClusterLeaveKeysCleaner extends ClusterMembershipAware {
     def nodes: mutable.Set[akka.actor.Address]
   } ⇒
 
+  implicit val t = Timeout(3.seconds)
+  implicit val ex = context.system.dispatchers.lookup("scheduler-dispatcher")
+  
   abstract override def receiveMemberRemoved(m: Member): Unit = {
     super.receiveMemberRemoved(m)
-
-    implicit val t = Timeout(3.seconds)
-    implicit val ex = context.system.dispatchers.lookup("scheduler-dispatcher")
 
     ServiceDiscovery(context.system)
       .deleteAll(UnsetAddress(m.address.toString))

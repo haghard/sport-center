@@ -47,7 +47,6 @@ trait DiscoveryMicroservice extends BootableRestService
     with SSEventsMarshalling
     with DefaultJsonProtocol {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
-  import services._
   import DiscoveryMicroservice._
 
   implicit val ec = system.dispatchers.lookup(httpDispatcher)

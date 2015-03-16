@@ -4,9 +4,7 @@ import akka.actor._
 import akka.cluster.Cluster
 import akka.contrib.datareplication.Replicator.{ Subscribe, UpdateResponse }
 import akka.contrib.datareplication.{ DataReplication, LWWMap, Replicator }
-import akka.contrib.pattern.ClusterSingletonManager
 import akka.pattern.{ AskTimeoutException, ask }
-import microservice.api.BootableClusterNode
 import spray.json.DefaultJsonProtocol
 
 import scala.collection.mutable
@@ -44,7 +42,6 @@ object ServiceDiscovery extends ExtensionKey[ServiceDiscovery] {
 
 class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   import discovery.ServiceDiscovery._
-  import BootableClusterNode.{ RoutingLayerRole, MicroserviceRole }
 
   private val config = system.settings.config.getConfig("discovery")
   private val timeout = config.getDuration("ops-timeout", SECONDS).second
@@ -57,13 +54,6 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   private implicit val sys = system
 
   private val replicator = DataReplication(system).replicator
-
-  private val guardian = system.actorOf(ClusterSingletonManager.props(
-    singletonProps = Props(new ServiceDiscoveryGuardian(timeout, Some(MicroserviceRole), replicator) with OnClusterLeaveKeysCleaner),
-    singletonName = "keys-guardian",
-    terminationMessage = PoisonPill,
-    role = Some(RoutingLayerRole)),
-    name = "keys-guardian-singleton")
 
   private def --(map: LWWMap[DiscoveryLine], kv: KV): LWWMap[DiscoveryLine] = {
     map.get(kv.address) match {
@@ -101,11 +91,10 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
       .ask(update(map ⇒ ++(map, op.key)))(writeTimeout)
       .mapTo[UpdateResponse]
       .map {
-        case r @ Replicator.UpdateSuccess(DataKey, _) ⇒ \/-(Update(r))
-        case response                                 ⇒ -\/(s"SetKey op unexpected response $response")
-      }
-      .recoverWith {
-        case ex: ClassCastException  ⇒ Future.successful(-\/(s"SetKey op error ${ex.getMessage}"))
+        case r@Replicator.UpdateSuccess(DataKey, _) ⇒ \/-(Update(r))
+        case response ⇒ -\/(s"SetKey op unexpected response $response")
+      }.recoverWith {
+        case ex: ClassCastException ⇒ Future.successful(-\/(s"SetKey op error ${ex.getMessage}"))
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"SetKey op error timeout ${ex.getMessage}"))
       }
 

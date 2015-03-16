@@ -48,7 +48,6 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
       .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
-      //.withFallback(ConfigFactory.parseString("akka.cluster.role { load-balancer.min-nr-of-members = 3 }"))
       .withFallback(ConfigFactory.load("application.conf"))
       .withFallback(ConfigFactory.load("app-setting.conf"))
       .withFallback(ConfigFactory.load("crawler.conf"))
