@@ -19,10 +19,7 @@ object ServiceDiscoverySpec extends MultiNodeConfig {
   val nodeA = role("node-a")
   val nodeB = role("node-b")
   val nodeC = role("node-c")
-
-  private def standings(ip: String) = s"http://$ip/api/standings"
-  
-  private def results(ip: String) = s"http://$ip/api/results"
+  val nodeD = role("node-d")
   
   commonConfig(ConfigFactory.parseString("""
     akka.loglevel = INFO
@@ -50,33 +47,37 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
     }
     enterBarrier(from.name + "-joined")
   }
+
+  private def standings(ip: RoleName) = s"http://${node(ip).address}/api/standings"
+
+  private def results(ip: RoleName) = s"http://${node(ip).address}/api/results"
   
 
   "Demo of a replicated service registry" must {
     "join cluster" in {
-      val nodes = List(nodeA, nodeB, nodeC)
-      nodes.foreach { join(_, nodeA) }
+      val nodes = List(nodeA, nodeB, nodeC, nodeD)
+      nodes foreach(join(_, nodeA))
       enterBarrier("after-join")
     }
 
     "handle several updates from one node" in within(5 seconds) {
       runOn(nodeB) {
-        ServiceDiscovery(system).setKey(SetKey(KV(nodeB.name, standings(nodeB.name))))
-        ServiceDiscovery(system).setKey(SetKey(KV(nodeB.name, results(nodeB.name))))
+        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeB).address.toString, standings(nodeB))))
+        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeB).address.toString, results(nodeB))))
       }
 
       enterBarrier("updates-done")
 
       awaitAssert {
         val result = Await.result(ServiceDiscovery(system).findAll, 3 seconds)
-        result shouldBe \/-(Registry(mutable.HashMap(nodeB.name -> Set(standings(nodeB.name), results(nodeB.name)))))
+        result shouldBe \/-(Registry(mutable.HashMap(node(nodeB).address.toString -> Set(standings(nodeB), results(nodeB)))))
       }
       enterBarrier("after-2")
     }
 
     "handle deleteAll from other node" in within(5 seconds) {
       runOn(nodeA) {
-        ServiceDiscovery(system).deleteAll(UnsetAddress(nodeB.name))
+        ServiceDiscovery(system).deleteAll(UnsetAddress(node(nodeB).address.toString))
       }
 
       enterBarrier("updates-done")
@@ -90,23 +91,24 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
     
     "handle several updates from diff nodes" in within(5 seconds) {
       runOn(nodeA) {
-        ServiceDiscovery(system).setKey(SetKey(KV(nodeA.name, standings(nodeA.name))))
+        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeA).address.toString, standings(nodeA))))
       }
       runOn(nodeB) {
-        ServiceDiscovery(system).setKey(SetKey(KV(nodeB.name, results(nodeB.name))))
+        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeB).address.toString, results(nodeB))))
       }
       runOn(nodeA) {
-        ServiceDiscovery(system).setKey(SetKey(KV(nodeA.name, results(nodeA.name))))
+        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeA).address.toString, results(nodeA))))
       }
 
       enterBarrier("updates-done")
 
       awaitAssert {
         val result = Await.result(ServiceDiscovery(system).findAll, 3 seconds)
-        result shouldBe \/-(Registry(mutable.HashMap(nodeA.name -> Set(standings(nodeA.name), results(nodeA.name)), 
-                                                     nodeB.name -> Set(results(nodeB.name)))))
+        result shouldBe \/-(Registry(mutable.HashMap(node(nodeA).address.toString -> Set(standings(nodeA), results(nodeA)),
+                                                     node(nodeB).address.toString -> Set(results(nodeB)))))
       }
       enterBarrier("after-4")
+
     }
   }
 }
@@ -114,3 +116,4 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
 class ServiceDiscoverySpecMultiJvmNode1 extends ServiceDiscoverySpec
 class ServiceDiscoverySpecMultiJvmNode2 extends ServiceDiscoverySpec
 class ServiceDiscoverySpecMultiJvmNode3 extends ServiceDiscoverySpec
+class ServiceDiscoverySpecMultiJvmNode4 extends ServiceDiscoverySpec
