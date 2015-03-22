@@ -108,7 +108,6 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
                                                      node(nodeB).address.toString -> Set(results(nodeB)))))
       }
       enterBarrier("after-4")
-
     }
   }
 }

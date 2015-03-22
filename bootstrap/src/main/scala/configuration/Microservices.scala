@@ -1,7 +1,6 @@
 package configuration
 
 import java.util.concurrent.ThreadLocalRandom
-
 import domain.DomainSupport
 import microservice.JmxAgent
 import hystrix.HystrixTurbineSupport
