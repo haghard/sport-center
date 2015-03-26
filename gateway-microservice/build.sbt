@@ -16,7 +16,5 @@ libraryDependencies ++= Seq(
   hystrix,
   hystrix_stream,
   turbine,
-  //dispatch,
-  //hystrix_dash,
   rxscala
 )

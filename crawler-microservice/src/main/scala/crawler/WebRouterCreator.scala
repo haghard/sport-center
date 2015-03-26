@@ -15,7 +15,10 @@ trait WebRouterCreator {
 }
 
 trait ProgrammaticallyCreator extends WebRouterCreator {
-  mixin: { def context: ActorContext; def teams: Seq[String] } ⇒
+
+  def context: ActorContext
+
+  def teams: Seq[String]
 
   private val routerProps = ClusterRouterPool(
     RoundRobinPool(nrOfInstances = 25),
@@ -31,7 +34,10 @@ trait ProgrammaticallyCreator extends WebRouterCreator {
 }
 
 trait ConfigCreator extends WebRouterCreator {
-  self: { def context: ActorContext; def teams: Seq[String] } ⇒
+
+  def context: ActorContext
+
+  def teams: Seq[String]
 
   override lazy val createRouter: ActorRef =
     context.actorOf(FromConfig.props(WebGetter.props(teams).withDispatcher(dispatcher)), name = routerName)

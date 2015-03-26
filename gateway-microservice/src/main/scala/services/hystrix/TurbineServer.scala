@@ -52,7 +52,8 @@ trait TurbineServer {
    * @return
    */
   private def toURI(streams: immutable.Set[Address]) =
-    for { n <- streams; host <- n.host; port <- n.port } yield URI.create(s"http://$host:${port + 10}${HystrixMetricsMicroservice.hystrixStream}")
+    for { n <- streams; host <- n.host; port <- n.port }
+      yield URI.create(s"http://$host:${port + 10}${HystrixMetricsMicroservice.hystrixStream}")
 
   private def serverHandler(pStreams: rx.Observable[_ <: util.Map[String, AnyRef]]) = new RequestHandler[ByteBuf, ByteBuf]() {
     override def handle(request: HttpServerRequest[ByteBuf], response: HttpServerResponse[ByteBuf]): rx.Observable[Void] = {
