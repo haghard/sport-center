@@ -4,9 +4,7 @@ import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import microservice.crawler.NbaResult
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-
 import scala.collection.JavaConversions._
-import scala.concurrent.forkjoin.ThreadLocalRandom
 
 object WebGetter {
   val NAME = """<div(.)+>\s*(\w+)\s*</div>""".r
@@ -37,7 +35,6 @@ class WebGetter(teams: Seq[String]) extends Actor with ActorLogging {
     import com.github.nscala_time.time.Imports._
 
     val document = try {
-      //if (ThreadLocalRandom.current.nextInt(10) > 5) throw new Exception(s"WebGetter error")
       Jsoup.connect(url).ignoreHttpErrors(true).timeout(TIMEOUT).get
     } catch {
       case e ⇒ throw new CrawlerException(sender, e, url)

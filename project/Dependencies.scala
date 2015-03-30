@@ -5,7 +5,7 @@ object Dependencies {
   val Scala = "2.11.5"
   val Akka = "2.3.9"
   val AkkaDataReplication = "0.10"
-  val AkkaStreamsVersion = "1.0-M4"
+  val AkkaStreamsVersion = "1.0-M5"
   val Hystrix = "1.4.0"
   val AkkaDDD = "1.0.2-SNAPSHOT"
 
