@@ -21,11 +21,8 @@ timeout for every request to an external system, limit of concurrent requests fo
 One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Mongo in own case) and updates own state.
 Domain node by itself could be 2 kind `Query-side-results` or `Query-side-standing`:
 
-* Query-side-results node respond on results query like:
-  * http://{ip}:{port}/api/results/{dt} - returns all results for defined date
-  * http://{ip}:{port}/api/results/{team}/last - returns last default 5 results
+* Query-side-results: [`http://{ip}:{port}/api/results/{dt}`, `http://{ip}:{port}/api/results/{team}/last`]
 
-* Query-side-standing node respond standing query:
-  * http://{ip}:{port}/api/standings/{dt} - returns teams standing for defined date
+* Query-side-standing: [`http://{ip}:{port}/api/standings/{dt}`]
 
 We can run as many as we want Query-side-results and Query-side-standing node for scalability
