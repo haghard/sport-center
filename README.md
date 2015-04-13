@@ -22,10 +22,10 @@ One Persistent Actor for one team. Every Game Persistent Actor persists incoming
 Domain node by itself could be 2 kind `Query-side-results` or `Query-side-standing`:
 
 * Query-side-results node respond on results query like:
-  _`http://{ip}:{port}/api/results/{dt}`_ - returns all results for defined date
-  _`http://{ip}:{port}/api/results/{team}/last`_ - returns last default 5 results
+  * http://{ip}:{port}/api/results/{dt} - returns all results for defined date
+  * http://{ip}:{port}/api/results/{team}/last - returns last default 5 results
 
 * Query-side-standing node respond standing query:
-  _http://{ip}:{port}/api/standings/{dt}_ - returns teams standing for defined date
+  * http://{ip}:{port}/api/standings/{dt} - returns teams standing for defined date
 
 We can run as many as we want Query-side-results and Query-side-standing node for scalability
