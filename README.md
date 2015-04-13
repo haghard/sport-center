@@ -7,9 +7,9 @@ SportCenter is a POC reactive applications based on microservices architecture b
 Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
 
 ### About the project ###
-There are 3 type roles node in our akka cluster:
-  _Gateway_   Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:               
-             _Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)_
+There are 3 type roles node in our akka cluster: 
+   _Gateway - Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:_               
+            _Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)_
                  To deliver fault tolerance Hystrix has built in the following features:             
                   * Timeout for every request to an external system             
                   * Limit of concurrent requests for external system             
@@ -25,14 +25,14 @@ There are 3 type roles node in our akka cluster:
              Akka-Cluster for distributed cluster membership
              Deployed http route: http://{ip}:{port}/api/crawler
   
-  _Domain_   Loosely coupled command or query side microservice with sharded domain. 
-             We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this.
-             Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors. 
-             One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal(Mongo in owr case) and updates own state.                                                      
-             Domain node by itself could be Query-side-results or Query-side-standing
-             * Query-side-results node respond on results query like                  
-                  http://{ip}:{port}/api/results/{dt} - returns all results for defined date              
+  _Domain_  Loosely coupled command or query side microservice with sharded domain. 
+            We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this.
+            Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors. 
+            One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal(Mongo in owr case) and updates own state.                                                      
+            Domain node by itself could be Query-side-results or Query-side-standing
+              * Query-side-results node respond on results query like                  
+                 http://{ip}:{port}/api/results/{dt} - returns all results for defined date              
                   http://{ip}:{port}/api/results/{team}/last - returns last default 5 results            
-             * Query-side-standing node respond standing query 
+              * Query-side-standing node respond standing query 
                   http://{ip}:{port}/api/standings/{dt} - returns teams standing for defined date              
              We can run as many as we want Query-side-results and Query-side-standing node for scalability 
