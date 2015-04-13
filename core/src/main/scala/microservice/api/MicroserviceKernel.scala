@@ -4,21 +4,23 @@ import akka.actor.ActorSystem
 import java.net.NetworkInterface
 import microservice.http.BootableRestService
 import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
-
 import scala.collection.JavaConverters._
-import BootableClusterNode._
 
 object MicroserviceKernel {
   val ActorSystemName = "SportCenter"
   val microserviceDispatcher = "akka.http-dispatcher"
   val ipExpression = """\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}"""
+
+  val CrawlerRole = "Crawler"
+  val DomainRole = "Domain" //if you change this name you change in application.conf
+  val GatewayRole = "Gateway"
 }
 
 abstract class MicroserviceKernel(override val akkaSystemPort: String,
   override val environment: String,
   override val httpPort: Int = BootableClusterNode.DefaultCloudHttpPort,
   override val jmxPort: Int = BootableClusterNode.DefaultJmxPort,
-  override val clusterRole: String = BootableClusterNode.MicroserviceRole,
+  override val clusterRole: String = MicroserviceKernel.DomainRole,
   override val ethName: String = BootableClusterNode.CloudEth)
     extends BootableMicroservice
     with ClusterNetworkSupport
@@ -52,7 +54,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.load("app-setting.conf"))
       .withFallback(ConfigFactory.load("crawler.conf"))
 
-    if (clusterRole == MicroserviceRole) {
+    if (clusterRole == DomainRole) {
       local.withFallback(ConfigFactory.parseString(s"akka.contrib.cluster.sharding.role=${clusterRole}"))
     }
 

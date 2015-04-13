@@ -117,7 +117,7 @@ trait ResultsMicroservice extends RestWithDiscovery
         withUri { uri ⇒
           complete {
             system.log.info(s"[$name] - incoming request $uri")
-            Thread.sleep(resultsByDateLatency.get)
+            Thread.sleep(resultsByDateLatency.get)// for testing por
             //fail("fake error")
             Try {
               formatter parse date

@@ -14,7 +14,7 @@ object WebGetterSpec {
 | akka {
 |    loglevel = "INFO"
 |
-|    io-dispatcher {
+|    crawler-dispatcher {
 |      type = PinnedDispatcher
 |      executor = "thread-pool-executor"
 |    }

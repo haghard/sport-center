@@ -16,7 +16,7 @@ object ApiGateway {
   case class Route(host: String, port: Int, pathRegex: String)
 
   private def updateRoutees(map: LWWMap[DiscoveryLine]) = {
-    map.entries.values.toList.asInstanceOf[List[DiscoveryLine]].map(_.urls)
+    map.entries.values.toList.map(_.urls)
       .flatten
       .map {
         case fragmentExp(host, port, path) ⇒
@@ -53,7 +53,6 @@ class ApiGateway private (localAddress: String, httpPort: Int) extends Actor wit
 
     case r: HttpRequest ⇒
       val replyTo = sender()
-      //log.info("Incoming request: {}", r.uri.toString)
       findRoute(r).fold {
         replyTo ! HttpResponse(ServiceUnavailable, entity = "Underling api unavailable cause: The routee was not found")
       } { route: Route ⇒

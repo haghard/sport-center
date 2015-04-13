@@ -2,7 +2,7 @@ package hystrix
 
 import akka.cluster.ClusterEvent._
 import akka.cluster.{ Cluster, Member }
-import microservice.api.{ MicroserviceKernel, BootableClusterNode }
+import microservice.api.MicroserviceKernel
 import akka.actor.{ Actor, ActorLogging, Address, Props }
 
 import scala.collection.immutable
@@ -18,7 +18,7 @@ class HystrixTurbineManager extends Actor
 
   private var nodes = immutable.Set.empty[Address]
 
-  private val watched = BootableClusterNode.RoutingLayerRole
+  private val watched = MicroserviceKernel.GatewayRole
 
   implicit val cluster = Cluster(context.system)
 

@@ -2,6 +2,7 @@ package view
 
 import scala.collection._
 import scalaz.concurrent.Task
+import scalaz.concurrent._
 import microservice.domain.State
 import domain.TeamAggregate.ResultAdded
 import scala.collection.mutable.ArrayBuffer
@@ -13,15 +14,14 @@ import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
 
 object ResultsView {
 
-  implicit val strategy = scalaz.concurrent.Strategy.Executor(
-    microservice.executor("results-materialized-view-executor", 2))
+  implicit val strategy = Strategy.Executor(microservice.executor("results-materialized-view-executor", 2))
 
   implicit object Ord extends Ordering[NbaResult] {
-    override def compare(x: NbaResult, y: NbaResult): Int = x.dt.compareTo(y.dt)
+    override def compare(x: NbaResult, y: NbaResult): Int =
+      x.dt.compareTo(y.dt)
   }
 
   case class ResultsByDateBody(count: Int = 0, results: ArrayBuffer[NbaResult]) extends ResponseBody with State
-
   case class ResultsByTeamBody(count: Int = 0, results: List[NbaResult]) extends ResponseBody with State
 
   def props(settings: CustomSettings) = Props(new ResultsView(settings))
@@ -43,11 +43,9 @@ class ResultsView private (settings: CustomSettings) extends Actor with ActorLog
   private val sink: Sink[Task, NbaResult] =
     io.channel(result ⇒ Task.delay { self ! result })
 
-  override def preStart = {
+  override def preStart =
     (merge.mergeN(emitAll(settings.teams) |> process1.lift(subscriber))
-      .to(sink))
-      .run.runAsync(_ => ())
-  }
+      .to(sink)).run.runAsync(_ => ())
 
   override def receive: Receive = {
     case r: NbaResult =>

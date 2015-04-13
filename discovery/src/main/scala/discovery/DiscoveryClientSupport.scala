@@ -5,7 +5,7 @@ import akka.http.model.{ StatusCode, StatusCodes }
 import akka.pattern.{ AskTimeoutException, ask }
 import microservice.ClusterMonitor
 import microservice.ClusterMonitor.GetNodes
-import microservice.api.{ BootableClusterNode, BootableMicroservice }
+import microservice.api.{MicroserviceKernel, BootableMicroservice}
 import microservice.http.RestWithDiscovery
 
 import scala.concurrent.duration._
@@ -25,7 +25,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   private implicit val discoveryTimeout = akka.util.Timeout(duration)
 
   private val clusterMonitor =
-    system.actorOf(ClusterMonitor.props(Option(BootableClusterNode.RoutingLayerRole)),
+    system.actorOf(ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)),
       name = "cluster-monitor")
 
   protected def askForDiscoveryNodeAddresses(): Future[String \/ Vector[Address]] =

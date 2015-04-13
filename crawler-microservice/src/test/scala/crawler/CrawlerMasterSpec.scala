@@ -20,7 +20,7 @@ class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", ConfigFactory.par
  |    }
  |  }
 """.stripMargin).withFallback(ConfigFactory.parseString("""
- | io-dispatcher {
+ | crawler-dispatcher {
  |   type = PinnedDispatcher
  |   executor = thread-pool-executor
  | }

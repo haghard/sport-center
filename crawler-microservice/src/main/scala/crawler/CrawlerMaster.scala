@@ -3,7 +3,7 @@ package crawler
 import akka.actor.SupervisorStrategy.{ Directive, Resume }
 import akka.actor._
 import crawler.WebGetter.CrawlerException
-import microservice.api.BootableClusterNode
+import microservice.api.{ MicroserviceKernel, BootableClusterNode }
 import microservice.crawler._
 import microservice.settings.CustomSettings
 import org.joda.time.DateTime
@@ -43,7 +43,7 @@ abstract class CrawlerMaster(val teams: Seq[String]) extends Actor with ActorLog
   private val formatter = searchFormatter()
   private def webRouter = createRouter
 
-  override def routerNodeRole = BootableClusterNode.CrawlerRole
+  override def routerNodeRole = MicroserviceKernel.CrawlerRole
 
   private val decider: PartialFunction[Throwable, Directive] = {
     case CrawlerException(_, _, url) ⇒

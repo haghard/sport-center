@@ -27,8 +27,8 @@ object NbaChangeDataCaptureSubscriber {
 
   private val path = "nba"
 
-  def props: Props =
-    Props(new NbaChangeDataCaptureSubscriber).withDispatcher("scheduler-dispatcher")
+  def props: Props = Props(new NbaChangeDataCaptureSubscriber)
+    .withDispatcher("scheduler-dispatcher")
 }
 
 class NbaChangeDataCaptureSubscriber private extends Actor with ActorLogging {

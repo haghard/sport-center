@@ -6,7 +6,7 @@ import akka.routing.{ FromConfig, RoundRobinPool }
 
 trait WebRouterCreator {
 
-  protected val dispatcher = "io-dispatcher"
+  protected val dispatcher = "crawler-dispatcher"
   protected val routerName = "webRouter"
 
   def routerNodeRole: String

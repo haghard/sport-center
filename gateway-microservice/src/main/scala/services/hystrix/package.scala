@@ -70,11 +70,11 @@ package object hystrix {
       }
     }
 
-    //executed in HystrixTimer-1
+    //executed in thread named as HystrixTimer-n
     override def getFallback: Unit = {
+      import scala.collection._
       import akka.http.model.headers.RawHeader
 
-      import scala.collection._
       replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(
         RawHeader("Target", uri), RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
         entity = "Underling api unavailable cause: " + cause())
