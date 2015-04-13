@@ -1,22 +1,17 @@
 Sport Center
 ================
-SportCenter is a POC reactive applications based on microservices architecture 
-built on top of [Akka](akka.io) following a Event Sourcing CQRS based approach.
+SportCenter is a POC reactive applications based on microservices architecture built on top of [Akka](akka.io) following a Event Sourcing CQRS based approach.
 
-
-Event Sourcing is about capturing sequence of event 
-  Each transaction is being recorded     
-  State is recreated by replaying all the transactions/events
+_Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
 
 ### Reactive application, Microservice architecture what and why shortly ###
 
 ### About the project ###
 
 There are 3 type roles node in our akka cluster:
-  Gateway    Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes.
-             Every incoming request will be redirected for internal services if matched route is found                 
-             Each Gateway node provides following features:               
-               Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)
+  Gateway    Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found                 
+             _Each Gateway node provides following features:               
+              Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)
                  To deliver fault tolerance Hystrix has built in the following features:             
                   * Timeout for every request to an external system             
                   * Limit of concurrent requests for external system             
