@@ -7,7 +7,9 @@ SportCenter is a POC reactive applications based on microservices architecture b
 Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
 
 ### About the project ###
-_There are 3 type roles node in our akka cluster:_ Gateway - Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:               
+_There are 3 type roles node in our akka cluster_ 
+
+_Gateway_   Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:               
             _Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)_
                  To deliver fault tolerance Hystrix has built in the following features:             
                   * Timeout for every request to an external system             
@@ -20,11 +22,11 @@ _There are 3 type roles node in our akka cluster:_ Gateway - Group of machines t
                   for being available for further requests
              _Akka-Cluster for distributed cluster membership_                
   
-  _Crawlers_ Cluster subset for collect result from web
+_Crawlers_ Cluster subset for collect result from web
              Akka-Cluster for distributed cluster membership
              Deployed http route: http://{ip}:{port}/api/crawler
   
-  _Domain_  Loosely coupled command or query side microservice with sharded domain. 
+_Domain_  Loosely coupled command or query side microservice with sharded domain. 
             We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this.
             Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors. 
             One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal(Mongo in owr case) and updates own state.                                                      
