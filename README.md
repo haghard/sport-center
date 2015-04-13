@@ -10,14 +10,14 @@ Event Sourcing is about capturing sequence of event in journal. Each transaction
 There are 3 type roles node in our akka cluster 
 
 * Gateway:   Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:             
-             Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com). To deliver fault tolerance Hystrix has built in the following features:
-                * _Timeout for every request to an external system_             
-                * _Limit of concurrent requests for external system_             
-                * _Circuit breaker to avoid further requests_             
-                * _Retry of a single request after circuit breaker has triggered_             
-                * _Realtime aggregated dashboard for to retrieve runtime information on load_                                                                      
-             _Distributed CRDT based Distributed Service Registry_ for domain using [akka-data-replication](https://github.com/patriknw/akka-data-replication). Every cluster node (exclude Gateways) before start register itself in Service Registry for being available for further requests             
-             _Akka-Cluster for distributed cluster membership_                
+Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com). To deliver fault tolerance Hystrix has built in the following features:
+* _Timeout for every request to an external system_
+* _Limit of concurrent requests for external system_
+* _Circuit breaker to avoid further requests_
+* _Retry of a single request after circuit breaker has triggered_
+* _Realtime aggregated dashboard for to retrieve runtime information on load_
+_Distributed CRDT based Distributed Service Registry_ for domain using [akka-data-replication](https://github.com/patriknw/akka-data-replication). Every cluster node (exclude Gateways) before start register itself in Service Registry for being available for further requests
+_Akka-Cluster for distributed cluster membership_
   
 * Crawlers: Cluster nodes to collect result from web. Akka-Cluster for distributed cluster membership. Deployed http route: http://{ip}:{port}/api/crawler
   
