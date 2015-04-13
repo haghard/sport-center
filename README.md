@@ -1,18 +1,14 @@
 Sport Center
 ================
 SportCenter is a POC reactive applications based on microservices architecture 
-built on top of [Akka](akka.io) following a CQRS based approach.
+built on top of [Akka](akka.io) following a Event Sourcing CQRS based approach.
 
 
-### Reactive application, Microservice architecture what and why shortly ### 
+Event Sourcing is about capturing sequence of event 
+  Each transaction is being recorded     
+  State is recreated by replaying all the transactions/events
 
-
-Reactive applications apply different approach than monolithic ones. 
-Unstead of building an architecture based on a single box environment relies on threads and locks inside 
-and load balancers outside, reactive applications assume a distributed environment by default.
-
-In order to read more about Microservice architecture check out http://microservices.io/
-
+### Reactive application, Microservice architecture what and why shortly ###
 
 ### About the project ###
 
