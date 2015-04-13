@@ -14,7 +14,7 @@ import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
 
 object ResultsView {
 
-  implicit val strategy = Strategy.Executor(microservice.executor("results-materialized-view-executor", 2))
+  implicit val strategy = Strategy.Executor(microservice.executor("results-view-executor", 2))
 
   implicit object Ord extends Ordering[NbaResult] {
     override def compare(x: NbaResult, y: NbaResult): Int =
@@ -40,8 +40,7 @@ class ResultsView private (settings: CustomSettings) extends Actor with ActorLog
   private def subscriber(domainActorName: String): Process[Task, NbaResult] =
     persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
 
-  private val sink: Sink[Task, NbaResult] =
-    io.channel(result ⇒ Task.delay { self ! result })
+  private val sink: Sink[Task, NbaResult] = io.channel(result ⇒ Task.delay { self ! result })
 
   override def preStart =
     (merge.mergeN(emitAll(settings.teams) |> process1.lift(subscriber))

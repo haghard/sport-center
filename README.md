@@ -24,4 +24,4 @@ Domain node by itself could be 2 kind `Query-side-results` or `Query-side-standi
 * Query-side-results: `http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`
 * Query-side-standing: `http://{ip}:{port}/api/standings/{dt}`
 
-We can run as many as we want Query-side-results and Query-side-standing node for scalability
+We can run as many as we want `query-side-results` and `query-side-standing` processes for scalability reasons. Our query side completely based on memory, not on underlying db, since we use PersistentView concept. What interesting there is what we can stay responsive with lost up to n-1 one of every type node.  
