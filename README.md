@@ -20,10 +20,12 @@ timeout for every request to an external system, limit of concurrent requests fo
 * Domain:  Loosely coupled command or query side microservice with sharded domain. We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this. Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors.
 One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Mongo in own case) and updates own state.
 Domain node by itself could be 2 kind `Query-side-results` or `Query-side-standing`:
-_`Query-side-results` node respond on results query like:_
-  _`http://{ip}:{port}/api/results/{dt}` - returns all results for defined date_
-  _`http://{ip}:{port}/api/results/{team}/last` - returns last default 5 results_
-_`Query-side-standing` node respond standing query:_
-  _http://{ip}:{port}/api/standings/{dt} - returns teams standing for defined date_
+
+* query-side-results node respond on results query like:
+  _`http://{ip}:{port}/api/results/{dt}`_ - returns all results for defined date
+  _`http://{ip}:{port}/api/results/{team}/last`_ - returns last default 5 results
+
+* query-side-standing node respond standing query:
+  _http://{ip}:{port}/api/standings/{dt}_ - returns teams standing for defined date
 
 We can run as many as we want Query-side-results and Query-side-standing node for scalability 
