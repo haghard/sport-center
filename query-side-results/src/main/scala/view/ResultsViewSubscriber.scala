@@ -12,7 +12,7 @@ import microservice.http.RestService.ResponseBody
 import microservice.settings.CustomSettings
 import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
 
-object ResultsView {
+object ResultsViewSubscriber {
 
   implicit val strategy = Strategy.Executor(microservice.executor("results-view-executor", 2))
 
@@ -24,26 +24,24 @@ object ResultsView {
   case class ResultsByDateBody(count: Int = 0, results: ArrayBuffer[NbaResult]) extends ResponseBody with State
   case class ResultsByTeamBody(count: Int = 0, results: List[NbaResult]) extends ResponseBody with State
 
-  def props(settings: CustomSettings) = Props(new ResultsView(settings))
+  def props(settings: CustomSettings) = Props(new ResultsViewSubscriber(settings))
 }
 
-class ResultsView private (settings: CustomSettings) extends Actor with ActorLogging {
-  import ResultsView._
-  import scalaz.stream._
-  import streamz.akka._
-  import scalaz.stream.Process._
+class ResultsViewSubscriber private (settings: CustomSettings) extends Actor with ActorLogging {
+  import ResultsViewSubscriber._
 
   private val formatter = microservice.crawler.searchFormatter()
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResult]]()
   private val viewByTeam = mutable.HashMap[String, mutable.SortedSet[NbaResult]]()
 
-  private def subscriber(domainActorName: String): Process[Task, NbaResult] =
-    persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
+  private def subscriber(domainActorName: String): scalaz.stream.Process[Task, NbaResult] =
+    streamz.akka.persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
 
-  private val sink: Sink[Task, NbaResult] = io.channel(result ⇒ Task.delay { self ! result })
+  private val sink: scalaz.stream.Sink[Task, NbaResult] =
+    scalaz.stream.io.channel(result ⇒ Task.delay { self ! result })
 
   override def preStart =
-    (merge.mergeN(emitAll(settings.teams) |> process1.lift(subscriber))
+    (scalaz.stream.merge.mergeN(scalaz.stream.Process.emitAll(settings.teams) |> scalaz.stream.process1.lift(subscriber))
       .to(sink)).run.runAsync(_ => ())
 
   override def receive: Receive = {

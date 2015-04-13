@@ -16,8 +16,8 @@ import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
 import spray.json._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
-import view.ResultsView
-import view.ResultsView.{ ResultsByTeamBody, ResultsByDateBody }
+import view.ResultsViewSubscriber
+import view.ResultsViewSubscriber.{ ResultsByTeamBody, ResultsByDateBody }
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
@@ -103,7 +103,7 @@ trait ResultsMicroservice extends RestWithDiscovery
   //import query.DomainFinder
   //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
 
-  private val view = system.actorOf(ResultsView.props(settings), "results-view")
+  private val view = system.actorOf(ResultsViewSubscriber.props(settings), "results-view")
 
   abstract override def configureApi() =
     super.configureApi() ~
@@ -117,7 +117,7 @@ trait ResultsMicroservice extends RestWithDiscovery
         withUri { uri ⇒
           complete {
             system.log.info(s"[$name] - incoming request $uri")
-            Thread.sleep(resultsByDateLatency.get)// for testing por
+            Thread.sleep(resultsByDateLatency.get) // for testing por
             //fail("fake error")
             Try {
               formatter parse date

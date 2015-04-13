@@ -49,10 +49,10 @@ lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
 /**
  *
  *  Project sbt commands
- *         nodes: lrouter1, lrouter2, lrouter3        http GET 192.168.0.143:2561/routes
- *         nodes: lresults1, lresults2, lresults3,    http GET 192.168.0.143:2561/api/results/2014-01-29 | http GET 192.168.0.143:2561/api/results/okc/last
- *         nodes: lstandings1 lstandings2 lstandings3 http GET 192.168.0.143:2561/api/standings/2015-01-28
- *         nodes: lcrawler1 lcrawler2 lcrawler3       http GET 192.168.0.143:2561/api/crawler
+ *         nodes: lgateway0, lgateway2, lgateway3     http GET 192.168.0.143:2561/routes
+ *         nodes: lresults0, lresults1, lresults2,    http GET 192.168.0.143:2561/api/results/2014-01-29 | http GET 192.168.0.143:2561/api/results/okc/last
+ *         nodes: lstandings0 lstandings1 lstandings2 http GET 192.168.0.143:2561/api/standings/2015-01-28
+ *         nodes: lcrawler0 lcrawler1 lcrawler2       http GET 192.168.0.143:2561/api/crawler
  */
 
  /**

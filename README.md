@@ -41,4 +41,6 @@ We can run as many as we want `query-side-results` and `query-side-standing` pro
 3. Run local gateway layer using `sbt lgateway0` and or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt
 4. Run local crawler `sbt lcrawler0`
 5. Run local query-side-results `sbt lresults0`
-6. Run local query-side-standing `sbt lstandings0`
+6. Run local query-side-standing `sbt lstandings0`. At least 3 node(1 crawler + 1 gateway + 1 results/standings) should be started to form cluster and begin crawling
+
+For testing we can use this: `http GET {ip}:2561/routes`, `http GET {ip}:2561/api/results/2013-01-29`, `http GET {ip}:2561/api/results/okc/last`, `http GET {ip}:2561/api/standings/2013-01-28`
