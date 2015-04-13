@@ -1,27 +1,26 @@
 Sport Center
 ================
-SportCenter is a POC reactive applications based on microservices architecture built on top of [Akka](akka.io) following a Event Sourcing CQRS based approach.
+SportCenter is a POC reactive applications based on microservices architecture built on top of [Akka](akka.io) following a Event Sourcing based approach.
 
-_Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
+### Reactive application, Event Sourcing, Microservice architecture what and why shortly ###
 
-### Reactive application, Microservice architecture what and why shortly ###
+Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
 
 ### About the project ###
 
 There are 3 type roles node in our akka cluster:
-  Gateway    Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found                 
-             _Each Gateway node provides following features:               
-              Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)
+  Gateway    Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:               
+             _Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)_
                  To deliver fault tolerance Hystrix has built in the following features:             
                   * Timeout for every request to an external system             
                   * Limit of concurrent requests for external system             
                   * Circuit breaker to avoid further requests             
                   * Retry of a single request after circuit breaker has triggered             
                   * Realtime aggregated dashboard for to retrieve runtime information on load
-               Distributed CRDT based Distributed Service Registry for domain using [akka-data-replication](https://github.com/patriknw/akka-data-replication)
+             _Distributed CRDT based Distributed Service Registry for domain using [akka-data-replication](https://github.com/patriknw/akka-data-replication)_
                   Every cluster node (exclude Gateways) before start register itself in Service Registry 
                   for being available for further requests
-               Akka-Cluster for distributed cluster membership                
+             _Akka-Cluster for distributed cluster membership_                
   
   Crawlers   Cluster subset for collect result from web
              Akka-Cluster for distributed cluster membership
