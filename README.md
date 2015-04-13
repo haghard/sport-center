@@ -7,8 +7,7 @@ SportCenter is a POC reactive applications based on microservices architecture b
 Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
 
 ### About the project ###
-There are 3 type roles node in our akka cluster: 
-   _Gateway - Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:_               
+There are 3 type roles node in our akka cluster: _Gateway - Group of machines that links together 2 worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:_               
             _Fault tolerant request routing layer using [Hystrix]( http://hystrix.github.com)_
                  To deliver fault tolerance Hystrix has built in the following features:             
                   * Timeout for every request to an external system             
