@@ -44,16 +44,6 @@ class NbaChangeDataCaptureSubscriber private extends Actor with ActorLogging {
 
   override def preStart() = changeCapture ! GetLastChangeSetNumber
 
-  /*private def trackableType(event: Event[Any]): Boolean = {
-    event.isInstanceOf[CampaignBeingPersisted]
-  }
-  
-  private def startWith(updatesPoint: Long): (Event[Any] ⇒ Boolean) =
-    event ⇒ {
-      val ev = event.data.asInstanceOf[EventMessage]
-      ev.event.isInstanceOf[CampaignBeingPersisted] && event.sequenceNr >= updatesPoint
-    }*/
-
   private def streamWriter: scalaz.stream.Channel[Task, Event[Any], BatchPersisted] =
     io.channel { event ⇒
       Task async { cb ⇒

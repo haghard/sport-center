@@ -47,7 +47,7 @@ object Project {
       "-Xlint:deprecation"
     ),
     javaOptions ++= Seq(
-      "-Djava.library.path=./sigar",
+      "-Djava.library.path=./sigar",  //not used
       "-Xms226m",
       "-Xmx756m"
     )
