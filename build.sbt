@@ -57,8 +57,8 @@ lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
 
  /**
   *
-  * cd /Volumes/Data/Code/Netflix/Hystrix/hystrix-dashboard
-  * ../gradlew jettyRun
+  * cd /Volumes/Data/Code/Netflix/Hystrix/
+  * ./gradlew jettyRun
   * http://localhost:7979/hystrix-dashboard
   *
   * To connect hystrix-dashboard to gateway-turbine use http://localhost:6500/turbine.stream
