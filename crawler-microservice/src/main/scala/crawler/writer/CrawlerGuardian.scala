@@ -1,15 +1,15 @@
 package crawler.writer
 
-import akka.pattern.ask
-import ddd.amod.{ EffectlessAck, Acknowledge }
-import domain.CrawlerCampaign
-import domain.CrawlerCampaign.{ InitCampaign, CrawlerTask, PersistCampaign, RequestCampaign }
-import crawler.CrawlerMaster
-import ddd.{ PassivationConfig, AggregateRootActorFactory, CustomShardResolution }
-import microservice.crawler._
-import microservice.settings.CustomSettings
 import akka.actor._
+import akka.pattern.ask
+import crawler.CrawlerMaster
+import microservice.crawler._
+import domain.CrawlerCampaign
 import org.joda.time.DateTime
+import microservice.settings.CustomSettings
+import ddd.amod.{ EffectlessAck, Acknowledge }
+import ddd.{ PassivationConfig, AggregateRootActorFactory, CustomShardResolution }
+import domain.CrawlerCampaign.{ InitCampaign, CrawlerTask, PersistCampaign, RequestCampaign }
 
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
@@ -27,22 +27,21 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
   import ddd.LocalShard._
   import CrawlerGuardian._
 
-  private val crawlDaysAtOnce = 7
+  implicit val sys = context.system
+
+  private val crawlDaysAtOnce = settings.crawler.daysInBatch // 7
+  private val iterationInterval = settings.crawler.iterationPeriod //1 hours
+  private val jobMaxLatency = settings.crawler.jobTimeout //60 seconds
+
   private val formatter = searchFormatter()
 
-  private val iterationInterval = 1 hours
-  private val jobTimeout = 60 seconds
-
   private val crawlerMaster = context.actorOf(CrawlerMaster.props(settings), "crawler-master")
-  //private val campaignAggregate = context.actorOf(CrawlCampaignAggregate.props(crawlDaysAtOnce), "crawl-campaign")
 
   implicit object ShardResolution extends CustomShardResolution[CrawlerCampaign]
   implicit object agFactory extends AggregateRootActorFactory[CrawlerCampaign] {
     override def inactivityTimeout: Duration = 10.minute
     override def props(pc: PassivationConfig) = Props(new CrawlerCampaign(pc))
   }
-
-  implicit val sys = context.system
 
   private val campaignDomain: ActorRef = shardOf[CrawlerCampaign]
 
@@ -66,7 +65,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
 
     case CrawlerTask(Some(job)) ⇒
       log.info("Schedule crawler job up to {} date", formatter format job.endDt.toDate)
-      context setReceiveTimeout jobTimeout
+      context setReceiveTimeout jobMaxLatency
       crawlerMaster ! job
       context become waitForCrawler
   }
@@ -81,9 +80,6 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
       campaignDomain
         .ask(PersistCampaign(dt, results))
         .mapTo[ddd.amod.Acknowledge]
-        //campaignAggregate
-        //.ask(SaveCompletedBatch(dt, results))
-        //.mapTo[BatchSavedConfirm]
         .onComplete {
           case Success(c) ⇒
             log.info("ChangeSet was persisted")
@@ -91,7 +87,6 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
           case Failure(error) ⇒
             log.info("ChangeSet save error {}", error.getMessage)
             context become receive
-            //context.system.scheduler.scheduleOnce(iterationInterval)(campaignAggregate ! ProgressCampaign)
             context.system.scheduler.scheduleOnce(iterationInterval)(campaignDomain ! RequestCampaign(crawlDaysAtOnce))
         }
   }

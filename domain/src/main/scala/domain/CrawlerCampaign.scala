@@ -1,13 +1,12 @@
 package domain
 
-import java.util.Date
-
-import com.github.nscala_time.time.Imports._
 import ddd._
-import domain.CrawlerCampaign.CampaignState
+import java.util.Date
 import microservice.crawler._
-import microservice.domain.DomainEvent
 import org.joda.time.DateTime
+import microservice.domain.DomainEvent
+import domain.CrawlerCampaign.CampaignState
+import com.github.nscala_time.time.Imports._
 
 import scala.annotation.tailrec
 import scala.collection.immutable

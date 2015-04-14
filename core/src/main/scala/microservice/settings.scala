@@ -1,8 +1,11 @@
 package microservice
 
 import akka.actor._
+import java.util.concurrent.TimeUnit
 import com.github.nscala_time.time.Imports._
 import org.joda.time.{ DateTime, DateTimeZone }
+
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 object settings {
 
@@ -19,13 +22,11 @@ object settings {
     def originalPath = s"/user/$name/$singletonName"
   }
 
-  case class ItemPaths(proxyName: String, singletonName: String, name: String) extends SingletonPaths
-
-  case class Paths(crawlerPaths: ItemPaths, tweeterPaths: ItemPaths, updaterPaths: ItemPaths)
-
   case class BrokerPorts(senderPort: Int, receiverPort: Int)
-
-  case class Twitter(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)
+  case class CrawlerSettings(daysInBatch: Int, iterationPeriod: FiniteDuration, jobTimeout: FiniteDuration)
+  case class Paths(crawlerPaths: ItemPaths, tweeterPaths: ItemPaths, updaterPaths: ItemPaths)
+  case class ItemPaths(proxyName: String, singletonName: String, name: String) extends SingletonPaths
+  case class TwitterAuth(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)
 
   object CustomSettings extends ExtensionKey[CustomSettings]
 
@@ -52,8 +53,7 @@ object settings {
         acc
       }
 
-    val journalUrl =
-      system.settings.config.getString("casbah-journal.mongo-journal-url")
+    val journalUrl = system.settings.config.getString("casbah-journal.mongo-journal-url")
 
     val stages = system.settings.config
       .getConfig("app-settings")
@@ -66,6 +66,13 @@ object settings {
         }
         acc
       }
+
+    lazy val crawler = {
+      val cfg = system.settings.config.getConfig("app-settings")
+      CrawlerSettings(cfg.getInt("crawler.days-in-batch"),
+        FiniteDuration(cfg.getDuration("crawler.iteration-period", TimeUnit.HOURS), TimeUnit.HOURS),
+        FiniteDuration(cfg.getDuration("crawler.job-timeout", TimeUnit.SECONDS), TimeUnit.SECONDS))
+    }
 
     val intervals = {
       var views0 = scala.collection.mutable.LinkedHashMap[Interval, String]()
@@ -91,7 +98,7 @@ object settings {
 
     lazy val twitterCreds = {
       val config = system.settings.config
-      Twitter(config.getString("API-Key"), config.getString("API-Secret"),
+      TwitterAuth(config.getString("API-Key"), config.getString("API-Secret"),
         config.getString("Access-Token"), config.getString("Access-Token-Secret"))
     }
 
@@ -106,12 +113,8 @@ object settings {
         acc
       }
 
-    val broker = {
-      val broker = system.settings.config.getConfig("broker")
-      BrokerPorts(broker.getInt("sender-port"), broker.getInt("receiver-port"))
-    }*/
 
-    /*val clusterSingletons = {
+    val clusterSingletons = {
       val paths = system.settings.config.getConfig("singletons")
       val crawlerPaths = paths.getConfig("crawler")
       val tweeterPaths = paths.getConfig("twitter")
