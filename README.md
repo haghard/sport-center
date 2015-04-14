@@ -29,16 +29,16 @@ timeout for every request to an external system, limit of concurrent requests fo
   
 * Domain:  Loosely coupled command or query side microservice with sharded domain. We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this. Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors.
 One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Mongo in own case) and updates own state.
-Domain node by itself could be 2 kinds **query-side-results** with routes [`http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`] and **query-side-standing** `http://{ip}:{port}/api/standings/{dt}`
-
-Our query side completely based on memory, not on underlying db, since we use `PersistentView` concept. What interesting there is what we can stay responsive with lost up to n-1 one of every type `Query-side-nnn` node.
+Domain node by itself could be 2 kinds **query-side-results** with routes [`http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`] and **query-side-standing** `http://{ip}:{port}/api/standings/{dt}`. They are both processes that can serve read queries. If gateway layer ran we can start and stop as many as we want **query-side-results** and **query-side-standing** processes to increase read throughput. We assume that our materialized views is so small that each machine can hold a copy of it in memory. This allows query side to be completely based on memory, and don't perform any request to the underlying db. We use `PersistentView` concept that acts like a streamer for persisted events. What interesting there is what we can stay responsive with lost up to n-1 one of every type `Query-side-nnn` node.
 
 ### How to run ###
 
 
 1. Install and run mongo.
 2. Modify file **application.conf** `casbah-journal.mongo-journal-url`, `casbah-snapshot-store.mongo-snapshot-url` with your own.
-3. Run local gateway layer using `sbt lgateway0` and or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt. Since gateway layer is running we can start and stop as many as we want **query-side-results** and **query-side-standing** processes  
+3. Run local gateway layer using `sbt lgateway0` and or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt. 
+                                                                                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                                     
 4. Run local crawler `sbt lcrawler0`
 5. Run local query-side-results `sbt lresults0`
 6. Run local query-side-standing `sbt lstandings0`. At least 3 node(1 crawler + 1 gateway + 1 results/standings) should be started to form cluster and begin crawling
