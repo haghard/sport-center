@@ -30,15 +30,20 @@ timeout for every request to an external system, limit of concurrent requests fo
 `Gateway-turbine` aggregate data from Gateway nodes into a single stream of metrics, which in turn streams the aggregated data to the browser for display in the UI.
 
 `Akka-Cluster` for distributed cluster membership
-  
+
+Fault tolerance aspect: Gateway process guarantees progress with lose up to n-1 `Gateway` node
+
 ### Crawler ###
 
 Cluster nodes to collect result from web. We use `RoundRobinPool` to scale crawler process to multiple machine and `Akka-Cluster` for distributed cluster membership. This processes deploy http route: `http://{ip}:{port}/api/crawler`
+Fault tolerance aspect: Crawling process guarantees progress with lose up to n-1 `Crawler` node 
   
 ### Http Microservice Node/Domain ###  
 Loosely coupled command or query side microservice with sharded domain. We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this. Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors.
 One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Mongo in own case) and updates own state.
 Domain node by itself could be 2 kinds **query-side-results** with routes [`http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`] and **query-side-standing** `http://{ip}:{port}/api/standings/{dt}`. They are both processes that can serve read queries. If gateway layer ran we can start and stop as many as we want **query-side-results** and **query-side-standing** processes to increase read throughput. We assume that our materialized views is so small that each machine can hold a copy of it in memory. This allows query side to be completely based on memory, and don't perform any request to the underlying db. We use `PersistentView` concept that acts like a streamer for persisted events. What interesting there is what we can stay responsive with lost up to n-1 one of every type `Query-side-nnn` node.
+Fault tolerance aspect: **query-side-standing** and **query-side-results** processes guarantee progress with lose up to n-1 node for each
+
 
 ### How to run ###
 1. Install and run mongo.

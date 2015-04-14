@@ -29,9 +29,9 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
 
   implicit val sys = context.system
 
-  private val crawlDaysAtOnce = settings.crawler.daysInBatch // 7
-  private val iterationInterval = settings.crawler.iterationPeriod //1 hours
-  private val jobMaxLatency = settings.crawler.jobTimeout //60 seconds
+  private val daysInBatch = settings.crawler.daysInBatch //default 7
+  private val iterationPeriod = settings.crawler.iterationPeriod //default 1 hours
+  private val jobTimeout = settings.crawler.jobTimeout //default 60 seconds
 
   private val formatter = searchFormatter()
 
@@ -48,24 +48,25 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
   implicit val timeout = akka.util.Timeout(10 seconds)
   implicit val ec = context.system.dispatchers.lookup("scheduler-dispatcher")
 
-  override def preStart = campaignDomain ! InitCampaign(startDate.toDate)
+  override def preStart =
+    campaignDomain ! InitCampaign(startDate.toDate)
 
   private def scheduleCampaign = {
-    campaignDomain ! RequestCampaign(crawlDaysAtOnce)
+    context.system.scheduler.scheduleOnce(10 seconds)(campaignDomain ! RequestCampaign(daysInBatch))
     context become receive
   }
 
   override def receive: Receive = {
     case Acknowledge(Success("OK")) | EffectlessAck(Success("OK")) =>
-      campaignDomain ! RequestCampaign(crawlDaysAtOnce)
+      campaignDomain ! RequestCampaign(daysInBatch)
 
     case CrawlerTask(None) ⇒
-      context.system.scheduler.scheduleOnce(iterationInterval)(campaignDomain ! RequestCampaign(crawlDaysAtOnce))
+      context.system.scheduler.scheduleOnce(iterationPeriod)(campaignDomain ! RequestCampaign(daysInBatch))
       log.info("Prevent useless crawler iteration. Data is up to date")
 
     case CrawlerTask(Some(job)) ⇒
       log.info("Schedule crawler job up to {} date", formatter format job.endDt.toDate)
-      context setReceiveTimeout jobMaxLatency
+      context setReceiveTimeout jobTimeout
       crawlerMaster ! job
       context become waitForCrawler
   }
@@ -87,7 +88,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
           case Failure(error) ⇒
             log.info("ChangeSet save error {}", error.getMessage)
             context become receive
-            context.system.scheduler.scheduleOnce(iterationInterval)(campaignDomain ! RequestCampaign(crawlDaysAtOnce))
+            context.system.scheduler.scheduleOnce(iterationPeriod)(campaignDomain ! RequestCampaign(daysInBatch))
         }
   }
 }

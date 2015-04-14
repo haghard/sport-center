@@ -1,9 +1,9 @@
 package ddd
 
 import akka.actor._
-import akka.contrib.pattern.ShardRegion.Passivate
-import scala.collection.immutable
 import scala.reflect.ClassTag
+import scala.collection.immutable
+import akka.contrib.pattern.ShardRegion.Passivate
 
 object LocalShard {
 
@@ -56,8 +56,7 @@ object LocalShard {
   }
 
   final class LocalShardGuardian[A <: BusinessEntity](implicit ct: ClassTag[A],
-    resolution: IdResolution[A], childFactory: BusinessEntityActorFactory[A])
-      extends /*LocalMapChildCreationSupport*/ AkkaActorsChildCreationSupport
+    resolution: IdResolution[A], childFactory: BusinessEntityActorFactory[A]) extends AkkaActorsChildCreationSupport
       with Actor with ActorLogging {
 
     override def aroundReceive(receive: Receive, msg: Any): Unit = {

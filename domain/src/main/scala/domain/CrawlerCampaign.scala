@@ -69,7 +69,7 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
 
     case RequestCampaign(size, _) =>
       if (initialized) {
-        onNext(size)
+        collectBatch(size)
       } else {
         replyTo ! CampaignInitializationError("Campaign needs to be initialized first")
       }
@@ -87,7 +87,7 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
       }
   }
 
-  private def onNext(batchSize: Int) = {
+  private def collectBatch(batchSize: Int) = {
     val localBatchSize = batchSize
     val lastCrawlDate = new DateTime(state.progressDate.get).withZone(SCENTER_TIME_ZONE)
     val crawlLimitDate = new DateTime().withZone(SCENTER_TIME_ZONE) - timeOffset
