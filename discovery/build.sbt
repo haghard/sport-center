@@ -9,7 +9,7 @@ scalaVersion := Scala
 
 scalariformSettings
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
+//net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(AlignSingleLineCaseStatements, true)
@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
   akka.multi_node_testkit,
   scalatest
 )
+/*
 
 Project.settings ++ SbtMultiJvm.multiJvmSettings ++ Seq(
   compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
@@ -39,4 +40,4 @@ Project.settings ++ SbtMultiJvm.multiJvmSettings ++ Seq(
         testResults.events ++ multiNodeResults.events,
         testResults.summaries ++ multiNodeResults.summaries)
   }
-)
+)*/

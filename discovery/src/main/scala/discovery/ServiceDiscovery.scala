@@ -91,10 +91,10 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
       .ask(update(map ⇒ ++(map, op.key)))(writeTimeout)
       .mapTo[UpdateResponse]
       .map {
-        case r@Replicator.UpdateSuccess(DataKey, _) ⇒ \/-(Update(r))
-        case response ⇒ -\/(s"SetKey op unexpected response $response")
+        case r @ Replicator.UpdateSuccess(DataKey, _) ⇒ \/-(Update(r))
+        case response                                 ⇒ -\/(s"SetKey op unexpected response $response")
       }.recoverWith {
-        case ex: ClassCastException ⇒ Future.successful(-\/(s"SetKey op error ${ex.getMessage}"))
+        case ex: ClassCastException  ⇒ Future.successful(-\/(s"SetKey op error ${ex.getMessage}"))
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"SetKey op error timeout ${ex.getMessage}"))
       }
 

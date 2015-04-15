@@ -51,7 +51,7 @@ Flow consist of several sequentual stages:
 
 
 ### How to run ###
-1. Install and run mongo.
+1. Install and run [MongoDB](http://mongodb.com). With docker you can do very simple `docker run -p 27017:27017 -it mongo:3.0.1`
 2. Modify file **application.conf** `casbah-journal.mongo-journal-url`, `casbah-snapshot-store.mongo-snapshot-url` with your own.
 3. Run local gateway layer using `sbt lgateway0` first and/or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt. 
 4. Run local crawler `sbt lcrawler0`
@@ -71,6 +71,9 @@ Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
 To connect hystrix-dashboard to `Gateway-turbine` use http://{ip}:6500/turbine.stream in hystrix-dashboard UI. 
 
 For testing we can use this:
+
+### Command line HTTP client ###
+  [Httpie](http://httpie.org/)
 
   `http GET {ip}:2561/routes`,
   

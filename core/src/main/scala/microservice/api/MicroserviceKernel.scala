@@ -1,10 +1,10 @@
 package microservice.api
 
 import akka.actor.ActorSystem
-import java.net.NetworkInterface
+import java.net.{ InetAddress, InetSocketAddress, NetworkInterface }
+import scala.collection.JavaConverters._
 import microservice.http.BootableRestService
 import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
-import scala.collection.JavaConverters._
 
 object MicroserviceKernel {
   val ActorSystemName = "SportCenter"
@@ -28,14 +28,16 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     with BootableRestService {
   import microservice.api.MicroserviceKernel._
 
-  override lazy val localAddress = NetworkInterface.getNetworkInterfaces.asScala.flatMap { x ⇒
-    x.getInetAddresses.asScala.find(x ⇒
-      seedAddresses.find(y ⇒ y.getHostAddress == x.getHostAddress).isDefined)
-  }.toList.headOption.map(_.getHostAddress).getOrElse {
-    NetworkInterface.getNetworkInterfaces.asScala.toList
-      .find(x ⇒ x.getName == ethName)
-      .flatMap(x ⇒ x.getInetAddresses.asScala.toList.find(_.getHostAddress.matches(ipExpression)))
-      .map(_.getHostAddress).getOrElse("0.0.0.0")
+  override lazy val localAddress = {
+    NetworkInterface.getNetworkInterfaces.asScala.flatMap { x ⇒
+      x.getInetAddresses.asScala.find(x ⇒
+        seedAddresses.find(y ⇒ y.getHostAddress == x.getHostAddress).isDefined)
+    }.toList.headOption.map(_.getHostAddress).getOrElse {
+      NetworkInterface.getNetworkInterfaces.asScala.toList
+        .find(x ⇒ x.getName == ethName)
+        .flatMap(x ⇒ x.getInetAddresses.asScala.toList.find(_.getHostAddress.matches(ipExpression)))
+        .map(_.getHostAddress).getOrElse("0.0.0.0")
+    }
   }
 
   override lazy val system = ActorSystem(ActorSystemName, config)
@@ -43,6 +45,13 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   private lazy val restApi = configureApi()
 
   def config = {
+    val env = ConfigFactory.load("env.conf")
+    val mongoHost = env.getConfig("env.mongo").getString("mh")
+    val mongoPort = env.getConfig("env.mongo").getString("mp")
+    println(env.getConfig("env"))
+
+    //val localAddress0 = new InetSocketAddress(env.getConfig("env").getString("hostIp"), 2551).getAddress.getHostAddress
+
     val local = ConfigFactory.empty()
       .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(akkaSeedNodes))
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
@@ -50,13 +59,14 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
       .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
+      .withFallback(ConfigFactory.parseString(s"""casbah-journal.mongo-journal-url="mongodb://$mongoHost:$mongoPort/sportcenter.journal""""))
+      .withFallback(ConfigFactory.parseString(s"""casbah-snapshot-store.mongo-snapshot-url="mongodb://$mongoHost:$mongoPort/sportcenter.snapshot""""))
       .withFallback(ConfigFactory.load("application.conf"))
       .withFallback(ConfigFactory.load("app-setting.conf"))
       .withFallback(ConfigFactory.load("crawler.conf"))
 
-    if (clusterRole == DomainRole) {
+    if (clusterRole == DomainRole)
       local.withFallback(ConfigFactory.parseString(s"akka.contrib.cluster.sharding.role=${clusterRole}"))
-    }
 
     local
   }
@@ -64,17 +74,16 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   override def startup(): Unit = {
     system
 
-    val message = new StringBuilder()
-      .append('\n')
+    val message = new StringBuilder().append('\n')
       .append("=====================================================================================================================================")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★   Cluster environment: $environment - Akka-System: $localAddress:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: $localAddress:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★   Seed nodes: ${config.getStringList("akka.cluster.seed-nodes")} ")
-      .append("★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Mongo-Journal: ${system.settings.config.getString("casbah-journal.mongo-journal-url")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★   Node cluster role: $clusterRole / JMX port: $jmxPort ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Seed nodes: ${system.settings.config.getStringList("akka.cluster.seed-nodes")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
+      .append(s"★ ★ ★ ★ ★ ★  Node cluster role: $clusterRole / JMX port: $jmxPort  ★ ★ ★ ★ ★ ★").append('\n')
       .append("=====================================================================================================================================")
       .append('\n')
       .toString

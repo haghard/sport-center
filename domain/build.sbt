@@ -2,7 +2,6 @@ import Dependencies._
 
 import scalariform.formatter.preferences._
 
-import com.typesafe.sbt.SbtGit._
 
 name := "domain"
 

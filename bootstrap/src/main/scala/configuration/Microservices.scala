@@ -69,7 +69,7 @@ object Microservices extends Microservices {
   implicit object LocalRouter extends LocalClusterNode[RouterCfg] {
     override def create(desc: RouterCfg) = {
       object LocalRouterNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort,
-        desc.jmxPort, MicroserviceKernel.GatewayRole, LocalEth)
+        desc.jmxPort, MicroserviceKernel.GatewayRole, CloudEth)
         with LocalSeedNodesClient
         with ApiGatewayMicroservice
         with HystrixTurbineSupport

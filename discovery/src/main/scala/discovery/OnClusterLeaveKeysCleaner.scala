@@ -18,7 +18,7 @@ trait OnClusterLeaveKeysCleaner extends ClusterMembershipAware {
 
   implicit val t = Timeout(3.seconds)
   implicit val ex = context.system.dispatchers.lookup("scheduler-dispatcher")
-  
+
   abstract override def receiveMemberRemoved(m: Member): Unit = {
     super.receiveMemberRemoved(m)
 

@@ -24,8 +24,8 @@ object MongoMockSpec {
       }
     }
 
-    casbah-journal.mongo-journal-url = "mongodb://localhost:$port/store.messages"
-    casbah-snapshot-store.mongo-snapshot-url = "mongodb://localhost:$port/store.snapshots"
+    casbah-journal.mongo-journal-url = "mongodb://localhost:$port/store0.messages"
+    casbah-snapshot-store.mongo-snapshot-url = "mongodb://localhost:$port/store0.snapshots"
     casbah-journal.mongo-journal-write-concern = "acknowledged"
     casbah-journal.mongo-journal-write-concern-timeout = 5000
   """)

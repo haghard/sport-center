@@ -5,7 +5,7 @@ import akka.http.model.{ StatusCode, StatusCodes }
 import akka.pattern.{ AskTimeoutException, ask }
 import microservice.ClusterMonitor
 import microservice.ClusterMonitor.GetNodes
-import microservice.api.{MicroserviceKernel, BootableMicroservice}
+import microservice.api.{ MicroserviceKernel, BootableMicroservice }
 import microservice.http.RestWithDiscovery
 
 import scala.concurrent.duration._
