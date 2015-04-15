@@ -15,7 +15,8 @@ object Dependencies {
 
     //val persistence_cassandra = "com.github.krasserm" %% "akka-persistence-cassandra"    % "0.3.4" intransitive()
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
-    val persistence_mongo     = "com.github.ironfish"     %%    "akka-persistence-mongo-casbah" % "0.7.6" withSources()
+    //val persistence_mongo     = "com.github.ironfish"     %%    "akka-persistence-mongo-casbah" % "0.7.6" withSources()
+    val persistence_mongo     = "com.github.ironfish"   %% "akka-persistence-mongo-casbah"  % "0.7.5" % "compile"
 
     val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication
     
