@@ -4,8 +4,9 @@ import sbt._
 
 object Project {
 
-  val localMvnRepo = "/Volumes/Data/dev_build_tools/apache-maven-3.1.1/repository"
+  val localMvnRepo = "~/.m2/repository"
   val ivy = "~/.ivy2/local/"
+  //"/Volumes/Data/dev_build_tools/apache-maven-3.1.1/repository"
 
   val settings = Defaults.defaultConfigs ++ Seq(
     name := "scenter",
