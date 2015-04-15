@@ -21,7 +21,7 @@ object Dependencies {
     val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication
     
     object streams {
-      val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"    % "0.2"              withSources()
+      val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"    % "0.3-SNAPSHOT"    withSources()
       val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"    % AkkaStreamsVersion withSources()
       val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"      % AkkaStreamsVersion withSources()
       val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental" % AkkaStreamsVersion withSources()
