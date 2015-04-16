@@ -6,7 +6,7 @@ trait SystemPropsSupport {
 
   private val opt = """--(\S+)=(\S+)""".r
 
-  implicit def funcToRunnable(f: () ⇒ Unit) = new Runnable {
+  protected implicit def funcToRunnable(f: () ⇒ Unit) = new Runnable {
     override def run() = f()
   }
 
@@ -15,7 +15,7 @@ trait SystemPropsSupport {
 
   def applySystemProperties(args: Array[String]) = {
     for ((key, value) ← argsToProps(args)) {
-      println(s"Env property: $key - $value")
+      println(s"ENV_PROP: $key - $value")
       System.setProperty(key, value)
     }
   }

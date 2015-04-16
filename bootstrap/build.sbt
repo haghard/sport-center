@@ -24,10 +24,10 @@ val clusterNodeType = settingKey[String]("Type of node that we gonna build")
 
 val mainJarClass = settingKey[String]("Main class to run")
 
-clusterNodeType := "gateway"
-
-mainJarClass := "configuration.GatewayBootstrap"
-
+clusterNodeType := "crawler"
+//gateway
+mainJarClass := "configuration.BootstrapCrawler"
+//GatewayBootstrap
 assemblyJarName in assembly := "scenter-" + clusterNodeType.value + ".jar"
 
 assemblyMergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
