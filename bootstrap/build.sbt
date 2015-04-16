@@ -22,9 +22,9 @@ enablePlugins(DockerPlugin)
 
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
 
-clusterNodeType := "gateway"
-
 val mainJarClass = settingKey[String]("Main class to run")
+
+clusterNodeType := "gateway"
 
 mainJarClass := "configuration.GatewayBootstrap"
 
