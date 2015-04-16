@@ -1,3 +1,4 @@
+/*
 package microservice.api
 
 import java.net.InetAddress
@@ -19,7 +20,7 @@ trait DigitaloceanClient extends SeedNodesSupport with SystemSettings {
 
   override lazy val seedAddresses = DigitaloceanClient(settings.cloudToken)(system)
 
-  override lazy val akkaSeedNodes =
+  lazy val akkaSeedNodes =
     seedAddresses.map(s ⇒ s"akka.tcp://${ActorSystemName}@${s.getHostAddress}:${akkaSystemPort}") //.asJava
 }
 
@@ -97,4 +98,4 @@ object DigitaloceanClient {
       }.getOrElse(-\/("json parsing error"))
     }
   }
-}
+}*/

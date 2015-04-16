@@ -1,10 +1,8 @@
 package microservice.api
 
 import akka.actor.ActorSystem
-import java.net.NetworkInterface
-import scala.collection.JavaConverters._
-import microservice.http.BootableRestService
 import com.typesafe.config.ConfigFactory
+import microservice.http.BootableRestService
 
 object MicroserviceKernel {
   val ActorSystemName = "SportCenter"
@@ -21,44 +19,43 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   override val httpPort: Int = BootableClusterNode.DefaultCloudHttpPort,
   override val jmxPort: Int = BootableClusterNode.DefaultJmxPort,
   override val clusterRole: String = MicroserviceKernel.DomainRole,
-  override val ethName: String = BootableClusterNode.CloudEth)
-    extends BootableMicroservice
+  override val ethName: String = BootableClusterNode.CloudEth) extends BootableMicroservice
     with ClusterNetworkSupport
     with SeedNodesSupport
     with BootableRestService {
   import microservice.api.MicroserviceKernel._
 
   override lazy val localAddress =
-    NetworkInterface.getNetworkInterfaces.asScala.flatMap { x ⇒
-      x.getInetAddresses.asScala.find(x ⇒
-        seedAddresses.find(y ⇒ y.getHostAddress == x.getHostAddress).isDefined)
-    }.toList.headOption.map(_.getHostAddress).getOrElse {
-      NetworkInterface.getNetworkInterfaces.asScala.toList
-        .find(x ⇒ x.getName == ethName)
-        .flatMap(x ⇒ x.getInetAddresses.asScala.toList.find(_.getHostAddress.matches(ipExpression)))
-        .map(_.getHostAddress).getOrElse("0.0.0.0")
-    }
+    seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
   override lazy val system = ActorSystem(ActorSystemName, config)
 
   private lazy val restApi = configureApi()
 
-  private def config = {
-    val env = ConfigFactory.load("env.conf")
-    val mongoHost = env.getConfig("env.mongo").getString("mh")
-    val mongoPort = env.getConfig("env.mongo").getString("mp")
+  def config = {
+    val env = ConfigFactory.load("env.conf").getConfig("env.mongo")
+    val mongoHost = env.getString("mh")
+    val mongoPort = env.getString("mp")
 
-    val seedNodesString = akkaSeedNodes.map { node =>
-      s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@$node:$akkaSystemPort""""
+    val akkaSeeds = if (clusterRole == GatewayRole) {
+      Option(System.getProperty("SEED_NODE")).map(line => line.split(",").toList)
+        .fold(List(s"$localAddress:$akkaSystemPort"))(s"$localAddress:$akkaSystemPort" :: _)
+    } else {
+      Option(System.getProperty("SEED_NODE")).fold(throw new Exception("SEED_NODE env valuable should be defined"))(x =>
+        x.split(",").toList)
+    }
+
+    val seedNodesString = akkaSeeds.map{ node =>
+      val ap = node.split(":")
+      s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@${ap(0)}:${ap(1)}""""
     }.mkString("\n")
 
+    println("AkkaSeeds:" + akkaSeeds)
+    println(seedNodesString)
+
     val seeds = (ConfigFactory parseString seedNodesString).resolve()
-    println(seeds)
 
-    //ConfigFactory.empty().withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(akkaSeedNodes))
-
-    val local = ConfigFactory.empty()
-      .withFallback(seeds)
+    val local = ConfigFactory.empty().withFallback(seeds)
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$localAddress"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))

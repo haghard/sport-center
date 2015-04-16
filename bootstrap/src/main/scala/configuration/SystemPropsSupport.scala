@@ -4,7 +4,7 @@ import scala.collection._
 
 trait SystemPropsSupport {
 
-  private val opt = """(\S+)=(\S+)""".r
+  private val opt = """--(\S+)=(\S+)""".r
 
   implicit def funcToRunnable(f: () ⇒ Unit) = new Runnable {
     override def run() = f()

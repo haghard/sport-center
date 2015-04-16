@@ -57,12 +57,12 @@ dockerfile in docker := {
     add(jarFile, jarTargetPath)
     workDir(appDirPath)
     runRaw("ifconfig")
+    cmd("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }")
     //expose(2551, 2561)
-    entryPoint("java", "-jar", jarTargetPath, "2551", "HTTP_PORT=2561")
-    //entryPoint("sh", "-c", "CLUSTER_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }'` bin/clustering $*")
     //entryPoint("sh", "-c", "export=HOST_IP0=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }')")
     maintainer("Haghard")
     env("MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017")
+    entryPoint("java", "-jar", jarTargetPath)
   }
 }
 
