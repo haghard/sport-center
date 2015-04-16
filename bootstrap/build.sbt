@@ -3,10 +3,6 @@ import sbt._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.typesafe.sbt.SbtScalariform._
 import sbtdocker.ImageName
-
-//import sbtassembly.Plugin.AssemblyKeys._
-//import sbtassembly.Plugin.MergeStrategy
-
 import scalariform.formatter.preferences._
 
 organization := "github.com"
@@ -24,14 +20,11 @@ scalaVersion := Scala
 
 enablePlugins(DockerPlugin)
 
-
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
-//clusterNodeType := "gateway"
-clusterNodeType := "crawler"
+clusterNodeType := "gateway"
 
 val mainJarClass = settingKey[String]("Main class to run")
-//mainJarClass := "configuration.GatewayBootstrap"
-mainJarClass := "configuration.BootstrapCrawler"
+mainJarClass := "configuration.GatewayBootstrap"
 
 assemblyJarName in assembly := "scenter-" + clusterNodeType.value + ".jar"
 
