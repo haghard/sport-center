@@ -21,9 +21,11 @@ scalaVersion := Scala
 enablePlugins(DockerPlugin)
 
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
+
 clusterNodeType := "gateway"
 
 val mainJarClass = settingKey[String]("Main class to run")
+
 mainJarClass := "configuration.GatewayBootstrap"
 
 assemblyJarName in assembly := "scenter-" + clusterNodeType.value + ".jar"
