@@ -63,7 +63,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$localAddress"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
-      .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
+      .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 2"))
       .withFallback(ConfigFactory.parseString(s"""casbah-journal.mongo-journal-url="mongodb://$mongoHost:$mongoPort/sportcenter.journal""""))
       .withFallback(ConfigFactory.parseString(s"""casbah-snapshot-store.mongo-snapshot-url="mongodb://$mongoHost:$mongoPort/sportcenter.snapshot""""))
       .withFallback(ConfigFactory.load("application.conf"))
