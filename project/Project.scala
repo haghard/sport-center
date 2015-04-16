@@ -33,7 +33,7 @@ object Project {
 
     scalacOptions ++= Seq(
       "-encoding", "UTF-8",
-      "-target:jvm-1.7",
+      "-target:jvm-1.8",
       "-deprecation",
       "-unchecked",
       "-Ywarn-dead-code",
@@ -42,8 +42,8 @@ object Project {
       "-language:postfixOps"
     ),
     javacOptions ++= Seq(
-      "-source", "1.7",
-      "-target", "1.7",
+      "-source", "1.6",
+      "-target", "1.8",
       "-Xlint:unchecked",
       "-Xlint:deprecation"
     ),

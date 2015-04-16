@@ -20,7 +20,7 @@ trait DigitaloceanClient extends SeedNodesSupport with SystemSettings {
   override lazy val seedAddresses = DigitaloceanClient(settings.cloudToken)(system)
 
   override lazy val akkaSeedNodes =
-    seedAddresses.map(s ⇒ s"akka.tcp://${ActorSystemName}@${s.getHostAddress}:${akkaSystemPort}").asJava
+    seedAddresses.map(s ⇒ s"akka.tcp://${ActorSystemName}@${s.getHostAddress}:${akkaSystemPort}") //.asJava
 }
 
 object DigitaloceanClient {

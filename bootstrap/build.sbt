@@ -53,21 +53,21 @@ dockerfile in docker := {
   val jarTargetPath = s"$appDirPath/${jarFile.name}"
 
   new Dockerfile {
-    from("dockerfile/java")
+    from("dockerfile/java:oracle-java8")
     add(jarFile, jarTargetPath)
     workDir(appDirPath)
-    //runRaw("ifconfig")
-    expose(2551, 2561)
-    entryPoint("java", "-jar", jarTargetPath, "2551", "-Dhttp.port=2561")
+    runRaw("ifconfig")
+    //expose(2551, 2561)
+    entryPoint("java", "-jar", jarTargetPath, "2551", "HTTP_PORT=2561")
     //entryPoint("sh", "-c", "CLUSTER_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }'` bin/clustering $*")
+    //entryPoint("sh", "-c", "export=HOST_IP0=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }')")
     maintainer("Haghard")
-    runRaw("""export HOST_IP=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }')""")
     env("MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017")
   }
 }
 
 imageNames in docker := Seq(
-  ImageName(namespace = Some("sport-center"), repository = "gateway1", tag = Some("v0.1")))
+  ImageName(namespace = Some("sport-center"), repository = "gateway", tag = Some("v0.1")))
   //ImageName("sport-center/gateway/v0.1"))
 //ImageName(namespace = Some("sport-center"), repository = "gateway", tag = Some("v0.1"))
 

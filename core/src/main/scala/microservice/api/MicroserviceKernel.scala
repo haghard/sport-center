@@ -1,10 +1,10 @@
 package microservice.api
 
 import akka.actor.ActorSystem
-import java.net.{ InetAddress, InetSocketAddress, NetworkInterface }
+import java.net.NetworkInterface
 import scala.collection.JavaConverters._
 import microservice.http.BootableRestService
-import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
+import com.typesafe.config.ConfigFactory
 
 object MicroserviceKernel {
   val ActorSystemName = "SportCenter"
@@ -28,7 +28,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     with BootableRestService {
   import microservice.api.MicroserviceKernel._
 
-  override lazy val localAddress = {
+  override lazy val localAddress =
     NetworkInterface.getNetworkInterfaces.asScala.flatMap { x ⇒
       x.getInetAddresses.asScala.find(x ⇒
         seedAddresses.find(y ⇒ y.getHostAddress == x.getHostAddress).isDefined)
@@ -38,22 +38,27 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
         .flatMap(x ⇒ x.getInetAddresses.asScala.toList.find(_.getHostAddress.matches(ipExpression)))
         .map(_.getHostAddress).getOrElse("0.0.0.0")
     }
-  }
 
   override lazy val system = ActorSystem(ActorSystemName, config)
 
   private lazy val restApi = configureApi()
 
-  def config = {
+  private def config = {
     val env = ConfigFactory.load("env.conf")
     val mongoHost = env.getConfig("env.mongo").getString("mh")
     val mongoPort = env.getConfig("env.mongo").getString("mp")
-    println(env.getConfig("env"))
 
-    //val localAddress0 = new InetSocketAddress(env.getConfig("env").getString("hostIp"), 2551).getAddress.getHostAddress
+    val seedNodesString = akkaSeedNodes.map { node =>
+      s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@$node:$akkaSystemPort""""
+    }.mkString("\n")
+
+    val seeds = (ConfigFactory parseString seedNodesString).resolve()
+    println(seeds)
+
+    //ConfigFactory.empty().withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(akkaSeedNodes))
 
     val local = ConfigFactory.empty()
-      .withValue("akka.cluster.seed-nodes", ConfigValueFactory.fromIterable(akkaSeedNodes))
+      .withFallback(seeds)
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$localAddress"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))

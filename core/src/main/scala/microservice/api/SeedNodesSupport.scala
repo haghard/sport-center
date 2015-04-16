@@ -6,6 +6,6 @@ trait SeedNodesSupport {
 
   def seedAddresses: List[InetAddress]
 
-  def akkaSeedNodes: java.util.List[String]
+  def akkaSeedNodes: List[String]
 }
 
