@@ -25,14 +25,13 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     with BootableRestService {
   import microservice.api.MicroserviceKernel._
 
-  override lazy val localAddress =
-    seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
+  private lazy val restApi = configureApi()
 
   override lazy val system = ActorSystem(ActorSystemName, config)
 
-  private lazy val restApi = configureApi()
+  override lazy val localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
-  def config = {
+  lazy val config = {
     val env = ConfigFactory.load("env.conf").getConfig("env.mongo")
     val mongoHost = env.getString("mh")
     val mongoPort = env.getString("mp")
