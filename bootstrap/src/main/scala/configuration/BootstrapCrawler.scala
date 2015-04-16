@@ -1,22 +1,20 @@
-package configuration.local
+package configuration
 
-import configuration.SystemPropsSupport
 
-object LocalCrawler extends SystemPropsSupport {
+object BootstrapCrawler extends SystemPropsSupport {
 
   def main(args: Array[String]) = {
-    implicit var akkaPort = "2551"
-    if (!args.isEmpty) {
+    if (!args.isEmpty)
       applySystemProperties(args)
-      akkaPort = args(0)
-    }
 
     import configuration.Microservices._
     import configuration.Microservices.local._
+    import GatewayBootstrap._
 
-    implicit val cfg = CrawlerCfg(akkaPort,
-      Option(System.getProperty("http.port").toInt).getOrElse(randomHttpPort),
-      randomJmxPort, "[Local]-Crawler")
+    implicit val cfg = CrawlerCfg(
+      Option(System.getProperty(configuration.AKKA_PORT)).getOrElse(defaultAkkaPort),
+      Option(System.getProperty(configuration.HTTP_PORT)).map(_.toInt).getOrElse(defaultHttpPort),
+      randomJmxPort, "Crawler")
 
     val node = microservice[CrawlerCfg]
     node.startup()

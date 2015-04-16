@@ -26,10 +26,12 @@ enablePlugins(DockerPlugin)
 
 
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
-clusterNodeType := "local-gateway"
+//clusterNodeType := "gateway"
+clusterNodeType := "crawler"
 
 val mainJarClass = settingKey[String]("Main class to run")
-mainJarClass := "configuration.local.LocalRouter"
+//mainJarClass := "configuration.GatewayBootstrap"
+mainJarClass := "configuration.BootstrapCrawler"
 
 assemblyJarName in assembly := "scenter-" + clusterNodeType.value + ".jar"
 
@@ -49,7 +51,7 @@ docker <<= (docker dependsOn sbtassembly.AssemblyKeys.assembly)
 
 dockerfile in docker := {
   val jarFile = (assemblyOutputPath in assembly).value
-  val appDirPath = "/services"
+  val appDirPath = "/sport-center"
   val jarTargetPath = s"$appDirPath/${jarFile.name}"
 
   new Dockerfile {
@@ -57,7 +59,7 @@ dockerfile in docker := {
     add(jarFile, jarTargetPath)
     workDir(appDirPath)
     runRaw("ifconfig")
-    cmd("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }")
+    //cmd("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }")
     //expose(2551, 2561)
     //entryPoint("sh", "-c", "export=HOST_IP0=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }')")
     maintainer("Haghard")
@@ -67,9 +69,8 @@ dockerfile in docker := {
 }
 
 imageNames in docker := Seq(
-  ImageName(namespace = Some("sport-center"), repository = "gateway", tag = Some("v0.1")))
-  //ImageName("sport-center/gateway/v0.1"))
-//ImageName(namespace = Some("sport-center"), repository = "gateway", tag = Some("v0.1"))
+  ImageName(namespace = Some("sport-center"), repository = clusterNodeType.value, tag = Some("v0.1")))
+  //ImageName(namespace = Some("sport-center"), repository = "gateway", tag = Some("v0.1"))
 
 buildOptions in docker := BuildOptions(cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,

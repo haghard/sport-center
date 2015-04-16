@@ -32,19 +32,19 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   override lazy val localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
   lazy val config = {
-    val env = ConfigFactory.load("env.conf").getConfig("env.mongo")
-    val mongoHost = env.getString("mh")
-    val mongoPort = env.getString("mp")
+    val env = ConfigFactory.load("env.conf")
+    val mongoHost = env.getConfig("env.mongo").getString("mh")
+    val mongoPort = env.getConfig("env.mongo").getString("mp")
 
     val akkaSeeds = if (clusterRole == GatewayRole) {
-      Option(System.getProperty("SEED_NODE")).map(line => line.split(",").toList)
+      Option(System.getProperty("SEED_NODES")).map(line => line.split(",").toList)
         .fold(List(s"$localAddress:$akkaSystemPort"))(s"$localAddress:$akkaSystemPort" :: _)
     } else {
-      Option(System.getProperty("SEED_NODE")).fold(throw new Exception("SEED_NODE env valuable should be defined"))(x =>
-        x.split(",").toList)
+      Option(System.getProperty("SEED_NODES"))
+        .fold(throw new Exception("SEED_NODES env valuable should be defined"))(x => x.split(",").toList)
     }
 
-    val seedNodesString = akkaSeeds.map{ node =>
+    val seedNodesString = akkaSeeds.map { node =>
       val ap = node.split(":")
       s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@${ap(0)}:${ap(1)}""""
     }.mkString("\n")
