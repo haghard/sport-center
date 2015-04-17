@@ -19,8 +19,6 @@ promptTheme := Scalapenos
 
 scalariformSettings
 
-//enablePlugins(JavaAppPackaging)
-
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(AlignParameters, true)

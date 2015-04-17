@@ -20,15 +20,21 @@ scalaVersion := Scala
 
 enablePlugins(DockerPlugin)
 
-val clusterNodeType = settingKey[String]("Type of node that we gonna build")
-
 val mainJarClass = settingKey[String]("Main class to run")
 
-clusterNodeType := "crawler"
-//gateway
-mainJarClass := "configuration.BootstrapCrawler"
-//GatewayBootstrap
-assemblyJarName in assembly := "scenter-" + clusterNodeType.value + ".jar"
+val clusterNodeType = settingKey[String]("Type of node that we gonna build")
+
+//clusterNodeType := "gateway-microservice"
+//clusterNodeType := "query-side-results"
+//clusterNodeType := "query-side-standings"
+clusterNodeType := "crawler-microservice"
+
+//mainJarClass := "configuration.QueryResultsSideBootstrap"
+//mainJarClass := "configuration.QueryStandingSideBootstrap"
+//mainJarClass := "configuration.GatewayBootstrap"
+mainJarClass := "configuration.CrawlerBootstrap"
+
+assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 
 assemblyMergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   {
@@ -48,44 +54,38 @@ dockerfile in docker := {
   val jarFile = (assemblyOutputPath in assembly).value
   val appDirPath = "/sport-center"
   val jarTargetPath = s"$appDirPath/${jarFile.name}"
+  val settingPath = s"$appDirPath/settings"
 
   new Dockerfile {
     from("dockerfile/java:oracle-java8")
+
     add(jarFile, jarTargetPath)
+
+    runRaw(s"mkdir $settingPath")
+
+    add(new File(s"${clusterNodeType.value}/settings/${clusterNodeType.value}-archaius.properties"),
+        s"${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
+
     workDir(appDirPath)
     runRaw("ifconfig")
-    //cmd("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }")
+
     //expose(2551, 2561)
     //entryPoint("sh", "-c", "export=HOST_IP0=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }')")
     maintainer("Haghard")
-    env("MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017")
-    entryPoint("java", "-jar", jarTargetPath)
+    env("MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017",
+        "archaius.configurationSource.additionalUrls" -> s"sport-center/${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
+    entryPoint("java", "-jar", jarTargetPath, "-Xmx1256m", "-XX:MaxPermSize=512m")
   }
 }
 
 imageNames in docker := Seq(
-  ImageName(namespace = Some("sport-center"), repository = clusterNodeType.value, tag = Some("v0.1")))
-  //ImageName(namespace = Some("sport-center"), repository = "gateway", tag = Some("v0.1"))
+  ImageName(namespace = Some("haghard"),
+    repository = "sport-center-" + clusterNodeType.value, tag = Some("v0.1")))
 
-buildOptions in docker := BuildOptions(cache = false,
+buildOptions in docker := BuildOptions(
+  cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,
   pullBaseImage = BuildOptions.Pull.Always)
 
-
-addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.LocalRouter 2551 -Dhttp.port=2561")
-addCommandAlias("lgateway1", "bootstrap/run-main configuration.local.LocalRouter 2552 -Dhttp.port=2562")
-addCommandAlias("lgateway2", "bootstrap/run-main configuration.local.LocalRouter 2553 -Dhttp.port=2563")
-
-
-addCommandAlias("lresults0", "bootstrap/run-main configuration.local.LocalResultsQuerySide 2555 -Dhttp.port=9001")
-addCommandAlias("lresults1", "bootstrap/run-main configuration.local.LocalResultsQuerySide 2556 -Dhttp.port=9002")
-addCommandAlias("lresults2", "bootstrap/run-main configuration.local.LocalResultsQuerySide 2557 -Dhttp.port=9003")
-
-
-addCommandAlias("lstandings1", "bootstrap/run-main configuration.local.LocalStandingSide 3561 -Dhttp.port=9011")
-addCommandAlias("lstandings2", "bootstrap/run-main configuration.local.LocalStandingSide 3562 -Dhttp.port=9010")
-
-
-addCommandAlias("lcrawler0", "bootstrap/run-main configuration.local.LocalCrawler 3558 -Dhttp.port=9007")
-addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.LocalCrawler 3559 -Dhttp.port=9008")
-addCommandAlias("lcrawler2", "bootstrap/run-main configuration.local.LocalCrawler 3560 -Dhttp.port=9009")
+//https://github.com/marcuslonnberg/sbt-docker
+//https://groups.google.com/forum/#!topic/akka-user/PaNIPdyD4ck

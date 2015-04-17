@@ -68,15 +68,10 @@ object ResultsMicroservice {
   val dtViewName = "results-by-date-view"
   val teamViewName = "last-results-by-team-view"
 
-  private val hystrixSettings = Paths.get(new File("").getAbsoluteFile + "/query-side-results/settings/archaius.properties")
-  System.setProperty("archaius.fixedDelayPollingScheduler.delayMills", "1000")
-  System.setProperty("archaius.fixedDelayPollingScheduler.initialDelayMills", "1000")
-  System.setProperty("archaius.configurationSource.additionalUrls", "file:///" + hystrixSettings.toString)
-
+  //this props could be changed in runtime through query-side-results-archaius.properties
+  private val lastResultsProps = "hystrix.api.lastResults.injectable.latency"
   private val resultsByDateProps = "hystrix.api.resultsByDate.injectable.latency"
   private val resultsByDateLatency = DynamicPropertyFactory.getInstance().getLongProperty(resultsByDateProps, 0)
-
-  private val lastResultsProps = "hystrix.api.lastResults.injectable.latency"
   private val lastResultsLatency = DynamicPropertyFactory.getInstance().getLongProperty(lastResultsProps, 0)
 }
 

@@ -50,11 +50,7 @@ object StandingMicroservice {
     }
   }
 
-  val hystrixSettings = Paths.get(new File("").getAbsoluteFile + "/query-side-standings/settings/archaius.properties")
-  System.setProperty("archaius.fixedDelayPollingScheduler.delayMills", "1000")
-  System.setProperty("archaius.fixedDelayPollingScheduler.initialDelayMills", "1000")
-  System.setProperty("archaius.configurationSource.additionalUrls", "file:///" + hystrixSettings.toString)
-
+  //this props could be changed in runtime through query-side-standings-archaius.properties
   private val standingsProps = "hystrix.api.standings.injectable.latency"
   private val standingsLatency = DynamicPropertyFactory.getInstance().getLongProperty(standingsProps, 0)
 }
