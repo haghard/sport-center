@@ -12,7 +12,7 @@ import microservice.http.RestService.ResponseBody
 import microservice.settings.CustomSettings
 import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
 
-object ResultsViewSubscriber {
+object ResultsViewRouter {
 
   implicit val strategy = Strategy.Executor(microservice.executor("results-view-executor", 2))
 
@@ -24,11 +24,11 @@ object ResultsViewSubscriber {
   case class ResultsByDateBody(count: Int = 0, results: ArrayBuffer[NbaResult]) extends ResponseBody with State
   case class ResultsByTeamBody(count: Int = 0, results: List[NbaResult]) extends ResponseBody with State
 
-  def props(settings: CustomSettings) = Props(new ResultsViewSubscriber(settings))
+  def props(settings: CustomSettings) = Props(new ResultsViewRouter(settings))
 }
 
-class ResultsViewSubscriber private (settings: CustomSettings) extends Actor with ActorLogging {
-  import ResultsViewSubscriber._
+class ResultsViewRouter private (settings: CustomSettings) extends Actor with ActorLogging {
+  import ResultsViewRouter._
 
   private val formatter = microservice.crawler.searchFormatter()
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResult]]()

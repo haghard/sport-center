@@ -5,7 +5,7 @@ import akka.pattern.ask
 import crawler.CrawlerMaster
 import microservice.crawler._
 import domain.CrawlerCampaign
-import org.joda.time.DateTime
+
 import microservice.settings.CustomSettings
 import ddd.amod.{ EffectlessAck, Acknowledge }
 import ddd.{ PassivationConfig, AggregateRootActorFactory, CustomShardResolution }
@@ -15,19 +15,16 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
 object CrawlerGuardian {
-
-  private val startDate = new DateTime().withZone(SCENTER_TIME_ZONE)
-    .withDate(2012, 10, 29).withTime(23, 59, 59, 0)
-
   def props(settings: CustomSettings) = Props(new CrawlerGuardian(settings))
 }
 
 class CrawlerGuardian private (settings: CustomSettings) extends Actor with ActorLogging {
   import ddd.Shard._
   import ddd.LocalShard._
-  import CrawlerGuardian._
 
   implicit val sys = context.system
+
+  private val startPoint = settings.intervals.headOption
 
   private val daysInBatch = settings.crawler.daysInBatch //default 7
   private val iterationPeriod = settings.crawler.iterationPeriod //default 1 hours
@@ -48,8 +45,11 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
   implicit val timeout = akka.util.Timeout(10 seconds)
   implicit val ec = context.system.dispatchers.lookup("scheduler-dispatcher")
 
-  override def preStart =
-    campaignDomain ! InitCampaign(startDate.toDate)
+  override def preStart = {
+    val start = startPoint.fold(throw new Exception("app-settings.stages prop must be defined"))
+    { _._1.getStart.withZone(SCENTER_TIME_ZONE).withTime(23, 59, 59, 0).toDate }
+    campaignDomain ! InitCampaign(start)
+  }
 
   private def scheduleCampaign = {
     context.system.scheduler.scheduleOnce(10 seconds)(campaignDomain ! RequestCampaign(daysInBatch))

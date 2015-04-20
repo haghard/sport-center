@@ -26,13 +26,13 @@ val clusterNodeType = settingKey[String]("Type of node that we gonna build")
 
 //clusterNodeType := "gateway-microservice"
 //clusterNodeType := "query-side-results"
-//clusterNodeType := "query-side-standings"
-clusterNodeType := "crawler-microservice"
+clusterNodeType := "query-side-standings"
+//clusterNodeType := "crawler-microservice"
 
 //mainJarClass := "configuration.QueryResultsSideBootstrap"
-//mainJarClass := "configuration.QueryStandingSideBootstrap"
+mainJarClass := "configuration.QueryStandingSideBootstrap"
 //mainJarClass := "configuration.GatewayBootstrap"
-mainJarClass := "configuration.CrawlerBootstrap"
+//mainJarClass := "configuration.CrawlerBootstrap"
 
 assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 

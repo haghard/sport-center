@@ -1,8 +1,5 @@
 package http
 
-import java.io.File
-import java.nio.file.Paths
-
 import akka.http.model.HttpResponse
 import akka.http.server.Route
 import com.netflix.config.DynamicPropertyFactory
@@ -15,8 +12,8 @@ import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
 import org.joda.time.DateTime
 import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonMetrics, SeasonStandingResponse, StandingLine }
-import query.StandingTopView
-import query.StandingTopView.StandingBody
+import query.StandingViewRouter
+import query.StandingViewRouter.StandingBody
 import spray.json._
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -50,7 +47,6 @@ object StandingMicroservice {
     }
   }
 
-  //this props could be changed in runtime through query-side-standings-archaius.properties
   private val standingsProps = "hystrix.api.standings.injectable.latency"
   private val standingsLatency = DynamicPropertyFactory.getInstance().getLongProperty(standingsProps, 0)
 }
@@ -71,7 +67,7 @@ trait StandingMicroservice extends RestWithDiscovery
 
   override lazy val endpoints = List(s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{dt}")
 
-  private lazy val standingView = system.actorOf(StandingTopView.props(settings), name = "standing-top-view")
+  private lazy val standingView = system.actorOf(StandingViewRouter.props(settings), "standing-top-view")
 
   abstract override def configureApi() =
     super.configureApi() ~

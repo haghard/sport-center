@@ -12,8 +12,8 @@ object GatewayBootstrap extends SystemPropsSupport {
       applySystemProperties(args)
 
     implicit val cfg = RouterCfg(
-      Option(System.getProperty(configuration.AKKA_PORT)).getOrElse(defaultAkkaPort),
-      Option(System.getProperty(configuration.HTTP_PORT)).map(_.toInt).getOrElse(defaultHttpPort),
+      Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
+      Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
       randomJmxPort, "Gateway-Registry")
 
     microservice[RouterCfg].startup()

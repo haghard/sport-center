@@ -23,8 +23,6 @@ case class RestApiJunction(
 
   /**
    * Alias for ``and`` operation
-   * @param that
-   * @return
    */
   def ~(that: RestApiJunction): RestApiJunction = and(that)
 }

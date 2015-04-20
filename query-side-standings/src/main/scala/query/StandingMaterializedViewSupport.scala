@@ -10,19 +10,20 @@ import scala.collection.immutable
 import scalaz.concurrent.Task
 import scalaz.stream._
 
-object MaterializedViewStreamSupport {
-
+object StandingMaterializedViewSupport {
   def viewName(name: String): String = s"materialized-view-$name"
 }
 
-trait MaterializedViewStreamSupport {
-  self: Actor with ActorLogging { def settings: CustomSettings } ⇒
+trait StandingMaterializedViewSupport {
+  self: Actor with ActorLogging ⇒
   import streamz.akka._
   import scalaz.stream.Process._
-  import query.MaterializedViewStreamSupport._
+  import query.StandingMaterializedViewSupport._
 
   private lazy val executor =
     scalaz.concurrent.Strategy.Executor(microservice.executor("materialized-view-executor", 2))
+
+  def settings: CustomSettings
 
   private val childViews: immutable.Map[String, ActorRef] =
     settings.stages.foldLeft(immutable.Map[String, ActorRef]()) { (map, c) ⇒

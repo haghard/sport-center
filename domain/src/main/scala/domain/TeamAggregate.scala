@@ -72,8 +72,6 @@ object TeamAggregate {
 
   case class TestException(msg: String) extends Exception(msg) with NoStackTrace
 
-  val message = "Journal doesn't ready for querying"
-
   def props = Props(new TeamAggregate)
 }
 

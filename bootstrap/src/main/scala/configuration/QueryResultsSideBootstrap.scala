@@ -11,10 +11,9 @@ object QueryResultsSideBootstrap extends SystemPropsSupport {
       applySystemProperties(args)
 
     implicit val cfg = ResultsQuerySideCfg(
-      Option(System.getProperty(configuration.AKKA_PORT)).getOrElse(defaultAkkaPort),
-      Option(System.getProperty(configuration.HTTP_PORT)).map(_.toInt).getOrElse(defaultHttpPort),
-      randomJmxPort,
-      "[Local]-ResultsQuerySide")
+      Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
+      Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
+      randomJmxPort, "Query-side-results")
 
     val node = microservice[ResultsQuerySideCfg]
     node.startup()

@@ -1,8 +1,5 @@
 package http
 
-import java.io.File
-import java.nio.file.Paths
-
 import akka.http.model.HttpResponse
 import akka.http.server.{ Directives, Route }
 import com.netflix.config.DynamicPropertyFactory
@@ -16,8 +13,8 @@ import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
 import spray.json._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
-import view.ResultsViewSubscriber
-import view.ResultsViewSubscriber.{ ResultsByTeamBody, ResultsByDateBody }
+import view.ResultsViewRouter
+import view.ResultsViewRouter.{ ResultsByTeamBody, ResultsByDateBody }
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
@@ -98,7 +95,7 @@ trait ResultsMicroservice extends RestWithDiscovery
   //import query.DomainFinder
   //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
 
-  private val view = system.actorOf(ResultsViewSubscriber.props(settings), "results-view")
+  private val view = system.actorOf(ResultsViewRouter.props(settings), "results-view")
 
   abstract override def configureApi() =
     super.configureApi() ~

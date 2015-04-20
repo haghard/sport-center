@@ -5,7 +5,7 @@ import java.math.MathContext
 import microservice.crawler.NbaResult
 import com.github.nscala_time.time.Imports._
 import microservice.settings.CustomSettings
-import query.StandingTopView.QueryStandingByDate
+import query.StandingViewRouter.QueryStandingByDate
 import microservice.http.RestService.ResponseBody
 import akka.actor._
 
@@ -32,8 +32,8 @@ object StandingMaterializedView {
   }
 
   private[StandingMaterializedView] final class PlayoffViewBuilder extends ViewBuilder {
-    private val stagesD = mutable.HashMap[Set[String], Date]()
-    private val stagesR = mutable.HashMap[Set[String], List[NbaResult]]()
+    private val stageHashes = mutable.HashMap[Set[String], Date]()
+    private val playOffResults = mutable.HashMap[Set[String], List[NbaResult]]()
     private val first = List.range(1, 9).map(_ + ". first round")
     private val second = List.range(1, 5).map(_ + ". second round")
     private val semifinal = List.range(1, 3).map(_ + ". conf final")
@@ -44,22 +44,22 @@ object StandingMaterializedView {
     override def add =
       r ⇒ {
         val set = hash(r.homeTeam, r.roadTeam)
-        stagesD += (set -> r.dt)
-        val rs = stagesR.getOrElse(set, List[NbaResult]())
-        val newList = rs :+ r
-        stagesR += (set -> newList)
+        stageHashes += (set -> r.dt)
+        val rs = playOffResults.getOrElse(set, List[NbaResult]())
+        val updated = rs :+ r
+        playOffResults += (set -> updated)
       }
 
     override def query(replyTo: ActorRef, vName: Option[String]) = {
-      vName.fold(replyTo ! "Can't write based on empty view") { name ⇒
-        val temp = stagesD.toSeq.sortWith { (l, r) ⇒
+      vName.fold(replyTo ! "Can't query based on empty view") { name ⇒
+        val temp = stageHashes.toSeq.sortWith { (l, r) ⇒
           l._2.compareTo(r._2) match {
             case -1 ⇒ true
             case _  ⇒ false
           }
         }
         val local = temp.foldLeft((mutable.Map[String, List[NbaResult]](), stageNames.toBuffer)) { (map, c) ⇒
-          map._1 += (map._2.head -> stagesR(c._1))
+          map._1 += (map._2.head -> playOffResults(c._1))
           map._1 -> map._2.tail
         }
         replyTo ! PlayOffStandingResponse(local._1)
@@ -92,7 +92,7 @@ object StandingMaterializedView {
       }
 
     override def query(replyTo: ActorRef, vName: Option[String]) = {
-      vName.fold(replyTo ! "Can't write based on empty view") { name ⇒
+      vName.fold(replyTo ! "Can't query based on empty view") { name ⇒
         val table = (storage.toSeq.sortWith(_._2.w > _._2.w) partition { item ⇒
           settings.teamConferences(item._1) match {
             case "west" ⇒ true
@@ -113,13 +113,9 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
   private var viewName: Option[String] = None
   private var view: Option[ViewBuilder] = None
 
-  //def supervisorStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
+  override def preStart() = log.info("preStart: {}", self)
 
-  override def preStart(): Unit =
-    log.info("preStart: {}", self)
-
-  override def postStop =
-    log.info("postStop: {}", self)
+  override def postStop = log.info("postStop: {}", self)
 
   override def receive = initial
 

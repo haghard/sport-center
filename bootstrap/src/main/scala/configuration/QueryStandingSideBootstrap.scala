@@ -11,9 +11,9 @@ object QueryStandingSideBootstrap extends SystemPropsSupport {
     import configuration.Microservices.local._
 
     implicit val cfg = StandingCfg(
-      Option(System.getProperty(configuration.AKKA_PORT)).getOrElse(defaultAkkaPort),
-      Option(System.getProperty(configuration.HTTP_PORT)).map(_.toInt).getOrElse(defaultHttpPort),
-      randomJmxPort, "[Local]-Standing")
+      Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
+      Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
+      randomJmxPort, "Query-side-standing")
 
     val node = microservice[StandingCfg]
     node.startup()

@@ -2,6 +2,7 @@ package query
 
 import org.joda.time.DateTime
 import akka.actor.ActorDSL._
+import scalaz.{ -\/, \/, \/- }
 import microservice.settings.CustomSettings
 import microservice.crawler.searchFormatter
 import microservice.http.RestService.ResponseBody
@@ -9,9 +10,8 @@ import http.StandingMicroservice.GetStandingByDate
 import microservice.domain.{ QueryCommand, State }
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonStandingResponse }
-import scalaz.{ -\/, \/, \/- }
 
-object StandingTopView {
+object StandingViewRouter {
   val season = "season-view"
   val playoff = "playoff-view"
 
@@ -21,13 +21,12 @@ object StandingTopView {
 
   case class QueryStandingByDate(date: DateTime) extends QueryCommand
 
-  def props(settings: CustomSettings): Props = Props(new StandingTopView(settings))
+  def props(settings: CustomSettings): Props = Props(new StandingViewRouter(settings))
 }
 
-class StandingTopView private (val settings: CustomSettings) extends Actor
-    with ActorLogging
-    with MaterializedViewStreamSupport {
-  import query.StandingTopView._
+class StandingViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
+    with StandingMaterializedViewSupport {
+  import query.StandingViewRouter._
 
   private val formatter = searchFormatter()
 

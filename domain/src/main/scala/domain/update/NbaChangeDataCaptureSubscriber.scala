@@ -61,7 +61,7 @@ class NbaChangeDataCaptureSubscriber private extends Actor with ActorLogging {
     case sequenceNumber: Long ⇒
       log.info("Receive last applied ChangeUpdate #: {}", sequenceNumber)
       (for {
-        event <- persistence.replay(path, sequenceNumber).filter(_.data.asInstanceOf[EventMessage].event.isInstanceOf[CampaignBeingPersisted]) //.filter(startWith(sequenceNumber))
+        event <- persistence.replay(path, sequenceNumber).filter(_.data.asInstanceOf[EventMessage].event.isInstanceOf[CampaignBeingPersisted])
         _ <- (Process.sleep(pullInterval) ++ Process.emit(event)) through streamWriter
       } yield ()).run.runAsync(_ => ())
   }

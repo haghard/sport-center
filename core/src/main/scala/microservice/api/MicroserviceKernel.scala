@@ -12,6 +12,8 @@ object MicroserviceKernel {
   val CrawlerRole = "Crawler"
   val DomainRole = "Domain" //if you change this name you change in application.conf
   val GatewayRole = "Gateway"
+
+  val SEEDS_ENV_VAR = "SEED_NODES"
 }
 
 abstract class MicroserviceKernel(override val akkaSystemPort: String,
@@ -37,20 +39,17 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val mongoPort = env.getConfig("env.mongo").getString("mp")
 
     val akkaSeeds = if (clusterRole == GatewayRole) {
-      Option(System.getProperty("SEED_NODES")).map(line => line.split(",").toList)
+      Option(System.getProperty(SEEDS_ENV_VAR)).map(line => line.split(",").toList)
         .fold(List(s"$localAddress:$akkaSystemPort"))(s"$localAddress:$akkaSystemPort" :: _)
     } else {
-      Option(System.getProperty("SEED_NODES"))
-        .fold(throw new Exception("SEED_NODES env valuable should be defined"))(x => x.split(",").toList)
+      Option(System.getProperty(SEEDS_ENV_VAR))
+        .fold(throw new Exception(s"$SEEDS_ENV_VAR env valuable should be defined"))(x => x.split(",").toList)
     }
 
     val seedNodesString = akkaSeeds.map { node =>
       val ap = node.split(":")
       s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@${ap(0)}:${ap(1)}""""
     }.mkString("\n")
-
-    println("AkkaSeeds:" + akkaSeeds)
-    println(seedNodesString)
 
     val seeds = (ConfigFactory parseString seedNodesString).resolve()
 
@@ -59,7 +58,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$localAddress"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
-      .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 2"))
+      .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
       .withFallback(ConfigFactory.parseString(s"""casbah-journal.mongo-journal-url="mongodb://$mongoHost:$mongoPort/sportcenter.journal""""))
       .withFallback(ConfigFactory.parseString(s"""casbah-snapshot-store.mongo-snapshot-url="mongodb://$mongoHost:$mongoPort/sportcenter.snapshot""""))
       .withFallback(ConfigFactory.load("application.conf"))
