@@ -46,8 +46,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
   implicit val ec = context.system.dispatchers.lookup("scheduler-dispatcher")
 
   override def preStart = {
-    val start = startPoint.fold(throw new Exception("app-settings.stages prop must be defined"))
-    { _._1.getStart.withZone(SCENTER_TIME_ZONE).withTime(23, 59, 59, 0).toDate }
+    val start = startPoint.fold(throw new Exception("app-settings.stages prop must be defined")) { _._1.getStart.withZone(SCENTER_TIME_ZONE).withTime(23, 59, 59, 0).toDate }
     campaignDomain ! InitCampaign(start)
   }
 

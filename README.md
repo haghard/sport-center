@@ -70,16 +70,55 @@ Flow consist of several sequentual stages:
 Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
 To connect hystrix-dashboard to `Gateway-turbine` use http://{ip}:6500/turbine.stream in hystrix-dashboard UI. 
 
+
+Installation with docker
+-------------------------
+
+All 4 docker image configuration can be found in `sportcenter/bootstrap/build.sbt`. You can build docker image by itself using `sbt bootstrap/*:docker` for uncomment image configuration
+
+##### Cluster run with docker example #####
+
+Docker image id can be discovered with `docker images`. Let's suppose we starting 3 gateway/seed node on 192.168.0.1, 192.168.0.2, 192.168.0.3  
+
+##### Run gateway layer #####
+
+docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565
+
+docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555
+
+docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555,192.168.0.3:2555
+
+Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 
+
+
+##### Run crawler layer #####
+
+docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+
+docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+
+...
+
+
+##### Run query side http layer #####
+
+docker run --net="host" -it `sport-center-query-side-results-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+
+....
+
+docker run --net="host" -it `sport-center-query-side-standings-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+
+....
+
 For testing we can use this:
 
 ### Command line HTTP client ###
   [Httpie](http://httpie.org/)
 
-  `http GET {ip}:2561/routes`,
+  `http GET 192.168.0.1:2565/routes`,
   
-  `http GET {ip}:2561/api/results/2013-01-29`,
+  `http GET 192.168.0.1:2565/api/results/2014-01-29`,
   
-  `http GET {ip}:2561/api/results/okc/last`,
+  `http GET 192.168.0.1:2565/api/results/okc/last`,
   
-  `http GET {ip}:2561/api/standings/2013-01-28`
-  
+  `http GET 192.168.0.1:2565/api/standings/2013-01-28`

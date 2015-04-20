@@ -24,15 +24,17 @@ val mainJarClass = settingKey[String]("Main class to run")
 
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
 
-//clusterNodeType := "gateway-microservice"
-//clusterNodeType := "query-side-results"
-clusterNodeType := "query-side-standings"
+clusterNodeType := "gateway-microservice"
 //clusterNodeType := "crawler-microservice"
+//clusterNodeType := "query-side-results"
+//clusterNodeType := "query-side-standings"
 
-//mainJarClass := "configuration.QueryResultsSideBootstrap"
-mainJarClass := "configuration.QueryStandingSideBootstrap"
-//mainJarClass := "configuration.GatewayBootstrap"
+
+mainJarClass := "configuration.GatewayBootstrap"
 //mainJarClass := "configuration.CrawlerBootstrap"
+//mainJarClass := "configuration.QueryResultsSideBootstrap"
+//mainJarClass := "configuration.QueryStandingSideBootstrap"
+
 
 assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 
@@ -68,11 +70,9 @@ dockerfile in docker := {
     runRaw("ifconfig")
 
     //expose(2551, 2561)
-    //entryPoint("sh", "-c", "export=HOST_IP0=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }')")
-    maintainer("Haghard")
-    env("MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017",
-        "archaius.configurationSource.additionalUrls" -> s"sport-center/${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
-    entryPoint("java", "-jar", jarTargetPath, "-Xmx1256m", "-XX:MaxPermSize=512m")
+    //"MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017"
+    env("archaius.configurationSource.additionalUrls" -> s"sport-center/${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
+    entryPoint("java", "-jar", jarTargetPath, "-Xmx1256m", "-XX:MaxPermSize=512m", "-XX:+HeapDumpOnOutOfMemoryError")
   }
 }
 
