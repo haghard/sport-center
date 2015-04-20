@@ -47,7 +47,7 @@ Fault tolerance aspect: We can stay responsive for reads with lost up to n-1 one
 ### Flow
 Add more....
 
-### How to run
+### How to run on local machine
 1. Install and run [MongoDB](http://mongodb.com). With docker you can do very simple `docker run -p 27017:27017 -it mongo:3.0.1`
 2. Modify file **application.conf** `casbah-journal.mongo-journal-url`, `casbah-snapshot-store.mongo-snapshot-url` with your own.
 3. Run local gateway layer using `sbt lgateway0` first and/or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt. 
@@ -68,7 +68,7 @@ Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
 To connect hystrix-dashboard to `Gateway-turbine` use http://{ip}:6500/turbine.stream in hystrix-dashboard UI. 
 
 
-Installation with docker
+Installation/Run with docker
 -------------------------
 
 First of all you should checkout on branch `docker`. All 4 docker image configuration can be found in `sportcenter/bootstrap/build.sbt`. You can build docker images by itself using `sbt bootstrap/*:docker` for each comment images
