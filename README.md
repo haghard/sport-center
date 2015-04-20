@@ -11,7 +11,6 @@ Add more....
 
 This application requires a distributed journal. Storage backends for journals and snapshot stores are pluggable in Akka persistence. In this case we are using MongoDB.
 You can find other journal plugins [here](http://akka.io/community/?_ga=1.264939791.1443869017.1408561680).
-The journal is specified in **application.conf**
 
 ### About the project ###
 
@@ -80,31 +79,31 @@ Docker image id can be discovered with `docker images`. Let's suppose we startin
 
 ##### Run gateway layer #####
 
-docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565
+`docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565`
 
-docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555
+`docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555`
 
-docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555,192.168.0.3:2555
+`docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555,192.168.0.3:2555`
 
 Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 
 
 
 ##### Run crawler layer #####
 
-docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+`docker run --net="host" -it crawler-docker-image-id --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
 
-docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+`docker run --net="host" -it crawler-docker-image-id --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
 
 ...
 
 
 ##### Run query side http layer #####
 
-docker run --net="host" -it `sport-center-query-side-results-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+`docker run --net="host" -it [results-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
 
 ....
 
-docker run --net="host" -it `sport-center-query-side-standings-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+`docker run --net="host" -it [standings-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
 
 ....
 
