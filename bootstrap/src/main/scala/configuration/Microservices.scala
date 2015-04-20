@@ -7,12 +7,14 @@ import crawler.CrawlerGuardianSupport
 import crawler.http.CrawlerMicroservice
 import microservice.api.BootableClusterNode._
 import java.util.concurrent.ThreadLocalRandom
-import discovery.{ ServiceRegistryCleanerSupport, DiscoveryClientSupport, DiscoveryHttpClient }
 import http.{ ApiGatewayMicroservice, StandingMicroservice, ResultsMicroservice }
 import microservice.api.{ BootableMicroservice, LocalSeedNodesClient, MicroserviceKernel }
+import discovery.{ ServiceRegistryCleanerSupport, DiscoveryClientSupport, DiscoveryHttpClient }
 import scala.reflect.ClassTag
 
 trait Microservices {
+
+  type NodeIdentity = MicroserviceCfg
 
   sealed trait MicroserviceCfg {
     def akkaPort: String
@@ -20,8 +22,6 @@ trait Microservices {
     def jmxPort: Int
     def envName: String
   }
-
-  type NodeIdentity = MicroserviceCfg
 
   case class RouterCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val envName: String) extends MicroserviceCfg
   case class CrawlerCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val envName: String) extends MicroserviceCfg

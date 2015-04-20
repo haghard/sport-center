@@ -7,7 +7,7 @@ import com.github.nscala_time.time.Imports._
 import microservice.settings.CustomSettings
 import query.StandingTopView.QueryStandingByDate
 import microservice.http.RestService.ResponseBody
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor._
 
 import scala.collection.mutable
 
@@ -112,6 +112,14 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
 
   private var viewName: Option[String] = None
   private var view: Option[ViewBuilder] = None
+
+  //def supervisorStrategy: SupervisorStrategy = SupervisorStrategy.defaultStrategy
+
+  override def preStart(): Unit =
+    log.info("preStart: {}", self)
+
+  override def postStop =
+    log.info("postStop: {}", self)
 
   override def receive = initial
 
