@@ -19,7 +19,7 @@ This application uses a simple domain to demonstrate CQRS and event sourcing wit
 
 There are 3 type roles node in our akka cluster(Gateway, Crawler, Http Microservice Node/Domain) 
 
-### Gateway ###  
+### Gateway   
 Group of machines that links together two worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:
 
 `Fault tolerant request routing layer` using [Hystrix]( http://hystrix.github.com). To deliver fault tolerance Hystrix has built in the following features:
@@ -33,24 +33,22 @@ timeout for every request to an external system, limit of concurrent requests fo
 
 Fault tolerance aspect: Gateway process guarantees progress with lose up to n-1 `Gateway` node
 
-### Crawler ###
+### Crawler 
 
 Cluster nodes to collect result from web. We use `RoundRobinPool` to scale crawler process to multiple machine and `Akka-Cluster` for distributed cluster membership. This processes deploy http route: `http://{ip}:{port}/api/crawler`
 Fault tolerance aspect: Crawling process guarantees progress with lose up to n-1 `Crawler` node 
   
-### Http Microservice Node/Domain ###  
+### Http Microservice Node/Domain  
 Loosely coupled command or query side microservice with sharded domain. We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this. Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors.
 One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Mongo in own case) and updates own state.
 `Http Microservice Node/Domain` node by itself could be 2 kinds **query-side-results** with routes [`http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`] and **query-side-standing** `http://{ip}:{port}/api/standings/{dt}`. They are both processes that can serve read queries. If gateway layer ran we can start and stop as many as we want **query-side-results** and **query-side-standing** processes to increase read throughput. We assume that our materialized views is so small that each machine can hold a copy of it in memory. This allows query side to be completely based on memory, and don't perform any request to the underlying db. We use `PersistentView` concept that acts like a streamer for persisted events.
 Fault tolerance aspect: We can stay responsive for reads with lost up to n-1 one of every type `Query-side-nnn` node 
 
 
-### Flow ###
-Flow consist of several sequentual stages:
-  Create crawler job (it happens on the )
+### Flow
+Add more....
 
-
-### How to run ###
+### How to run
 1. Install and run [MongoDB](http://mongodb.com). With docker you can do very simple `docker run -p 27017:27017 -it mongo:3.0.1`
 2. Modify file **application.conf** `casbah-journal.mongo-journal-url`, `casbah-snapshot-store.mongo-snapshot-url` with your own.
 3. Run local gateway layer using `sbt lgateway0` first and/or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt. 
