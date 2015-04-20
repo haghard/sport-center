@@ -58,9 +58,7 @@ dockerfile in docker := {
 
   new Dockerfile {
     from("dockerfile/java:oracle-java8")
-
     add(jarFile, jarTargetPath)
-
     runRaw(s"mkdir $settingPath")
 
     add(new File(s"${clusterNodeType.value}/settings/${clusterNodeType.value}-archaius.properties"),
@@ -82,8 +80,7 @@ imageNames in docker := Seq(
   ImageName(namespace = Some("haghard"),
     repository = "sport-center-" + clusterNodeType.value, tag = Some("v0.1")))
 
-buildOptions in docker := BuildOptions(
-  cache = false,
+buildOptions in docker := BuildOptions(cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,
   pullBaseImage = BuildOptions.Pull.Always)
 
