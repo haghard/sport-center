@@ -91,22 +91,21 @@ Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2
 
 ##### Run crawler layer #####
 
-`docker run --net="host" -it crawler-docker-image-id --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
+> docker run --net="host" -it crawler-docker-image-id --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
 
-`docker run --net="host" -it crawler-docker-image-id --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
+> docker run --net="host" -it crawler-docker-image-id --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
 
 ...
 
 
 ##### Run query side http layer #####
 
-`docker run --net="host" -it [results-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
+> docker run --net="host" -it [results-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+
+> docker run --net="host" -it [standings-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
 
 ....
 
-`docker run --net="host" -it [standings-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017`
-
-....
 
 For testing we can use this:
 
