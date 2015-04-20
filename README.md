@@ -79,11 +79,12 @@ Docker image id can be discovered with `docker images`. Let's suppose we startin
 
 ##### Run gateway layer #####
 
-`docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565`
+> docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565
 
-`docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555`
+> docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555
 
-`docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555,192.168.0.3:2555`
+> docker run --net="host" -it [gateway-docker-image-id] --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555,192.168.0.3:2555
+
 
 Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 
 
