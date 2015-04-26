@@ -1,17 +1,18 @@
 package http
 
-import akka.http.model.HttpResponse
-import akka.http.model.StatusCodes._
-import akka.http.model.headers.Host
 import discovery.ServiceDiscovery
 import gateway.ApiGateway
 import microservice.http.RestApiJunction
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
-import akka.http.model.Uri.{ Host => HostHeader }
+import akka.http.scaladsl.model.headers.Host
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.Uri.{ Host => HostHeader }
 import akka.pattern.ask
 import spray.json._
 import DefaultJsonProtocol._
 import scala.concurrent.duration._
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes._
 
 import scala.concurrent.ExecutionContext
 
@@ -41,7 +42,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
       )
 
   //TODO: try to avoid timeout
-  private def gatewayRoute(implicit ec: ExecutionContext) =
+  private def gatewayRoute(implicit ec: ExecutionContext): Route =
     pathPrefix(pathPrefix) {
       path(Segments) { path ⇒
         ctx ⇒

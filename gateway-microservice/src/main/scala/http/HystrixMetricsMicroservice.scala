@@ -1,12 +1,12 @@
 package http
 
-import akka.http.server.Route
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import hystrix.HystrixMetricsPublisher
 import microservice.http.RestApiJunction
-import akka.http.marshalling.ToResponseMarshallable
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
+import akka.http.scaladsl.server.Route
 
 import scala.concurrent.ExecutionContext
 
@@ -19,9 +19,9 @@ object HystrixMetricsMicroservice {
   private val dispatcher = "hystrix-stream-dispatcher"
 }
 
-trait HystrixMetricsMicroservice extends DiscoveryMicroservice
-    with SSEventsMarshalling {
+trait HystrixMetricsMicroservice extends DiscoveryMicroservice with SSEventsMarshalling {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
+
   import http.HystrixMetricsMicroservice._
 
   abstract override def configureApi() =
@@ -31,7 +31,7 @@ trait HystrixMetricsMicroservice extends DiscoveryMicroservice
   private def metricsPublisher() =
     system.actorOf(HystrixMetricsPublisher.props.withDispatcher(dispatcher))
 
-  private def metricsStreamRoute(implicit ec: ExecutionContext): Route =
+  private def metricsStreamRoute(implicit ec: ExecutionContext): Route = {
     path(prefix / stream) {
       get {
         complete {
@@ -39,4 +39,5 @@ trait HystrixMetricsMicroservice extends DiscoveryMicroservice
         }
       }
     }
+  }
 }

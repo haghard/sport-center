@@ -4,10 +4,10 @@ import akka.actor._
 import akka.contrib.datareplication.LWWMap
 import java.util.concurrent.ThreadLocalRandom
 import akka.contrib.datareplication.Replicator.Changed
-import akka.http.model.{ HttpHeader, HttpResponse, HttpRequest }
 import discovery.ServiceDiscovery.DiscoveryLine
-import akka.http.model.StatusCodes._
 import microservice.api.MicroserviceKernel
+import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
+import akka.http.scaladsl.model.StatusCodes._
 
 object ApiGateway {
   //TODO: add microservice version in url 

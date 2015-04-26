@@ -1,7 +1,7 @@
 package discovery
 
 import akka.actor.Address
-import akka.http.model.{ StatusCode, StatusCodes }
+import akka.http.scaladsl.model.{ StatusCodes, StatusCode }
 import akka.pattern.{ AskTimeoutException, ask }
 import microservice.ClusterMonitor
 import microservice.ClusterMonitor.GetNodes
@@ -74,7 +74,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
     Future.successful(statusCodes)
   }
 
-  private def unregister = Await.result(delete(key), duration)
+  //private def unregister = Await.result(delete(key), duration)
 
   private def unregisterSequence =
     Await.result(blockingCleanup, (duration * endpoints.size))

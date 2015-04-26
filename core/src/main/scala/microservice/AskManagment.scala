@@ -1,11 +1,11 @@
 package microservice
 
 import akka.actor.ActorRef
-import akka.pattern.{ AskTimeoutException, ask }
 import microservice.domain.State
+import akka.pattern.{ AskTimeoutException, ask }
+import scala.concurrent.{ ExecutionContext, Future }
 import microservice.http.RestService.BasicHttpRequest
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.reflect.ClassTag
 import scalaz.{ -\/, \/, \/- }
 

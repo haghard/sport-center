@@ -72,7 +72,7 @@ dockerfile in docker := {
     //expose(2551, 2561)
     //"MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017"
     env("archaius.configurationSource.additionalUrls" -> s"sport-center/${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
-    entryPoint("java", "-jar", jarTargetPath, "-Xmx1256m", "-XX:MaxPermSize=512m", "-XX:+HeapDumpOnOutOfMemoryError")
+    entryPoint("java", "-Xmx1256m", "-XX:MaxMetaspaceSize=512m", "-XX:+HeapDumpOnOutOfMemoryError", "-jar", jarTargetPath)
   }
 }
 
@@ -84,5 +84,9 @@ buildOptions in docker := BuildOptions(cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,
   pullBaseImage = BuildOptions.Pull.Always)
 
+//bootstrap/*:docker
 //https://github.com/marcuslonnberg/sbt-docker
 //https://groups.google.com/forum/#!topic/akka-user/PaNIPdyD4ck
+
+//docker run --net="host" -it 426576ed0cb6 --AKKA_PORT=2555 --HTTP_PORT=2565
+//docker run --net="host" -it 55b4382fae57 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.182:2556 --MONGO_HOST=192.168.0.62

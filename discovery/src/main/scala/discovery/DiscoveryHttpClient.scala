@@ -2,20 +2,20 @@ package discovery
 
 import java.io.IOException
 
-import akka.http.Http
-import akka.http.model._
+import akka.http.scaladsl.Http
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
 import akka.util.ByteString
 import discovery.DiscoveryHttpClient.Protocols
 import microservice.http.RestWithDiscovery
 import spray.json.DefaultJsonProtocol
-import akka.http.model.HttpMethods._
-import akka.http.model.MediaTypes._
-
+import scalaz.{ -\/, \/- }
 import scala.concurrent.Future
 import scala.concurrent.forkjoin.ThreadLocalRandom
-import scalaz.{ -\/, \/- }
+import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
+import akka.http.scaladsl.model.{ HttpResponse, HttpEntity, HttpRequest, StatusCode }
+import akka.http.scaladsl.model.ContentTypes._
+import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model.StatusCodes._
 
 object DiscoveryHttpClient {
 
@@ -58,13 +58,6 @@ trait DiscoveryHttpClient extends DiscoveryClient
   /**
    *
    * @param k
-   * @return
-   */
-  override def delete(k: String): Future[StatusCode] = ???
-
-  /**
-   *
-   * @param k
    * @param v
    * @return
    */
@@ -77,7 +70,6 @@ trait DiscoveryHttpClient extends DiscoveryClient
     call(req)
   }
 
-  import akka.http.model.StatusCodes._
   private def call(req: HttpRequest): Future[StatusCode] = {
     askForDiscoveryNodeAddresses()
       .flatMap {

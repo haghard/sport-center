@@ -1,11 +1,9 @@
 package http
 
 import akka.contrib.datareplication.LWWMap
-import akka.http.marshalling.ToResponseMarshallable
-import akka.http.model.HttpEntity.Strict
-import akka.http.model.{ HttpResponse, HttpRequest }
-import akka.http.server.{ Route, Directives }
-import akka.http.unmarshalling.FromRequestUnmarshaller
+import akka.http.scaladsl.model.HttpEntity.Strict
+import akka.http.scaladsl.server.{ Route, Directives }
+import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import discovery.ServiceDiscovery
@@ -14,13 +12,14 @@ import microservice.api.{ ClusterNetworkSupport, BootableMicroservice }
 import microservice.http.{ RestApiJunction, BootableRestService }
 import discovery.ServiceRegistryPublisher
 import spray.json.DefaultJsonProtocol
-import akka.http.model.StatusCodes._
-
+import akka.http.scaladsl.model.{ HttpResponse, HttpRequest }
+import akka.http.scaladsl.model.StatusCodes._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 import spray.json._
 
 import scalaz.{ -\/, \/- }
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 
 object DiscoveryMicroservice {
   case class KVRequest(key: String, value: String)

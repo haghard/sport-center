@@ -51,7 +51,7 @@ lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).depen
 lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
 
 //future work
-lazy val `seedsMicroservices` = project.in(file("cluster-seeds-discovery")).dependsOn(`core`)
+//lazy val `seedsMicroservices` = project.in(file("cluster-seeds-discovery")).dependsOn(`core`)
 
 
 /**

@@ -2,10 +2,10 @@ import sbt._
 
 object Dependencies {
 
-  val Scala = "2.11.5"
-  val Akka = "2.3.9"
+  val Scala = "2.11.6"
+  val Akka = "2.3.10"
   val AkkaDataReplication = "0.11"
-  val AkkaStreamsVersion = "1.0-M5"
+  val AkkaStreamsVersion = "1.0-RC1"
   val Hystrix = "1.4.0"
 
   object akka {
@@ -15,16 +15,16 @@ object Dependencies {
 
     //val persistence_cassandra = "com.github.krasserm" %% "akka-persistence-cassandra"    % "0.3.4" intransitive()
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
-    //val persistence_mongo     = "com.github.ironfish"     %%    "akka-persistence-mongo-casbah" % "0.7.6" withSources()
-    val persistence_mongo     = "com.github.ironfish"   %% "akka-persistence-mongo-casbah"  % "0.7.5" % "compile"
+    val persistence_mongo     = "com.github.ironfish"     %%    "akka-persistence-mongo-casbah" % "0.7.6" withSources()
+    //val persistence_mongo     = "com.github.ironfish"   %% "akka-persistence-mongo-casbah"  % "0.7.5" % "compile"
 
     val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication
     
     object streams {
-      val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"    % "0.3-SNAPSHOT"    withSources()
-      val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"    % AkkaStreamsVersion withSources()
-      val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"      % AkkaStreamsVersion withSources()
-      val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental" % AkkaStreamsVersion withSources()
+      val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"      % "0.2"    withSources()
+      val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"      % AkkaStreamsVersion withSources()
+      val akka_http                = "com.typesafe.akka"    %%    "akka-http-scala-experimental"  % AkkaStreamsVersion withSources()
+      val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental"   % AkkaStreamsVersion withSources()
     }
 
     val slf4j                 = "com.typesafe.akka"       %%    "akka-slf4j"                    % Akka

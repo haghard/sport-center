@@ -1,6 +1,6 @@
 package crawler.http
 
-import akka.http.server._
+import akka.http.scaladsl.server.Route
 import spray.json.JsonWriter
 import crawler.{ NbaCampaignView, CrawlerGuardianSupport }
 import NbaCampaignView.LastUpdateDate
@@ -55,8 +55,8 @@ object CrawlerMicroservice {
   private val viewName = "last-crawl-date"
 }
 
-trait CrawlerMicroservice extends RestWithDiscovery
-    with AskManagment {
+trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
+
   mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport ⇒
   import crawler.http.CrawlerMicroservice._
 

@@ -1,9 +1,9 @@
 package microservice.http
 
-import akka.http.Http
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.{ Directives, Route }
 import spray.json.DefaultJsonProtocol
 import microservice.api.MicroserviceKernel
-import akka.http.server.{ Directives, Route }
 import akka.actor.{ Actor, ActorLogging, Props }
 import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
 

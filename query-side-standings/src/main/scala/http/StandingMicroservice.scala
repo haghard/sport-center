@@ -1,7 +1,7 @@
 package http
 
-import akka.http.model.HttpResponse
-import akka.http.server.Route
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.server.Route
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
 import microservice.api.MicroserviceKernel
@@ -11,10 +11,10 @@ import microservice.http.RestWithDiscovery._
 import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
 import org.joda.time.DateTime
-import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonMetrics, SeasonStandingResponse, StandingLine }
 import query.StandingViewRouter
 import query.StandingViewRouter.StandingBody
 import spray.json._
+import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonMetrics, SeasonStandingResponse, StandingLine }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }

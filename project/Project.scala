@@ -21,6 +21,7 @@ object Project {
       "Sonatype OSS Snapshots"   at "https://oss.sonatype.org/content/repositories/snapshots",
       "Sonatype OSS Releases"    at "https://oss.sonatype.org/content/repositories/releases",
       "Scalaz Bintray Repo"      at "http://dl.bintray.com/scalaz/releases",
+    "m2" at	"https://repo1.maven.org/maven2/",
       "spray repo"               at "http://repo.spray.io",
       "krasserm at bintray"      at "http://dl.bintray.com/krasserm/maven",
       "patriknw at bintray"      at "http://dl.bintray.com/patriknw/maven",

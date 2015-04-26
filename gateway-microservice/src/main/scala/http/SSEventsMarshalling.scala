@@ -1,7 +1,7 @@
 package http
 
-import akka.http.marshalling._
-import akka.http.model.{ HttpEntity, HttpResponse, HttpCharsets, MediaType }
+import akka.http.scaladsl.marshalling.{ Marshaller, ToResponseMarshaller }
+import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Source
 
 import scala.concurrent.ExecutionContext
@@ -13,7 +13,7 @@ trait SSEventsMarshalling {
    * SSE content type
    * [[http://www.w3.org/TR/eventsource/#event-stream-interpretation SSE specification]].
    */
-  private[this] val `text/event-stream` = MediaType.custom("text", "event-stream")
+  private[this] val `text/event-stream` = MediaType.custom("text/event-stream", akka.http.scaladsl.model.MediaType.Encoding.Open)
 
   def messageToResponseMarshaller[A: ToMessage, B](implicit ec: ExecutionContext): ToResponseMarshaller[Source[A, B]] =
     Marshaller.withFixedCharset(`text/event-stream`, HttpCharsets.`UTF-8`) { messages ⇒

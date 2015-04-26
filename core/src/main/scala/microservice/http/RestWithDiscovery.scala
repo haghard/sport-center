@@ -1,10 +1,9 @@
 package microservice.http
 
-import akka.http.model.HttpEntity.Strict
-import akka.http.model.StatusCodes._
-import akka.http.model.headers.Host
-import akka.http.model.{ HttpResponse, MediaTypes }
-import akka.http.server._
+import akka.http.scaladsl.model.HttpEntity.Strict
+import akka.http.scaladsl.model.headers.Host
+import akka.http.scaladsl.model.{ MediaTypes, HttpResponse }
+import akka.http.scaladsl.server.{ Directives, Directive1 }
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
@@ -13,7 +12,7 @@ import spray.json.{ JsonWriter, DefaultJsonProtocol, JsonFormat }
 
 import scala.concurrent.Future
 import spray.json._
-import akka.http.model.Uri.{ Host => HostHeader }
+import akka.http.scaladsl.model.Uri.{ Host => HostHeader }
 
 object RestWithDiscovery {
 
@@ -58,22 +57,41 @@ trait RestWithDiscovery extends BootableRestService with Directives {
    */
   def servicePathPostfix: String
 
+  /**
+   *
+   * @param resp
+   * @param writer
+   * @tparam T
+   * @return
+   */
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
         HttpResponse(
-          BadRequest,
+          akka.http.scaladsl.model.StatusCodes.BadRequest,
           List(Host(HostHeader(localAddress), httpPort)),
           Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
+  /**
+   *
+   * @param error
+   * @return
+   */
   protected def fail(error: String) =
     HttpResponse(
-      InternalServerError,
+      akka.http.scaladsl.model.StatusCodes.InternalServerError,
       List(Host(HostHeader(localAddress), httpPort)), error)
 
+  /**
+   *
+   * @param resp
+   * @param writer
+   * @tparam T
+   * @return
+   */
   protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
     HttpResponse(
-      OK,
+      akka.http.scaladsl.model.StatusCodes.OK,
       List(Host(HostHeader(localAddress), httpPort)),
       Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
 }

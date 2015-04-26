@@ -1,7 +1,6 @@
 package http
 
-import akka.http.model.HttpResponse
-import akka.http.server.{ Directives, Route }
+import akka.http.scaladsl.model.HttpResponse
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
 import domain.DomainSupport
@@ -20,6 +19,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
 import microservice.crawler.searchFormatter
+import akka.http.scaladsl.server.{ Directives, Route }
 
 object ResultsMicroservice {
 

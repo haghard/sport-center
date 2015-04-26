@@ -1,7 +1,7 @@
 package discovery
 
 import scala.concurrent.Future
-import akka.http.model.StatusCode
+import akka.http.scaladsl.model.StatusCode
 
 trait DiscoveryClient {
 
@@ -12,13 +12,6 @@ trait DiscoveryClient {
    * @return
    */
   def set(k: String, v: String): Future[StatusCode]
-
-  /**
-   *
-   * @param k
-   * @return
-   */
-  def delete(k: String): Future[StatusCode]
 
   /**
    *

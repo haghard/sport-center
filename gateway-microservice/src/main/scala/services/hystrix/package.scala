@@ -2,12 +2,13 @@ package services
 
 import java.io.InputStream
 import akka.actor.ActorRef
-import akka.http.model.HttpEntity.Strict
-import akka.http.model.StatusCodes._
-import akka.http.model._
+import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.util.ByteString
 import com.netflix.hystrix.HystrixCommand.Setter
 import com.netflix.hystrix._
+import akka.http.scaladsl.model.{ MediaTypes, HttpResponse }
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.headers._
 
 package object hystrix {
 
@@ -73,7 +74,6 @@ package object hystrix {
     //executed in thread named as HystrixTimer-n
     override def getFallback: Unit = {
       import scala.collection._
-      import akka.http.model.headers.RawHeader
 
       replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(
         RawHeader("Target", uri), RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
