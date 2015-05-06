@@ -1,23 +1,22 @@
 package configuration
 
 import configuration.Microservices._
-import configuration.Microservices.local._
+import configuration.Microservices.container._
 
-object QueryResultsSideBootstrap extends SystemPropsSupport {
+object QueryResultsSideBootstrap extends SystemPropsSupport with App {
 
   import GatewayBootstrap._
-  def main(args: Array[String]) = {
-    if (!args.isEmpty)
-      applySystemProperties(args)
 
-    implicit val cfg = ResultsQuerySideCfg(
-      Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
-      Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
-      randomJmxPort, "Query-side-results")
+  if (!args.isEmpty)
+    applySystemProperties(args)
 
-    val node = microservice[ResultsQuerySideCfg]
-    node.startup()
+  implicit val cfg = ResultsQuerySideCfg(
+    Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
+    Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
+    randomJmxPort, "Query-side-results")
 
-    Runtime.getRuntime.addShutdownHook(new Thread(() ⇒ node.shutdown))
-  }
+  val node = microservice[ResultsQuerySideCfg]
+  node.startup()
+
+  Runtime.getRuntime.addShutdownHook(new Thread(() ⇒ node.shutdown))
 }

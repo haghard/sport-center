@@ -59,7 +59,7 @@ dockerfile in docker := {
   val settingPath = s"$appDirPath/settings"
 
   new Dockerfile {
-    from("dockerfile/java:oracle-java8")
+    from("java:8u45")
     add(jarFile, jarTargetPath)
     runRaw(s"mkdir $settingPath")
 
@@ -67,7 +67,8 @@ dockerfile in docker := {
         s"${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
 
     workDir(appDirPath)
-    runRaw("ifconfig")
+    //runRaw("ifconfig")
+    runRaw("ls -la")
 
     //expose(2551, 2561)
     //"MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017"

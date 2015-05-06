@@ -1,23 +1,22 @@
 package configuration
 
-object QueryStandingSideBootstrap extends SystemPropsSupport {
+object QueryStandingSideBootstrap extends SystemPropsSupport with App {
 
   import GatewayBootstrap._
-  def main(args: Array[String]) = {
-    if (!args.isEmpty)
-      applySystemProperties(args)
 
-    import configuration.Microservices._
-    import configuration.Microservices.local._
+  if (!args.isEmpty)
+    applySystemProperties(args)
 
-    implicit val cfg = StandingCfg(
-      Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
-      Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
-      randomJmxPort, "Query-side-standing")
+  import configuration.Microservices._
+  import configuration.Microservices.container._
 
-    val node = microservice[StandingCfg]
-    node.startup()
+  implicit val cfg = StandingCfg(
+    Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
+    Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
+    randomJmxPort, "Query-side-standing")
 
-    Runtime.getRuntime.addShutdownHook(new Thread(() ⇒ node.shutdown))
-  }
+  val node = microservice[StandingCfg]
+  node.startup()
+
+  Runtime.getRuntime.addShutdownHook(new Thread(() ⇒ node.shutdown))
 }

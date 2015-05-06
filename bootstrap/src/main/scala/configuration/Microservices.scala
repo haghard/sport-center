@@ -33,15 +33,15 @@ trait Microservices {
     def create(desc: T): BootableMicroservice
   }
 
-  object local {
+  object container {
 
-    private[Microservices] trait LocalClusterNode[T <: NodeIdentity] {
+    private[Microservices] trait ContainerClusterNode[T <: NodeIdentity] {
       def create(desc: T): BootableMicroservice
     }
 
-    implicit def localNode[T <: NodeIdentity: LocalClusterNode: ClassTag]: MicroserviceFactory[T] = {
+    implicit def localNode[T <: NodeIdentity: ContainerClusterNode: ClassTag]: MicroserviceFactory[T] = {
       new MicroserviceFactory[T] {
-        override def create(desc: T) = implicitly[LocalClusterNode[T]].create(desc)
+        override def create(desc: T) = implicitly[ContainerClusterNode[T]].create(desc)
       }
     }
   }
@@ -61,12 +61,12 @@ trait Microservices {
 }
 
 object Microservices extends Microservices {
-  import configuration.Microservices.local._
+  import configuration.Microservices.container._
 
   def randomHttpPort = ThreadLocalRandom.current().nextInt(9000, 9050)
   def randomJmxPort = ThreadLocalRandom.current().nextInt(5000, 6000)
 
-  implicit object LocalRouter extends LocalClusterNode[RouterCfg] {
+  implicit object ContainerRouter extends ContainerClusterNode[RouterCfg] {
     override def create(desc: RouterCfg) = {
       object LocalRouterNode extends MicroserviceKernel(desc.akkaPort, desc.envName, desc.httpPort,
         desc.jmxPort, MicroserviceKernel.GatewayRole, CloudEth)
@@ -79,38 +79,38 @@ object Microservices extends Microservices {
     }
   }
 
-  implicit object LocalResultsQuerySide extends LocalClusterNode[ResultsQuerySideCfg] {
+  implicit object ContainerResultsQuerySide extends ContainerClusterNode[ResultsQuerySideCfg] {
     override def create(cfg: ResultsQuerySideCfg) = {
       object LocalResults extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, ethName = LocalEth)
         with LocalSeedNodesClient
         with ResultsMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
         with DomainSupport
-      //with JmxAgent
+        with JmxAgent
       LocalResults
     }
   }
 
-  implicit object LocalStandingQuerySide extends LocalClusterNode[StandingCfg] {
+  implicit object ContainerStandingQuerySide extends ContainerClusterNode[StandingCfg] {
     override def create(cfg: StandingCfg) = {
       object LocalStanding extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, ethName = LocalEth)
         with LocalSeedNodesClient
         with StandingMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
         with DomainSupport
-      //with JmxAgent
+        with JmxAgent
       LocalStanding
     }
   }
 
-  implicit object LocalCrawlerWriteSide extends LocalClusterNode[CrawlerCfg] {
+  implicit object ContainerCrawlerWriteSide extends ContainerClusterNode[CrawlerCfg] {
     override def create(cfg: CrawlerCfg) = {
       object LocalCrawler extends MicroserviceKernel(cfg.akkaPort, cfg.envName, cfg.httpPort, cfg.jmxPort, MicroserviceKernel.CrawlerRole, LocalEth)
         with LocalSeedNodesClient
         with CrawlerMicroservice
         with DiscoveryClientSupport with DiscoveryHttpClient
         with CrawlerGuardianSupport
-      //with JmxAgent
+        with JmxAgent
       //with DigitaloceanClient
       LocalCrawler
     }

@@ -47,5 +47,5 @@ trait Sharding {
     case (m: TeamMessage) ⇒ (m.aggregateRootId.hashCode % shardCount).toString
   }
 
-  def shardRegion = ClusterSharding(system).shardRegion(typeName)
+  private lazy val shardRegion = ClusterSharding(system).shardRegion(typeName)
 }

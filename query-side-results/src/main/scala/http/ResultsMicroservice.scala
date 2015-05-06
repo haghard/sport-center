@@ -100,8 +100,8 @@ trait ResultsMicroservice extends RestWithDiscovery
   abstract override def configureApi() =
     super.configureApi() ~
       RestApiJunction(Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
-        Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")),
-        Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
+        Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was started on $httpPrefixAddress ★ ★ ★ ★ ★ ★")),
+        Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was stopped on $httpPrefixAddress ★ ★ ★ ★ ★ ★")))
 
   private def resultsRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPrefix) {

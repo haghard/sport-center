@@ -38,9 +38,7 @@ object Domains extends ExtensionKey[Domains] {
   val BatchWriteComplete = "Done"
 }
 
-class Domains(protected val system: ExtendedActorSystem) extends Extension
-    with Sharding {
-
+class Domains(protected val system: ExtendedActorSystem) extends Extension with Sharding {
   import Domains._
 
   /**

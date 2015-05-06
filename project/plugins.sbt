@@ -14,4 +14,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.7.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.8")
 
-addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.0.1")
+addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.1.0")
