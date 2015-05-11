@@ -113,10 +113,6 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
   private var viewName: Option[String] = None
   private var view: Option[ViewBuilder] = None
 
-  override def preStart() = log.info("preStart: {}", self)
-
-  override def postStop = log.info("postStop: {}", self)
-
   override def receive = initial
 
   private val initial: Receive = {
