@@ -34,10 +34,10 @@ object StandingMaterializedView {
   private[StandingMaterializedView] final class PlayoffViewBuilder extends ViewBuilder {
     private val stageHashes = mutable.HashMap[Set[String], Date]()
     private val playOffResults = mutable.HashMap[Set[String], List[NbaResult]]()
-    private val first = List.range(1, 9).map(_ + ". first round")
-    private val second = List.range(1, 5).map(_ + ". second round")
-    private val semifinal = List.range(1, 3).map(_ + ". conf final")
-    private val stageNames = first ::: second ::: semifinal ::: List("final")
+    private val first = List.range(1, 9).map(_ + ". FIRST ROUND")
+    private val second = List.range(1, 5).map(_ + ". CONFERENCE SEMIS")
+    private val semifinal = List.range(1, 3).map(_ + ". CONFERENCE FINALS")
+    private val stageNames = first ::: second ::: semifinal ::: List("FINALS")
 
     private def hash(homeTeam: String, roadTeam: String): Set[String] = Set(homeTeam, roadTeam)
 
