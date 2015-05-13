@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   val Scala = "2.11.6"
-  val Akka = "2.3.10"
+  val Akka = "2.3.11"
   val AkkaDataReplication = "0.11"
   val AkkaStreamsVersion = "1.0-RC2"
   val Hystrix = "1.4.0"
@@ -17,7 +17,7 @@ object Dependencies {
 
     val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.3.7"
 
-    val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication
+    val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication intransitive()
     
     object streams {
       val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"      % "0.2"    withSources()

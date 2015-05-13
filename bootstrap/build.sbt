@@ -93,6 +93,10 @@ addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.CrawlerBoot
 addCommandAlias("lresults0", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2555 --HTTP_PORT=9010 --DB_HOSTS=" + cassandra)
 addCommandAlias("lresults1", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2556 --HTTP_PORT=9011 --DB_HOSTS=" + cassandra)
 
+addCommandAlias("lstanding0", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2557 --HTTP_PORT=9012 --DB_HOSTS=" + cassandra)
+addCommandAlias("lstanding1", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2558 --HTTP_PORT=9013 --DB_HOSTS=" + cassandra)
+
+
 //bootstrap/*:docker
 //https://github.com/marcuslonnberg/sbt-docker
 //https://groups.google.com/forum/#!topic/akka-user/PaNIPdyD4ck

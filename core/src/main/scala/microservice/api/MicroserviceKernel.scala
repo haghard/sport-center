@@ -10,7 +10,7 @@ object MicroserviceKernel {
   val ipExpression = """\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}"""
 
   val CrawlerRole = "Crawler"
-  val DomainRole = "Domain" //if you change this name you change in application.conf
+  val DomainRole = "Domain" //if you change this value you should've changed it in application.conf
   val GatewayRole = "Gateway"
 }
 
@@ -23,6 +23,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     with ClusterNetworkSupport
     with SeedNodesSupport
     with BootableRestService {
+
   import BootableClusterNode._
   import microservice.api.MicroserviceKernel._
 
@@ -30,10 +31,10 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
   override lazy val system = ActorSystem(ActorSystemName, config)
 
-  override lazy val localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
+  override def localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
   lazy val config = {
-    //localAddress //FIX later
+    val la = localAddress
 
     val env = ConfigFactory.load("db.conf")
 
@@ -43,7 +44,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
     val akkaSeeds = if (clusterRole == GatewayRole) {
       Option(System.getProperty(SEEDS_ENV_VAR)).map(line => line.split(",").toList)
-        .fold(List(s"$localAddress:$akkaSystemPort"))(s"$localAddress:$akkaSystemPort" :: _)
+        .fold(List(s"$la:$akkaSystemPort"))(s"$la:$akkaSystemPort" :: _)
     } else {
       Option(System.getProperty(SEEDS_ENV_VAR))
         .fold(throw new Exception(s"$SEEDS_ENV_VAR env valuable should be defined"))(x => x.split(",").toList)
@@ -58,7 +59,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
     val local = ConfigFactory.empty().withFallback(seeds)
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$localAddress"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
       .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
@@ -84,9 +85,9 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .append('\n')
       .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: $localAddress:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★  Cassandra: ${system.settings.config.getStringList("cassandra-journal.contact-points")}  ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Cassandra contact points: ${system.settings.config.getStringList("cassandra-journal.contact-points")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★  Seed nodes: ${system.settings.config.getStringList("akka.cluster.seed-nodes")}  ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Akka cluster seed nodes: ${system.settings.config.getStringList("akka.cluster.seed-nodes")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
       .append(s"★ ★ ★ ★ ★ ★  Node cluster role: $clusterRole / JMX port: $jmxPort  ★ ★ ★ ★ ★ ★").append('\n')
       .append("=====================================================================================================================================")
