@@ -3,7 +3,9 @@ package crawler
 import akka.actor.SupervisorStrategy.{ Directive, Resume }
 import akka.actor._
 import crawler.WebGetter.CrawlerException
-import microservice.api.{ MicroserviceKernel, BootableClusterNode }
+import crawler.http.CrawlerMicroservice.CrawlerHttpResponse
+import crawler.writer.CrawlerGuardian.CrawlerResponse
+import microservice.api.MicroserviceKernel
 import microservice.crawler._
 import microservice.settings.CustomSettings
 import org.joda.time.DateTime
@@ -72,7 +74,7 @@ abstract class CrawlerMaster(val teams: Seq[String]) extends Actor with ActorLog
       }
 
     case r: SuccessCollected ⇒
-      crawlerClient foreach (_ ! CollectedResultBlock(dt, collectedResults ::: r.list))
+      crawlerClient foreach (_ ! CrawlerResponse(dt, collectedResults ::: r.list))
       crawlerClient = None
       context.become(idle)
 

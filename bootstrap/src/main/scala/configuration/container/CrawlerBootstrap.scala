@@ -1,13 +1,14 @@
-package configuration
+package configuration.container
+
+import configuration.SystemPropsSupport
 
 object CrawlerBootstrap extends SystemPropsSupport with App {
+  import GatewayBootstrap._
+  import configuration.Microservices._
+  import configuration.Microservices.container._
 
   if (!args.isEmpty)
     applySystemProperties(args)
-
-  import configuration.Microservices._
-  import configuration.Microservices.container._
-  import GatewayBootstrap._
 
   implicit val cfg = CrawlerCfg(
     Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),

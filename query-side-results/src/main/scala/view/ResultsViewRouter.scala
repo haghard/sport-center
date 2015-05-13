@@ -49,7 +49,7 @@ class ResultsViewRouter private (settings: CustomSettings) extends Actor with Ac
       val date = formatter format r.dt
       viewByDate.get(date).fold { viewByDate += (date -> ArrayBuffer[NbaResult](r)); () } { res => res += r }
       viewByTeam.get(r.homeTeam).fold { viewByTeam += (r.homeTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
-      viewByTeam.get(r.roadTeam).fold { viewByTeam += (r.roadTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
+      viewByTeam.get(r.awayTeam).fold { viewByTeam += (r.awayTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
 
     case GetResultsByDate(uri, date) =>
       sender() ! viewByDate.get(date).fold(ResultsByDateBody(0, new ArrayBuffer[NbaResult]())) { list => ResultsByDateBody(list.size, list) }
@@ -70,7 +70,7 @@ class ResultsViewRouter private (settings: CustomSettings) extends Actor with Ac
 
         case Location.Away ⇒
           viewByTeam.get(team).map(_.foldRight(List[NbaResult]()) { (c, acc) ⇒
-            if (c.roadTeam == team && acc.size < size) c :: acc
+            if (c.awayTeam == team && acc.size < size) c :: acc
             else acc
           }).fold(sender() ! ResultsByTeamBody(0, List())) { results =>
             sender() ! ResultsByTeamBody(results.size, results)

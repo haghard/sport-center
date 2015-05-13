@@ -33,7 +33,7 @@ object CrawlerCampaign {
     val aggregateRootId: String
   }
 
-  case class CampaignBeingPersisted(aggregateRootId: String, dt: Date, results: immutable.List[NbaResult]) extends CampaignEvent
+  case class CampaignPersistedEvent(aggregateRootId: String, dt: Date, results: immutable.List[NbaResult]) extends CampaignEvent
   case class CampaignBeingInited(aggregateRootId: String, dt: Date) extends CampaignEvent
 
   case class InitCampaign(date: Date, aggregateId: String = "nba") extends DomainCommand
@@ -45,7 +45,7 @@ object CrawlerCampaign {
       progressDate: Option[Date] = None) extends AggregateState {
     override def apply = {
       case CampaignBeingInited(id, dt)      => copy(Option(id), Option(dt))
-      case CampaignBeingPersisted(_, dt, _) => copy(progressDate = Option(dt))
+      case CampaignPersistedEvent(_, dt, _) => copy(progressDate = Option(dt))
       case r: RequestCampaign               => this
     }
   }
@@ -77,10 +77,10 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
     case PersistCampaign(dt, results, id) =>
       if (initialized) {
         if (dt.toDate.after(state.progressDate.get)) {
-          raise(CampaignBeingPersisted(id, dt.toDate, results))
+          raise(CampaignPersistedEvent(id, dt.toDate, results))
         } else {
           log.info("[Current campaign {}] - [Received dt {}]]. Do effectless ack", state, dt)
-          raiseDuplicate(CampaignBeingPersisted(id, dt.toDate, results))
+          raiseDuplicate(CampaignPersistedEvent(id, dt.toDate, results))
         }
       } else {
         replyTo ! CampaignInitializationError("Campaign needs to be initialized first")

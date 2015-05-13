@@ -1,19 +1,20 @@
-package configuration
+package configuration.local
 
-import configuration.Microservices._
-import configuration.Microservices.container._
+object QueryResultsBootstrap extends configuration.SystemPropsSupport with App {
+  import configuration.Microservices._
+  import configuration.Microservices.local._
 
-object QueryResultsSideBootstrap extends SystemPropsSupport with App {
+  private val defaultAkkaPort = "4551"
+  private val defaultHttpPort = 9010
 
-  import GatewayBootstrap._
-
-  if (!args.isEmpty)
+  if (!args.isEmpty) {
     applySystemProperties(args)
+  }
 
   implicit val cfg = ResultsQuerySideCfg(
     Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
     Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
-    randomJmxPort, "Query-side-results")
+    randomJmxPort, "Query-results")
 
   val node = microservice[ResultsQuerySideCfg]
   node.startup()

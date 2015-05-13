@@ -1,0 +1,15 @@
+option java_package = "domain.formats";
+option optimize_for = SPEED;
+
+message CrawlerResponseFormat {
+  required int64 logicalTime = 1;
+  repeated ResponseFormat results = 2;
+}
+
+message ResponseFormat {
+  required string homeTeam = 1;
+  required int32 homeScore = 2;
+  required string awayTeam = 3;
+  required int32 awayScore = 4;
+  required int64 time = 5;
+}

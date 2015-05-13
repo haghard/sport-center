@@ -9,7 +9,7 @@ Add more....
 
 ### DataStore
 
-This application requires a distributed journal. Storage backends for journals and snapshot stores are pluggable in Akka persistence. In this case we are using MongoDB.
+This application requires a distributed journal. Storage backends for journals and snapshot stores are pluggable in Akka persistence. In this case we are using Cassandra.
 You can find other journal plugins [here](http://akka.io/community/?_ga=1.264939791.1443869017.1408561680).
 The journal is specified in **application.conf**
 
@@ -40,7 +40,7 @@ Fault tolerance aspect: Crawling process guarantees progress with lose up to n-1
   
 ### Http Microservice Node/Domain  
 Loosely coupled command or query side microservice with sharded domain. We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this. Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors.
-One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Mongo in own case) and updates own state.
+One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Cassandra in own case) and updates own state.
 `Http Microservice Node/Domain` node by itself could be 2 kinds **query-side-results** with routes [`http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`] and **query-side-standing** `http://{ip}:{port}/api/standings/{dt}`. They are both processes that can serve read queries. If gateway layer ran we can start and stop as many as we want **query-side-results** and **query-side-standing** processes to increase read throughput. We assume that our materialized views is so small that each machine can hold a copy of it in memory. This allows query side to be completely based on memory, and don't perform any request to the underlying db. We use `PersistentView` concept that acts like a streamer for persisted events.
 Fault tolerance aspect: We can stay responsive for reads with lost up to n-1 one of every type `Query-side-nnn` node 
 
@@ -48,31 +48,28 @@ Fault tolerance aspect: We can stay responsive for reads with lost up to n-1 one
 ### Flow
 Add more....
 
-### How to run
-1. Install and run [MongoDB](http://mongodb.com). With docker you can do very simple `docker run -p 27017:27017 -it mongo:3.0.1`
-2. Modify file **application.conf** `casbah-journal.mongo-journal-url`, `casbah-snapshot-store.mongo-snapshot-url` with your own.
-3. Run local gateway layer using `sbt lgateway0` first and/or `lgateway1` `lgateway2`. All running configurations can be found in /sportcenter/bootstrap/build.sbt. 
-4. Run local crawler `sbt lcrawler0`
-5. Run local query-side-results `sbt lresults0`
-6. Run local query-side-standing `sbt lstandings0`. At least 3 node(1 crawler + 1 gateway + 1 results/standings) should be started to form cluster and begin crawling 
-7. To access [hystrix-dashboard](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard) and attach streams of metrics from Gateway nodes:
 
-> git clone https://github.com/Netflix/Hystrix.git
+How to run with docker
+---------------------------
+You should checkout on branch cassandra. All 4 docker image configuration can be found in `sportcenter/bootstrap/build.sbt`. You can build docker images by itself using `sbt bootstrap/*:docker` for each commented images
 
-> cd Hystrix/hystrix-dashboard
+##### Cassandra #####
 
-> ../gradlew jettyRun
-  
-> Running at http://localhost:7979/hystrix-dashboard
-  
-Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
-To connect hystrix-dashboard to `Gateway-turbine` use http://{ip}:6500/turbine.stream in hystrix-dashboard UI. 
+Run [Cassandra](http://http://cassandra.apache.org) cluster with at least 3 node. Example for 192.168.0.182, 192.168.0.134, 192.168.0.218 
 
+> docker run --net="host" -it -e HOST=192.168.0.182 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.134 -e CASSANDRA_TOKEN=-9223372036854775808 -e CASSANDRA_CLUSTERNAME="scenter" -v /home/haghard/Projects/cassandra_docker:/var/lib/cassandra haghard/cassandra
 
-Installation with docker
--------------------------
+> docker run --net="host" -it -e HOST=192.168.0.134 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.134 -e CASSANDRA_TOKEN=2317766532957582345 -e CASSANDRA_CLUSTERNAME="scenter" -v /home/haghard/Projects/cassandra_docker:/var/lib/cassandra haghard/cassandra
 
-You should checkout on branch docker. All 4 docker image configuration can be found in `sportcenter/bootstrap/build.sbt`. You can build docker images by itself using `sbt bootstrap/*:docker` for each comment images
+> docker run --net="host" -it -e HOST=192.168.0.218 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.134 -e CASSANDRA_TOKEN=3558217197862924070 -e CASSANDRA_CLUSTERNAME="scenter" -v /home/haghard/Projects/cassandra_docker:/var/lib/cassandra haghard/cassandra
+
+where /home/haghard/Projects/cassandra_docker ls -la
+
+``bash
+  haghard 4096 May 11 05:55 commitlog
+  haghard 4096 May 11 05:23 data
+  haghard 4096 May 10 10:06 saved_caches
+``
 
 ##### Cluster run with docker example #####
 
@@ -88,25 +85,41 @@ docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PO
 
 Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 
 
-
 ##### Run crawler layer #####
 
-docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
 
-docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
 
 ...
 
 
 ##### Run query side http layer #####
 
-docker run --net="host" -it `sport-center-query-side-results-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+docker run --net="host" -it `sport-center-query-side-results-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
 
 ....
 
-docker run --net="host" -it `sport-center-query-side-standings-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --MONGO_HOST=192.168.0.62 --MONGO_PORT=27017
+docker run --net="host" -it `sport-center-query-side-standings-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
 
 ....
+
+
+##### Hystrix-dashboard #####
+ 
+To access [hystrix-dashboard](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard) and attach streams of metrics from Gateway nodes:
+
+> git clone https://github.com/Netflix/Hystrix.git
+
+> cd Hystrix/hystrix-dashboard
+
+> ../gradlew jettyRun
+  
+> Running at http://localhost:7979/hystrix-dashboard
+  
+Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
+To connect hystrix-dashboard to `Gateway-turbine` use http://{ip}:6500/turbine.stream in hystrix-dashboard UI. 
+
 
 For testing we can use this:
 

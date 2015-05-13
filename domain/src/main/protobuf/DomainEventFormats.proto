@@ -1,0 +1,26 @@
+option java_package = "domain.formats";
+option optimize_for = SPEED;
+
+message ChangeSetFormat {
+  required int64 seqNumber = 1;
+  required int32 size = 2;
+}
+
+message ResultAddedEvent {
+  required string teamName = 1;
+  required ResultFormat result = 2;
+}
+
+message ResultFormat {
+  required string homeTeam = 1;
+  required int32 homeScore = 2;
+  required string awayTeam = 3;
+  required int32 awayScore = 4;
+  required int64 time = 5;
+}
+
+message PersistedCampaignFormat {
+  required string aggregateRootId = 1;
+  required int64  date = 2;
+  repeated ResultFormat results = 3;
+}

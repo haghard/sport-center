@@ -58,9 +58,8 @@ object TeamAggregate {
   case class QueryTeamStateLast(override val aggregateRootId: String, size: Int, location: Location.Value)
     extends QueryCommand with TeamMessage
 
-  case class WriteAck(val aggregateRootId: String) extends DomainEvent
-
   case class ResultAdded(team: String, r: NbaResult) extends DomainEvent
+  case class WriteAck(val aggregateRootId: String) extends DomainEvent
 
   case class TeamCreated(val teamId: String) extends DomainEvent
   case class SnapshotCreated(name: Option[String], lastDate: Option[Date]) extends DomainEvent

@@ -14,7 +14,7 @@ trait ClusterNetworkSupport {
 
   def jmxPort: Int
 
-  def akkaClusterAddress = s"akka.tcp://${MicroserviceKernel.ActorSystemName}@${localAddress}:${akkaSystemPort}"
-
   def httpPrefixAddress = s"http://$localAddress:$httpPort"
+
+  def akkaClusterAddress = s"akka.tcp://${MicroserviceKernel.ActorSystemName}@${localAddress}:${akkaSystemPort}"
 }

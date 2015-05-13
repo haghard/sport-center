@@ -2,6 +2,8 @@ package microservice
 
 import java.text.SimpleDateFormat
 import java.util.{ TimeZone, Date }
+import akka.actor.ExtendedActorSystem
+import akka.serialization.Serializer
 import org.joda.time.{ DateTimeZone, DateTime }
 import spray.json.{ JsString, JsNumber, JsObject, JsValue }
 
@@ -13,7 +15,6 @@ package object crawler {
   case object GetBackends
 
   case class CrawlerJob(endDt: DateTime, urls: List[String])
-  case class CollectedResultBlock(dt: DateTime, results: List[NbaResult])
 
   val SCENTER_TIME_ZONE = DateTimeZone.forID("EST")
   val TIME_ZONE = TimeZone.getTimeZone("EST")
@@ -45,7 +46,7 @@ package object crawler {
   case class TimeOut(urls: List[String], results: List[NbaResult])
   case class StatsResult(meanWordLength: Double)
   case class SuccessCollected(list: List[NbaResult])
-  case class NbaResult(homeTeam: String, homeScore: Int, roadTeam: String, roadScore: Int, dt: Date)
+  case class NbaResult(homeTeam: String, homeScore: Int, awayTeam: String, awayScore: Int, dt: Date)
 
   case class CrawledNbaResult(opponent: String, homeScore: Int, awayScore: Int, dt: Date, lct: Location.Value)
 

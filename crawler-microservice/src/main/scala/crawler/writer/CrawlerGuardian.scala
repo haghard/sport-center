@@ -10,15 +10,18 @@ import microservice.settings.CustomSettings
 import ddd.amod.{ EffectlessAck, Acknowledge }
 import ddd.{ PassivationConfig, AggregateRootActorFactory, CustomShardResolution }
 import domain.CrawlerCampaign.{ InitCampaign, CrawlerTask, PersistCampaign, RequestCampaign }
+import org.joda.time.DateTime
 
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
 object CrawlerGuardian {
+  case class CrawlerResponse(dt: DateTime, results: List[NbaResult])
   def props(settings: CustomSettings) = Props(new CrawlerGuardian(settings))
 }
 
 class CrawlerGuardian private (settings: CustomSettings) extends Actor with ActorLogging {
+  import CrawlerGuardian._
   import ddd.Shard._
   import ddd.LocalShard._
 
@@ -75,7 +78,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
       log.info("Crawler job failed cause timeout/failed")
       scheduleCampaign
 
-    case CollectedResultBlock(dt, results) ⇒
+    case CrawlerResponse(dt, results) ⇒
       log.info("We have received response from job [{}] - size: {}", dt, results.size)
       campaignDomain
         .ask(PersistCampaign(dt, results))

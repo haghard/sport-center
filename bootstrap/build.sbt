@@ -29,12 +29,10 @@ clusterNodeType := "gateway-microservice"
 //clusterNodeType := "query-side-results"
 //clusterNodeType := "query-side-standings"
 
-
-mainJarClass := "configuration.GatewayBootstrap"
-//mainJarClass := "configuration.CrawlerBootstrap"
-//mainJarClass := "configuration.QueryResultsSideBootstrap"
-//mainJarClass := "configuration.QueryStandingSideBootstrap"
-
+mainJarClass := "configuration.container.GatewayBootstrap"
+//mainJarClass := "configuration.container.CrawlerBootstrap"
+//mainJarClass := "configuration.container.QueryResultsBootstrap"
+//mainJarClass := "configuration.container.QueryStandingBootstrap"
 
 assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 
@@ -71,7 +69,6 @@ dockerfile in docker := {
     runRaw("ls -la")
 
     //expose(2551, 2561)
-    //"MONGO_HOST" -> "192.168.0.62",  "MONGO_PORT" -> "27017"
     env("archaius.configurationSource.additionalUrls" -> s"sport-center/${appDirPath}/settings/${clusterNodeType.value}-archaius.properties")
     entryPoint("java", "-Xmx1256m", "-XX:MaxMetaspaceSize=512m", "-XX:+HeapDumpOnOutOfMemoryError", "-jar", jarTargetPath)
   }
@@ -85,9 +82,20 @@ buildOptions in docker := BuildOptions(cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,
   pullBaseImage = BuildOptions.Pull.Always)
 
+
+val cassandra = "192.168.0.182"
+
+addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562")
+
+addCommandAlias("lcrawler0", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2553 --HTTP_PORT=9001 --DB_HOSTS=" + cassandra)
+addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2554 --HTTP_PORT=9002 --DB_HOSTS=" + cassandra)
+
+addCommandAlias("lresults0", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2555 --HTTP_PORT=9010 --DB_HOSTS=" + cassandra)
+addCommandAlias("lresults1", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2556 --HTTP_PORT=9011 --DB_HOSTS=" + cassandra)
+
 //bootstrap/*:docker
 //https://github.com/marcuslonnberg/sbt-docker
 //https://groups.google.com/forum/#!topic/akka-user/PaNIPdyD4ck
 
 //docker run --net="host" -it 426576ed0cb6 --AKKA_PORT=2555 --HTTP_PORT=2565
-//docker run --net="host" -it 55b4382fae57 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.182:2556 --MONGO_HOST=192.168.0.62
+//docker run --net="host" -it 55b4382fae57 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.182:2556 --DB_HOSTS=192.168.0.182

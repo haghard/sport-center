@@ -2,7 +2,7 @@ package domain.update
 
 import akka.actor._
 import ddd.EventMessage
-import domain.CrawlerCampaign.CampaignBeingPersisted
+import domain.CrawlerCampaign.CampaignPersistedEvent
 
 import domain.TeamAggregate.CreateResult
 import microservice.domain.Command
@@ -47,7 +47,7 @@ class NbaChangeDataCaptureSubscriber private extends Actor with ActorLogging {
   private def streamWriter: scalaz.stream.Channel[Task, Event[Any], BatchPersisted] =
     io.channel { event ⇒
       Task async { cb ⇒
-        val ev = event.data.asInstanceOf[EventMessage].event.asInstanceOf[CampaignBeingPersisted]
+        val ev = event.data.asInstanceOf[EventMessage].event.asInstanceOf[CampaignPersistedEvent]
         val map = ev.results.foldLeft(Map[String, SortedSet[CreateResult]]()) { (map, res) ⇒
           val set = map.getOrElse(res.homeTeam, SortedSet[CreateResult]())
           val newSet = set + CreateResult(res.homeTeam, res)
@@ -61,7 +61,7 @@ class NbaChangeDataCaptureSubscriber private extends Actor with ActorLogging {
     case sequenceNumber: Long ⇒
       log.info("Receive last applied ChangeUpdate #: {}", sequenceNumber)
       (for {
-        event <- persistence.replay(path, sequenceNumber).filter(_.data.asInstanceOf[EventMessage].event.isInstanceOf[CampaignBeingPersisted])
+        event <- persistence.replay(path, sequenceNumber).filter(_.data.asInstanceOf[EventMessage].event.isInstanceOf[CampaignPersistedEvent])
         _ <- (Process.sleep(pullInterval) ++ Process.emit(event)) through streamWriter
       } yield ()).run.runAsync(_ => ())
   }

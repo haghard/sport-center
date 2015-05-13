@@ -1,8 +1,8 @@
 package crawler
 
+import akka.routing.{ FromConfig, RoundRobinPool }
 import akka.actor.{ ActorContext, ActorRef, Props }
 import akka.cluster.routing.{ ClusterRouterPool, ClusterRouterPoolSettings }
-import akka.routing.{ FromConfig, RoundRobinPool }
 
 trait WebRouterCreator {
 

@@ -27,18 +27,18 @@ object CrawlerMicroservice {
   /*
    * Response
    */
-  case class CrawlerResponse(url: String, view: Option[String] = None,
+  case class CrawlerHttpResponse(url: String, view: Option[String] = None,
     body: Option[ResponseBody] = None,
     error: Option[String] = None) extends BasicHttpResponse
 
   case class CrawlerResultsBody(last: LastUpdateDate, override val count: Int = 1) extends ResponseBody
 
-  implicit object CampaignProtocols extends JsonWriter[CrawlerResponse] {
+  implicit object CampaignProtocols extends JsonWriter[CrawlerHttpResponse] {
     import spray.json._
     implicit val dtFormat = DateFormatToJson
     private val empty = JsObject("lastIterationDate" -> JsString("empty"))
 
-    override def write(obj: CrawlerResponse): JsValue = {
+    override def write(obj: CrawlerHttpResponse): JsValue = {
       obj.body match {
         case Some(CrawlerResultsBody(last, count)) ⇒
           last.lastIterationDate.fold(empty) { dt ⇒
@@ -56,11 +56,11 @@ object CrawlerMicroservice {
 }
 
 trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
-
   mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport ⇒
+
   import crawler.http.CrawlerMicroservice._
 
-  override def name = "CrawlerMicroservice"
+  override val name = "CrawlerMicroservice"
 
   override val servicePathPostfix = "crawler"
 
@@ -87,7 +87,7 @@ trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
           system.log.info(s"[$name] - incoming request $uri")
           complete {
             fetch[LastUpdateDate](GetLastCrawlDate(uri), view) map {
-              case \/-(resp)  ⇒ success(CrawlerResponse(uri, view = Option(viewName), body = Option(CrawlerResultsBody(resp))))
+              case \/-(resp)  ⇒ success(CrawlerHttpResponse(uri, view = Option(viewName), body = Option(CrawlerResultsBody(resp))))
               case -\/(error) ⇒ fail(error)
             }
           }

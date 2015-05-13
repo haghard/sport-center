@@ -11,7 +11,7 @@ import scalaz.{ \/, \/- }
 object CampaignChangeCapture {
 
   case class BatchPersisted(seqNumber: Long) extends DomainEvent
-  case class ChangeSetPositionApplied(seqNumber: Long) extends DomainEvent
+  case class ChangeSetLogicalTimeline(sn: Long, size: Int) extends DomainEvent
 
   object GetLastChangeSetNumber
 
@@ -46,27 +46,27 @@ class CampaignChangeCapture private extends PersistentActor with ActorLogging {
   private var callback: Option[Throwable \/ BatchPersisted ⇒ Unit] = None
 
   override def receiveRecover: Receive = {
-    case e: ChangeSetPositionApplied ⇒ updateState(e)
+    case e: ChangeSetLogicalTimeline ⇒ updateState(e)
     case RecoveryFailure(ex)         ⇒ log.info("Recovery failure {}", ex.getMessage)
     case RecoveryCompleted           ⇒ log.info("Completely recovered. Last applied changeSet: {}", sequenceNr)
   }
 
   private def updateState(event: DomainEvent) = {
     event match {
-      case ChangeSetPositionApplied(number) ⇒
+      case ChangeSetLogicalTimeline(number, size) ⇒
         sequenceNr = number
         callback = None
     }
   }
 
   override def receiveCommand: Receive = {
-    case PersistDataChange(sequenceNr, results, cb) ⇒
-      persist(ChangeSetPositionApplied(sequenceNr)) { ev ⇒
+    case PersistDataChange(sn, results, cb) ⇒
+      persist(ChangeSetLogicalTimeline(sn, results.size)) { ev ⇒
         updateState(ev)
         callback = Some(cb)
         if (results.size > 0) {
-          log.info("Schedule write changeSet {}", sequenceNr)
-          Domains(context.system).tellBatchWrite(sequenceNr, results)
+          log.info("Schedule write changeSet {}", sn)
+          Domains(context.system).tellBatchWrite(sn, results)
         } else { self ! "Done" }
       }
     case "Done"                 ⇒ for { cb ← callback } yield cb(\/-(BatchPersisted(sequenceNr)))

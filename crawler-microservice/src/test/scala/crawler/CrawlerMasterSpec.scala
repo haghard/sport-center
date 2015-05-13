@@ -5,7 +5,7 @@ import akka.cluster.routing.{ ClusterRouterPoolSettings, ClusterRouterPool }
 import akka.routing.RoundRobinPool
 import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
-import microservice.crawler.{ CollectedResultBlock, CrawlerJob }
+import microservice.crawler.{ CrawlerResponse, CrawlerJob }
 import org.joda.time.DateTime
 import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpecLike }
 
@@ -75,7 +75,7 @@ class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", ConfigFactory.par
 
       val crawlerMaster = system.actorOf(Props(new CrawlerMaster(teams) with ClusterRoundRobinPoolCreator))
       crawlerMaster.tell(CrawlerJob(dt, urls), probe.ref)
-      probe.expectMsgClass(30 second, classOf[CollectedResultBlock])
+      probe.expectMsgClass(30 second, classOf[CrawlerResponse])
     }
   }
 }

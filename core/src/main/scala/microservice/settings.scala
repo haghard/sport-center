@@ -53,8 +53,6 @@ object settings {
         acc
       }
 
-    val journalUrl = system.settings.config.getString("casbah-journal.mongo-journal-url")
-
     val stages = system.settings.config
       .getConfig("app-settings")
       .getObjectList("stages")

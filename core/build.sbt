@@ -20,4 +20,5 @@ libraryDependencies ++= Seq(
   json4s,
   scalaz,
   nscala_time,
-  guava)
+  guava,
+  protobuf)

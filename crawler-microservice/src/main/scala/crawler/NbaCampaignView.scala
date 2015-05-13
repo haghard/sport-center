@@ -3,7 +3,7 @@ package crawler
 import java.util.Date
 import microservice.domain.State
 import akka.actor.{ ActorLogging, Props }
-import domain.CrawlerCampaign.CampaignBeingPersisted
+import domain.CrawlerCampaign.CampaignPersistedEvent
 import crawler.http.CrawlerMicroservice.GetLastCrawlDate
 
 import scala.concurrent.duration._
@@ -31,6 +31,6 @@ class NbaCampaignView extends akka.persistence.PersistentView with ActorLogging 
 
   override def receive: Receive = {
     case q: GetLastCrawlDate              ⇒ sender() ! state
-    case CampaignBeingPersisted(_, dt, _) ⇒ state = state.copy(Some(dt))
+    case CampaignPersistedEvent(_, dt, _) ⇒ state = state.copy(Some(dt))
   }
 }

@@ -12,8 +12,6 @@ object MicroserviceKernel {
   val CrawlerRole = "Crawler"
   val DomainRole = "Domain" //if you change this name you change in application.conf
   val GatewayRole = "Gateway"
-
-  val SEEDS_ENV_VAR = "SEED_NODES"
 }
 
 abstract class MicroserviceKernel(override val akkaSystemPort: String,
@@ -25,6 +23,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     with ClusterNetworkSupport
     with SeedNodesSupport
     with BootableRestService {
+  import BootableClusterNode._
   import microservice.api.MicroserviceKernel._
 
   private lazy val restApi = configureApi()
@@ -34,9 +33,13 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   override lazy val localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
   lazy val config = {
-    val env = ConfigFactory.load("env.conf")
-    val mongoHost = env.getConfig("env.mongo").getString("mh")
-    val mongoPort = env.getConfig("env.mongo").getString("mp")
+    //localAddress //FIX later
+
+    val env = ConfigFactory.load("db.conf")
+
+    val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
+    val cassandraPort = env.getConfig("db.cassandra").getString("port")
+    val contactPoints = cassandraEPs.split(",").map(_.trim).mkString("\"", "\",\"", "\"")
 
     val akkaSeeds = if (clusterRole == GatewayRole) {
       Option(System.getProperty(SEEDS_ENV_VAR)).map(line => line.split(",").toList)
@@ -59,8 +62,10 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
       .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
-      .withFallback(ConfigFactory.parseString(s"""casbah-journal.mongo-journal-url="mongodb://$mongoHost:$mongoPort/sportcenter.journal""""))
-      .withFallback(ConfigFactory.parseString(s"""casbah-snapshot-store.mongo-snapshot-url="mongodb://$mongoHost:$mongoPort/sportcenter.snapshot""""))
+      .withFallback(ConfigFactory.parseString(s"cassandra-journal.contact-points=[$contactPoints]"))
+      .withFallback(ConfigFactory.parseString(s"cassandra-snapshot-store.contact-points=[$contactPoints]"))
+      .withFallback(ConfigFactory.parseString(s"cassandra-journal.port=$cassandraPort"))
+      .withFallback(ConfigFactory.parseString(s"cassandra-snapshot-store.port=$cassandraPort"))
       .withFallback(ConfigFactory.load("application.conf"))
       .withFallback(ConfigFactory.load("app-setting.conf"))
       .withFallback(ConfigFactory.load("crawler.conf"))
@@ -79,7 +84,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .append('\n')
       .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: $localAddress:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★  Mongo-Journal: ${system.settings.config.getString("casbah-journal.mongo-journal-url")}  ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Cassandra: ${system.settings.config.getStringList("cassandra-journal.contact-points")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
       .append(s"★ ★ ★ ★ ★ ★  Seed nodes: ${system.settings.config.getStringList("akka.cluster.seed-nodes")}  ★ ★ ★ ★ ★ ★")
       .append('\n')

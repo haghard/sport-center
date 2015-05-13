@@ -43,7 +43,7 @@ object StandingMaterializedView {
 
     override def add =
       r ⇒ {
-        val set = hash(r.homeTeam, r.roadTeam)
+        val set = hash(r.homeTeam, r.awayTeam)
         stageHashes += (set -> r.dt)
         val rs = playOffResults.getOrElse(set, List[NbaResult]())
         val updated = rs :+ r
@@ -80,14 +80,14 @@ object StandingMaterializedView {
     override def add =
       r ⇒ for {
         hm ← storage.get(r.homeTeam)
-        rm ← storage.get(r.roadTeam)
+        rm ← storage.get(r.awayTeam)
       } yield {
-        if (r.homeScore > r.roadScore) {
+        if (r.homeScore > r.awayScore) {
           storage += (r.homeTeam -> hm.copy(w = hm.w + 1, pct = BigDecimal.decimal(((hm.w + 1).toFloat / ((hm.w + 1) + hm.l)), mc), homeW = hm.homeW + 1))
-          storage += (r.roadTeam -> rm.copy(l = rm.l + 1, pct = BigDecimal.decimal((rm.w.toFloat / (rm.w + rm.l + 1)), mc), roadL = rm.roadL + 1))
+          storage += (r.awayTeam -> rm.copy(l = rm.l + 1, pct = BigDecimal.decimal((rm.w.toFloat / (rm.w + rm.l + 1)), mc), roadL = rm.roadL + 1))
         } else {
           storage += (r.homeTeam -> hm.copy(l = hm.l + 1, pct = BigDecimal.decimal(((hm.w + 1).toFloat / ((hm.w + 1) + hm.l)), mc), homeL = hm.homeL + 1))
-          storage += (r.roadTeam -> rm.copy(w = rm.w + 1, pct = BigDecimal.decimal((rm.w.toFloat / (rm.w + rm.l + 1)), mc), roadW = rm.roadW + 1))
+          storage += (r.awayTeam -> rm.copy(w = rm.w + 1, pct = BigDecimal.decimal((rm.w.toFloat / (rm.w + rm.l + 1)), mc), roadW = rm.roadW + 1))
         }
       }
 
@@ -134,12 +134,12 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
   }
 
   private def activate(r: NbaResult) = {
-    view.foreach(_.add(r))
+    view foreach (_.add(r))
     active
   }
 
   private def active: Actor.Receive = {
-    case r: NbaResult ⇒ view.foreach(_.add(r))
+    case r: NbaResult ⇒ view foreach (_.add(r))
     case QueryStandingByDate(dt) ⇒
       val replyTo = sender()
       view.foreach(_.query(replyTo, viewName))

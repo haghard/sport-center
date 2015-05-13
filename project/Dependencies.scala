@@ -13,9 +13,9 @@ object Dependencies {
     val cluster               = "com.typesafe.akka"       %%    "akka-cluster"                  % Akka withSources()
     val contrib               = "com.typesafe.akka"       %%    "akka-contrib"                  % Akka intransitive()
 
-    //val persistence_cassandra = "com.github.krasserm" %% "akka-persistence-cassandra"    % "0.3.4" intransitive()
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
-    val persistence_mongo     = "com.github.ironfish"     %%    "akka-persistence-mongo-casbah" % "0.7.6" withSources()
+
+    val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.3.7"
 
     val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication
     
@@ -67,4 +67,6 @@ object Dependencies {
 
   //val dispatch         = "net.databinder.dispatch"  %%  "dispatch-core"       % "0.11.2"
   val rxscala          = "io.reactivex"           %% "rxscala"                % "0.23.1"
+
+  val protobuf         = "com.google.protobuf"    % "protobuf-java"           % "2.5.0"
 }
