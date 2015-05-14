@@ -3,7 +3,6 @@ package crawler
 import akka.actor.SupervisorStrategy.{ Directive, Resume }
 import akka.actor._
 import crawler.WebGetter.CrawlerException
-import crawler.http.CrawlerMicroservice.CrawlerHttpResponse
 import crawler.writer.CrawlerGuardian.CrawlerResponse
 import microservice.api.MicroserviceKernel
 import microservice.crawler._
@@ -17,7 +16,7 @@ object CrawlerMaster {
    * @param settings
    * @return
    */
-  def props(settings: CustomSettings) = Props(new CrawlerMaster(settings.teams) with ConfigCreator)
+  def props(settings: CustomSettings) = Props(new CrawlerMaster(settings.teams) with FromConfigCreator)
 
   def props2(settings: CustomSettings) = Props(new CrawlerMaster(settings.teams) with ProgrammaticallyCreator)
 

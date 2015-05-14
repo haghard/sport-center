@@ -1,8 +1,16 @@
 package microservice.http
 
-import akka.http.scaladsl.server.{ Directives, Route }
 import scala.concurrent.ExecutionContext
+import akka.http.scaladsl.server.{ Directives, Route }
 
+/**
+ *
+ *
+ *
+ * @param route
+ * @param preAction
+ * @param postAction
+ */
 case class RestApiJunction(
     route: Option[ExecutionContext => Route] = None,
     preAction: Option[() => Unit] = None,

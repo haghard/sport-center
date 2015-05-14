@@ -1,8 +1,9 @@
 Sport Center
 ================
-SportCenter is a POC reactive applications based on microservices architecture built on top of [Akka](akka.io) following a Event Sourcing based approach.
+SportCenter is a POC reactive applications based on microservices architecture built on top of [Akka](akka.io) used Distributed Domain Driven Design approach.
 
-### Reactive application, Event Sourcing, Microservice architecture what and why shortly ###
+
+### Reactive application with Microservice architecture and Distributed Domain Driven Design what and why shortly ###
 Event Sourcing is about capturing sequence of event in journal. Each transaction/event is being recorded. State is recreated by replaying all the transactions/events.
 
 Add more....
@@ -17,7 +18,8 @@ The journal is specified in **application.conf**
 
 This application uses a simple domain to demonstrate CQRS and event sourcing with Akka Persistence. This domain is a nba games: results and standings
 
-There are 3 type roles node in our akka cluster(Gateway, Crawler, Http Microservice Node/Domain) 
+There are 3 type roles node in our akka cluster(Gateway, Crawler(Write side), Http Microservice/Domain(Read size))
+For better design we should have splitted domain and http layer(future work) 
 
 ### Gateway   
 Group of machines that links together two worlds using simple Load Balancer and Distributed Service Registry for internal cluster nodes. Every incoming request will be redirected for internal services if matched route is found. Each Gateway node provides following features:
@@ -36,13 +38,13 @@ Fault tolerance aspect: Gateway process guarantees progress with lose up to n-1 
 ### Crawler 
 
 Cluster nodes to collect result from web. We use `RoundRobinPool` to scale crawler process to multiple machine and `Akka-Cluster` for distributed cluster membership. This processes deploy http route: `http://{ip}:{port}/api/crawler`
-Fault tolerance aspect: Crawling process guarantees progress with lose up to n-1 `Crawler` node 
+Fault tolerance aspect: Crawling process guarantees progress with losing up to n-1 `Crawler` node 
   
 ### Http Microservice Node/Domain  
 Loosely coupled command or query side microservice with sharded domain. We use Akka-Http, Akka-Persistense and Akka-Sharding to achieve this. Each Domain node is a place for one or several shards of the domain. Domain itself is a set of Persistent Actors.
 One Persistent Actor for one team. Every Game Persistent Actor persists incoming events in Event Journal (Cassandra in own case) and updates own state.
 `Http Microservice Node/Domain` node by itself could be 2 kinds **query-side-results** with routes [`http://{ip}:{port}/api/results/{dt}` and `http://{ip}:{port}/api/results/{team}/last`] and **query-side-standing** `http://{ip}:{port}/api/standings/{dt}`. They are both processes that can serve read queries. If gateway layer ran we can start and stop as many as we want **query-side-results** and **query-side-standing** processes to increase read throughput. We assume that our materialized views is so small that each machine can hold a copy of it in memory. This allows query side to be completely based on memory, and don't perform any request to the underlying db. We use `PersistentView` concept that acts like a streamer for persisted events.
-Fault tolerance aspect: We can stay responsive for reads with lost up to n-1 one of every type `Query-side-nnn` node 
+Fault tolerance aspect: We can stay responsive for reads with losing up to n-1 one of every type `Query-side-nnn` node 
 
 
 ### Flow
@@ -51,9 +53,9 @@ Add more....
 
 How to run with docker
 ---------------------------
-You should checkout on branch cassandra. All 4 docker image configuration can be found in `sportcenter/bootstrap/build.sbt`. You can build docker images by itself using `sbt bootstrap/*:docker` for each commented images
+All 4 docker image configuration can be found in `sportcenter/bootstrap/build.sbt`. You can build docker images by itself using `sbt bootstrap/*:docker` for each commented image
 
-##### Cassandra #####
+##### Cassandra cluster #####
 
 Run [Cassandra](http://http://cassandra.apache.org) cluster with at least 3 node. Example for 192.168.0.182, 192.168.0.134, 192.168.0.218 
 
@@ -63,27 +65,48 @@ Run [Cassandra](http://http://cassandra.apache.org) cluster with at least 3 node
 
 > docker run --net="host" -it -e HOST=192.168.0.218 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.134 -e CASSANDRA_TOKEN=3558217197862924070 -e CASSANDRA_CLUSTERNAME="scenter" -v /home/haghard/Projects/cassandra_docker:/var/lib/cassandra haghard/cassandra
 
-where /home/haghard/Projects/cassandra_docker ls -la
+where /home/haghard/Projects/cassandra_docker has this subdirectories:
 
-``bash
-  haghard 4096 May 11 05:55 commitlog
-  haghard 4096 May 11 05:23 data
-  haghard 4096 May 10 10:06 saved_caches
-``
+commitlog
 
-##### Cluster run with docker example #####
+data
 
-Docker image id can be discovered with `docker images`. Let's suppose we starting 3 gateway/seed node on 192.168.0.1, 192.168.0.2, 192.168.0.3  
+saved_caches
+
+It's important to allow cassandra save data on local disk and restore it when docker image starts. If you don't care about saving data between cassandra runs you can drop it.  
+
+##### Local cluster run #####
+
+We can run cluster with 4 nodes locally using sbt like this
+
+sbt lgateway0
+
+sbt lcrawler0
+
+sbt lresults0
+
+sbt lstanding0
+
+This commands will run single instance for each cluster node(Gateway, Crawler, HttpResults, HttpStandings). All command aliases you can find in sportcenter/bootstrap/build.sbt. And now you can check it `http GET <local-ip>:2561/routes`
+
+
+##### Sport-center cluster with docker on multiple machine #####
+
+Docker image id can be discovered with `docker images` command. Let's suppose we starting 3 gateway/seed node on 192.168.0.1, 192.168.0.2, 192.168.0.3  
 
 ##### Run gateway layer #####
 
+on 192.168.0.1
 docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565
 
+on 192.168.0.2
 docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555
 
+on 192.168.0.3
 docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.2:2555,192.168.0.3:2555
 
-Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 
+Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 which are seed nodes for whole akka cluster. It isn't necessary to have all gateway's node as seed.
+
 
 ##### Run crawler layer #####
 

@@ -1,6 +1,6 @@
 package configuration
 
-import configuration.local.LocalSeedsResolver
+import microservice.api._
 import domain.DomainSupport
 import microservice.JmxAgent
 import hystrix.HystrixTurbineSupport
@@ -8,8 +8,8 @@ import crawler.CrawlerGuardianSupport
 import crawler.http.CrawlerMicroservice
 import microservice.api.BootableClusterNode._
 import java.util.concurrent.ThreadLocalRandom
+import configuration.local.LocalSeedsResolver
 import http.{ ApiGatewayMicroservice, StandingMicroservice, ResultsMicroservice }
-import microservice.api._
 import discovery.{ ServiceRegistryCleanerSupport, DiscoveryClientSupport, DiscoveryHttpClient }
 import scala.reflect.ClassTag
 
@@ -31,7 +31,7 @@ trait Microservices {
   case class StandingCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
 
   abstract class MicroserviceFactory[T <: NodeIdentity: ClassTag] {
-    def create(desc: T): BootableMicroservice
+    def apply(desc: T): BootableMicroservice
   }
 
   object local {
@@ -42,7 +42,7 @@ trait Microservices {
 
     implicit def localNode[T <: NodeIdentity: LocalClusterNode: ClassTag]: MicroserviceFactory[T] = {
       new MicroserviceFactory[T] {
-        override def create(desc: T) = implicitly[LocalClusterNode[T]].create(desc)
+        override def apply(desc: T) = implicitly[LocalClusterNode[T]].create(desc)
       }
     }
   }
@@ -55,7 +55,7 @@ trait Microservices {
 
     implicit def containerNode[T <: NodeIdentity: ContainerClusterNode: ClassTag]: MicroserviceFactory[T] = {
       new MicroserviceFactory[T] {
-        override def create(desc: T) = implicitly[ContainerClusterNode[T]].create(desc)
+        override def apply(desc: T) = implicitly[ContainerClusterNode[T]].create(desc)
       }
     }
   }
@@ -68,7 +68,7 @@ trait Microservices {
 
     implicit def cloudNode[T <: NodeIdentity: CloudClusterNode: ClassTag]: MicroserviceFactory[T] = {
       new MicroserviceFactory[T] {
-        override def create(desc: T) = implicitly[CloudClusterNode[T]].create(desc)
+        override def apply(desc: T) = implicitly[CloudClusterNode[T]].create(desc)
       }
     }
   }
@@ -84,14 +84,14 @@ object Microservices extends Microservices {
   /*******************************************************************************************************************/
   implicit object ContainerGateway extends ContainerClusterNode[GatewayCfg] {
     override def create(desc: GatewayCfg) = {
-      object Gateaway extends MicroserviceKernel(desc.akkaPort, desc.env, desc.httpPort,
+      object Gateway extends MicroserviceKernel(desc.akkaPort, desc.env, desc.httpPort,
         desc.jmxPort, MicroserviceKernel.GatewayRole, CloudEth)
         with SeedNodesResolver
         with ApiGatewayMicroservice
         with HystrixTurbineSupport
         with ServiceRegistryCleanerSupport
         with JmxAgent
-      Gateaway
+      Gateway
     }
   }
 
@@ -185,5 +185,5 @@ object Microservices extends Microservices {
    *
    */
   def microservice[T <: NodeIdentity: MicroserviceFactory: ClassTag](implicit desc: T) =
-    implicitly[MicroserviceFactory[T]].create(desc)
+    implicitly[MicroserviceFactory[T]].apply(desc)
 }

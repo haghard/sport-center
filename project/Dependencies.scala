@@ -65,7 +65,6 @@ object Dependencies {
   
   val turbine          = "com.netflix.turbine"    %   "turbine-core"          % "2.0.0-DP.2"
 
-  //val dispatch         = "net.databinder.dispatch"  %%  "dispatch-core"       % "0.11.2"
   val rxscala          = "io.reactivex"           %% "rxscala"                % "0.23.1"
 
   val protobuf         = "com.google.protobuf"    % "protobuf-java"           % "2.5.0"

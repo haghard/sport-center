@@ -85,7 +85,8 @@ buildOptions in docker := BuildOptions(cache = false,
 
 val cassandra = "192.168.0.182"
 
-addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562")
+addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2551 --HTTP_PORT=2561")
+addCommandAlias("lgateway1", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562")
 
 addCommandAlias("lcrawler0", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2553 --HTTP_PORT=9001 --DB_HOSTS=" + cassandra)
 addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2554 --HTTP_PORT=9002 --DB_HOSTS=" + cassandra)

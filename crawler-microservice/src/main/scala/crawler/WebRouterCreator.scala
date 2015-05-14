@@ -15,8 +15,7 @@ trait WebRouterCreator {
 }
 
 trait ProgrammaticallyCreator extends WebRouterCreator {
-
-  def context: ActorContext
+  mixin => def context: ActorContext
 
   def teams: Seq[String]
 
@@ -33,12 +32,12 @@ trait ProgrammaticallyCreator extends WebRouterCreator {
     context.actorOf(routerProps, name = routerName)
 }
 
-trait ConfigCreator extends WebRouterCreator {
-
-  def context: ActorContext
+trait FromConfigCreator extends WebRouterCreator {
+  mixin => def context: ActorContext
 
   def teams: Seq[String]
 
   override lazy val createRouter: ActorRef =
-    context.actorOf(FromConfig.props(WebGetter.props(teams).withDispatcher(dispatcher)), name = routerName)
+    context.actorOf(FromConfig.props(WebGetter.props(teams).withDispatcher(dispatcher)),
+      name = routerName)
 }

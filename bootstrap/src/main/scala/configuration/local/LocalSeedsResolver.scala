@@ -8,7 +8,7 @@ import microservice.api.{ BootableClusterNode, ClusterNetworkSupport, SeedNodesS
 import scala.collection.JavaConverters._
 
 /**
- * Based on addCommandAlias("lgateway0") port 2552
+ * Based on addCommandAlias("lgateway0") port 2551
  *
  */
 trait LocalSeedsResolver extends SeedNodesSupport {
@@ -19,7 +19,8 @@ trait LocalSeedsResolver extends SeedNodesSupport {
       .find(_.getName == ethName)
       .flatMap(x ⇒ x.getInetAddresses.asScala.toList.find(i => i.getHostAddress.matches(ipExpression)))
 
-    val seeds = r.fold("localhost:2552")(a => a.getHostAddress + ":2552")
+    //based on alias command
+    val seeds = r.fold("localhost:2551")(a => a.getHostAddress + ":2551")
     System.setProperty(BootableClusterNode.SEEDS_ENV_VAR, seeds)
     r
   }
