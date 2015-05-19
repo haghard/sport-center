@@ -1,0 +1,23 @@
+option java_package = "domain.formats";
+option optimize_for = SPEED;
+
+
+message EventMessageFormat {
+  required PersistedEventFormat event = 1;
+  required string uuid = 2;
+  required int64  time = 3;
+}
+
+message PersistedEventFormat {
+  required string owner = 1;
+  required int64  time = 2;
+  repeated ResultFormat events = 3;
+}
+
+message ResultFormat {
+  required string homeTeam = 1;
+  required int32 homeScore = 2;
+  required string awayTeam = 3;
+  required int32 awayScore = 4;
+  required int64 time = 5;
+}

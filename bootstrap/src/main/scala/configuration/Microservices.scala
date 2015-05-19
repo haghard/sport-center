@@ -9,7 +9,7 @@ import crawler.http.CrawlerMicroservice
 import microservice.api.BootableClusterNode._
 import java.util.concurrent.ThreadLocalRandom
 import configuration.local.LocalSeedsResolver
-import http.{ ApiGatewayMicroservice, StandingMicroservice, ResultsMicroservice }
+import http.{ AnalyticsMicroservice, ApiGatewayMicroservice, StandingMicroservice, ResultsMicroservice }
 import discovery.{ ServiceRegistryCleanerSupport, DiscoveryClientSupport, DiscoveryHttpClient }
 import scala.reflect.ClassTag
 
@@ -29,6 +29,8 @@ trait Microservices {
 
   case class ResultsQuerySideCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
   case class StandingCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
+
+  case class AnalyticsCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
 
   abstract class MicroserviceFactory[T <: NodeIdentity: ClassTag] {
     def apply(desc: T): BootableMicroservice
@@ -132,6 +134,16 @@ object Microservices extends Microservices {
     }
   }
 
+  implicit object ContainerAnalytics extends ContainerClusterNode[AnalyticsCfg] {
+    override def create(cfg: AnalyticsCfg): BootableMicroservice = {
+      object Analytics extends MicroserviceKernel(cfg.akkaPort, cfg.env, cfg.httpPort, cfg.jmxPort, MicroserviceKernel.AnalyticRole, LocalMacEth)
+        with SeedNodesResolver
+        with AnalyticsMicroservice
+        with DiscoveryClientSupport with DiscoveryHttpClient
+      Analytics
+    }
+  }
+
   /******************************************************************************************************************/
   implicit object LocalGateway extends LocalClusterNode[GatewayCfg] {
     override def create(desc: GatewayCfg) = {
@@ -163,6 +175,16 @@ object Microservices extends Microservices {
         with DiscoveryClientSupport with DiscoveryHttpClient
         with DomainSupport
       StandingQuery
+    }
+  }
+
+  implicit object LocalAnalytics extends LocalClusterNode[AnalyticsCfg] {
+    override def create(cfg: AnalyticsCfg): BootableMicroservice = {
+      object Analytics extends MicroserviceKernel(cfg.akkaPort, cfg.env, cfg.httpPort, cfg.jmxPort, MicroserviceKernel.AnalyticRole, LocalMacEth)
+        with LocalSeedsResolver
+        with AnalyticsMicroservice
+        with DiscoveryClientSupport with DiscoveryHttpClient
+      Analytics
     }
   }
 

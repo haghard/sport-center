@@ -4,7 +4,6 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import com.typesafe.sbt.SbtScalariform._
-import com.typesafe.sbt.SbtGit._
 
 name := "sport-center"
 organization := "github.com"
@@ -19,22 +18,23 @@ promptTheme := Scalapenos
 
 scalariformSettings
 
+
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(AlignParameters, true)
   .setPreference(AlignSingleLineCaseStatements, true)
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
 
+net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 lazy val root = project.in(file("."))
   .aggregate(`discovery`, `core`, `bootstrap`, `domain`,
-             `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
+             `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`, `analyticsMicroservice`)
 
 
 lazy val `core` = project.in(file("core"))
 
-lazy val `bootstrap` = project.in(file("bootstrap")).dependsOn(`gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
+lazy val `bootstrap` = project.in(file("bootstrap")).dependsOn(`gatewayMicroservices`, `querySideResults`, `querySideStandings`, `analyticsMicroservice`, `crawlerMicroservices`)
 
 lazy val `discovery` = project.in(file("discovery")).dependsOn(`core`).configs(MultiJvm)
 
@@ -49,6 +49,9 @@ lazy val `querySideStandings` = project.in(file("query-side-standings")).depends
 lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).dependsOn(`core`, `domain`, `discovery`, `dddCore`)
 
 lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
+
+lazy val `analyticsMicroservice` = project.in(file("analytics-microservice")).dependsOn(`core`, `domain`, `discovery`)
+
 
 //future work
 //lazy val `seedsMicroservices` = project.in(file("cluster-seeds-discovery")).dependsOn(`core`)

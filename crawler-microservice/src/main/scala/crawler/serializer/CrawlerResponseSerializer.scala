@@ -41,10 +41,7 @@ final class CrawlerResponseSerializer(system: ExtendedActorSystem) extends Seria
 
     e.results.foreach { r =>
       val b = domain.formats.CrawlerResponseFormats.ResponseFormat.newBuilder()
-      b.setHomeTeam(r.homeTeam)
-      b.setHomeScore(r.homeScore)
-      b.setAwayTeam(r.awayTeam)
-      b.setAwayScore(r.awayScore)
+      b.setHomeTeam(r.homeTeam).setHomeScore(r.homeScore).setAwayTeam(r.awayTeam).setAwayScore(r.awayScore)
       b.setTime(r.dt.getTime)
       builder = builder.addResults(b)
     }

@@ -17,6 +17,13 @@ import scala.util.{ Failure, Success }
 
 object CrawlerGuardian {
   case class CrawlerResponse(dt: DateTime, results: List[NbaResult])
+
+  implicit object ShardResolution extends CustomShardResolution[CrawlerCampaign]
+  implicit object agFactory extends AggregateRootActorFactory[CrawlerCampaign] {
+    override def inactivityTimeout: Duration = 10.minute
+    override def props(pc: PassivationConfig) = Props(new CrawlerCampaign(pc))
+  }
+
   def props(settings: CustomSettings) = Props(new CrawlerGuardian(settings))
 }
 
@@ -35,41 +42,35 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
 
   private val formatter = searchFormatter()
 
-  private val crawlerMaster = context.actorOf(CrawlerMaster.props(settings), "crawler-master")
+  private val crawler = context.actorOf(CrawlerMaster.props(settings), "crawler")
 
-  implicit object ShardResolution extends CustomShardResolution[CrawlerCampaign]
-  implicit object agFactory extends AggregateRootActorFactory[CrawlerCampaign] {
-    override def inactivityTimeout: Duration = 10.minute
-    override def props(pc: PassivationConfig) = Props(new CrawlerCampaign(pc))
-  }
-
-  private val campaignDomain: ActorRef = shardOf[CrawlerCampaign]
+  private val campaign = shardOf[CrawlerCampaign]
 
   implicit val timeout = akka.util.Timeout(10 seconds)
   implicit val ec = context.system.dispatchers.lookup("scheduler-dispatcher")
 
   override def preStart = {
     val start = startPoint.fold(throw new Exception("app-settings.stages prop must be defined")) { _._1.getStart.withZone(SCENTER_TIME_ZONE).withTime(23, 59, 59, 0).toDate }
-    campaignDomain ! InitCampaign(start)
+    campaign ! InitCampaign(start)
   }
 
   private def scheduleCampaign = {
-    context.system.scheduler.scheduleOnce(10 seconds)(campaignDomain ! RequestCampaign(daysInBatch))
+    context.system.scheduler.scheduleOnce(10 seconds)(campaign ! RequestCampaign(daysInBatch))
     context become receive
   }
 
   override def receive: Receive = {
     case Acknowledge(Success("OK")) | EffectlessAck(Success("OK")) =>
-      campaignDomain ! RequestCampaign(daysInBatch)
+      campaign ! RequestCampaign(daysInBatch)
 
     case CrawlerTask(None) ⇒
-      context.system.scheduler.scheduleOnce(iterationPeriod)(campaignDomain ! RequestCampaign(daysInBatch))
+      context.system.scheduler.scheduleOnce(iterationPeriod)(campaign ! RequestCampaign(daysInBatch))
       log.info("Prevent useless crawler iteration. Data is up to date")
 
     case CrawlerTask(Some(job)) ⇒
       log.info("Schedule crawler job up to {} date", formatter format job.endDt.toDate)
       context setReceiveTimeout jobTimeout
-      crawlerMaster ! job
+      crawler ! job
       context become waitForCrawler
   }
 
@@ -80,7 +81,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
 
     case CrawlerResponse(dt, results) ⇒
       log.info("We have received response from job [{}] - size: {}", dt, results.size)
-      campaignDomain
+      campaign
         .ask(PersistCampaign(dt, results))
         .mapTo[ddd.amod.Acknowledge]
         .onComplete {
@@ -90,7 +91,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
           case Failure(error) ⇒
             log.info("ChangeSet save error {}", error.getMessage)
             context become receive
-            context.system.scheduler.scheduleOnce(iterationPeriod)(campaignDomain ! RequestCampaign(daysInBatch))
+            context.system.scheduler.scheduleOnce(iterationPeriod)(campaign ! RequestCampaign(daysInBatch))
         }
   }
 }

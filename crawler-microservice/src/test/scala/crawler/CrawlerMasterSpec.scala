@@ -5,7 +5,8 @@ import akka.cluster.routing.{ ClusterRouterPoolSettings, ClusterRouterPool }
 import akka.routing.RoundRobinPool
 import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
-import microservice.crawler.{ CrawlerResponse, CrawlerJob }
+import crawler.writer.CrawlerGuardian.CrawlerResponse
+import microservice.crawler.CrawlerJob
 import org.joda.time.DateTime
 import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpecLike }
 

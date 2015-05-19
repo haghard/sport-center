@@ -24,15 +24,17 @@ val mainJarClass = settingKey[String]("Main class to run")
 
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
 
-clusterNodeType := "gateway-microservice"
+//clusterNodeType := "gateway-microservice"
 //clusterNodeType := "crawler-microservice"
 //clusterNodeType := "query-side-results"
 //clusterNodeType := "query-side-standings"
+clusterNodeType := "spark-analytics-microservice"
 
-mainJarClass := "configuration.container.GatewayBootstrap"
+//mainJarClass := "configuration.container.GatewayBootstrap"
 //mainJarClass := "configuration.container.CrawlerBootstrap"
 //mainJarClass := "configuration.container.QueryResultsBootstrap"
 //mainJarClass := "configuration.container.QueryStandingBootstrap"
+mainJarClass := "configuration.container.AnalyticsBootstrap"
 
 assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 
@@ -41,10 +43,16 @@ assemblyMergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
     case "META-INF/io.netty.versions.properties" => MergeStrategy.discard
     case "*.properties"     => MergeStrategy.discard
-    case "logback.xml"       => MergeStrategy.first
+    case "logback.xml"      => MergeStrategy.first
+    case  PathList(ps @ _*) if ps.last contains "Effect.class"     => MergeStrategy.first
+    case  PathList(ps @ _*) if ps.last contains "Predicate.class"  => MergeStrategy.first
+    case  PathList(ps @ _*) if ps.last startsWith "Function"   => MergeStrategy.first
+    case  PathList(ps @ _*) if ps.last startsWith "Procedure" =>  MergeStrategy.first
     case x => old(x)
   }
 }
+
+//This is only for stream RC3 - https://groups.google.com/forum/#!topic/akka-user/3MQGojdIBcU
 
 mainClass in assembly := Some(mainJarClass.value)
 
@@ -96,6 +104,8 @@ addCommandAlias("lresults1", "bootstrap/run-main configuration.local.QueryResult
 
 addCommandAlias("lstanding0", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2557 --HTTP_PORT=9012 --DB_HOSTS=" + cassandra)
 addCommandAlias("lstanding1", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2558 --HTTP_PORT=9013 --DB_HOSTS=" + cassandra)
+
+addCommandAlias("lanalytics0", "bootstrap/run-main configuration.local.AnalyticsBootstrap --AKKA_PORT=2559 --HTTP_PORT=9014 --DB_HOSTS=" + cassandra)
 
 
 //bootstrap/*:docker

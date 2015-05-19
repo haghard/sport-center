@@ -8,8 +8,6 @@ addSbtPlugin("com.scalapenos" % "sbt-prompt" % "0.1")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.13.0")
 
-//addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.0.0")
-
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.7.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.8")

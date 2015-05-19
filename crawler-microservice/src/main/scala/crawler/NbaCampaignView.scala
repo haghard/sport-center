@@ -10,9 +10,9 @@ import scala.concurrent.duration._
 
 object NbaCampaignView {
 
-  case class LastUpdateDate(lastIterationDate: Option[Date] = None) extends State
-
   private val path = "nba"
+
+  case class LastUpdateDate(lastIterationDate: Option[Date] = None) extends State
 
   def props(dispatcher: String): Props =
     Props(new NbaCampaignView).withDispatcher(dispatcher)
@@ -28,6 +28,10 @@ class NbaCampaignView extends akka.persistence.PersistentView with ActorLogging 
   override def viewId = "nba-campaign-view"
 
   override def persistenceId = path
+
+  override def preStart = {
+    log.info("****NbaCampaignView {}***", self)
+  }
 
   override def receive: Receive = {
     case q: GetLastCrawlDate              ⇒ sender() ! state

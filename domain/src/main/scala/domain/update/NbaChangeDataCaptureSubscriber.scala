@@ -34,8 +34,8 @@ object NbaChangeDataCaptureSubscriber {
 class NbaChangeDataCaptureSubscriber private extends Actor with ActorLogging {
   import NbaChangeDataCaptureSubscriber._
 
-  implicit val scheduler = DefaultScheduler
   implicit val logger = log
+  implicit val scheduler = DefaultScheduler
   implicit val system = context.system
 
   private val pullInterval = 10 seconds

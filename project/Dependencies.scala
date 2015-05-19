@@ -2,7 +2,9 @@ import sbt._
 
 object Dependencies {
 
+  val crossScala = Seq("2.11.6", "2.10.5")
   val Scala = "2.11.6"
+
   val Akka = "2.3.11"
   val AkkaDataReplication = "0.11"
   val AkkaStreamsVersion = "1.0-RC2"
@@ -31,6 +33,25 @@ object Dependencies {
     val multi_node_testkit    = "com.typesafe.akka"       %%    "akka-multi-node-testkit"       % Akka
   }
 
+  val sparkCassandra    = "com.datastax.spark"  %% "spark-cassandra-connector"          % "1.3.0-SNAPSHOT" //current build, works fine
+
+/*
+  object Spark {
+    val spark_core      = "org.apache.spark" %% "spark-core"      % sparkVersion
+    val spark_sql       = "org.apache.spark" %% "spark-sql"       % sparkVersion
+    val mllib           = "org.apache.spark" %% "spark-mllib"     % sparkVersion
+
+  }*/
+
+  object spark {
+    val Spark = "1.3.1"
+
+    val core           = ("org.apache.spark"        %% "spark-core"            % Spark).exclude("akka.actor", "akka-actor")
+    //val sparkStreaming = "org.apache.spark"        %% "spark-streaming"       % Spark
+    //val sparkSql       = "org.apache.spark"        %% "spark-sql"             % Spark
+    //val mllib = ("org.apache.spark" %% "spark-mllib" % version).exclude("org.slf4j", "slf4j-api")
+  }
+
   val json4s = "org.json4s"             %%    "json4s-native"   % "3.2.10"
 
   val spray_json = "io.spray"           %%    "spray-json"      % "1.2.6" withSources()
@@ -45,7 +66,7 @@ object Dependencies {
   val logback      = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
   val slf4j_api    = "org.slf4j"        %     "slf4j-api"       % "1.7.7"
 
-  val scalacompiler    = "org.scala-lang"         %  "scala-compiler"        % Scala
+  //val scalacompiler    = "org.scala-lang"         %  "scala-compiler"        % Scala
 
   val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
   val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.0"    %   "test"
@@ -63,9 +84,12 @@ object Dependencies {
 
   val hystrix_stream   = "com.netflix.hystrix"    %  "hystrix-metrics-event-stream" % Hystrix
   
-  val turbine          = "com.netflix.turbine"    %   "turbine-core"          % "2.0.0-DP.2"
+  val turbine          = "com.netflix.turbine"    %  "turbine-core"          % "2.0.0-DP.2"
 
   val rxscala          = "io.reactivex"           %% "rxscala"                % "0.23.1"
 
-  val protobuf         = "com.google.protobuf"    % "protobuf-java"           % "2.5.0"
+  val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
+
+  //val spark            =  "org.apache.spark"      %% "spark-core"              % "1.3.1"
+  //val spark_streaming  =  "org.apache.spark"      %% "spark-streaming"         % "1.3.1"
 }

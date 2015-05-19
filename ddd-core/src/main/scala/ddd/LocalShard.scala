@@ -10,7 +10,7 @@ object LocalShard {
   implicit def localShardFactory[T <: BusinessEntity: BusinessEntityActorFactory: ShardResolution: ClassTag](implicit system: ActorSystem): ShardFactory[T] = {
     new ShardFactory[T] {
       override def getOrCreate: ActorRef = {
-        system.actorOf(Props(new LocalShardGuardian[T]()), name = shardName)
+        system.actorOf(Props(new LocalShardRouter[T]), name = shardName)
       }
     }
   }
@@ -23,7 +23,10 @@ object LocalShard {
   }
 
   trait LocalMapChildCreationSupport extends CreationSupport {
-    mixin: ActorLogging { def context: ActorContext } =>
+    mixin: ActorLogging =>
+
+    def context: ActorContext
+
     private var children: immutable.Map[String, ActorRef] = Map()
 
     override def getChild(name: String): Option[ActorRef] = children.get(name)
@@ -55,7 +58,7 @@ object LocalShard {
     }
   }
 
-  final class LocalShardGuardian[A <: BusinessEntity](implicit ct: ClassTag[A],
+  final class LocalShardRouter[A <: BusinessEntity](implicit ct: ClassTag[A],
     resolution: IdResolution[A], childFactory: BusinessEntityActorFactory[A]) extends AkkaActorsChildCreationSupport
       with Actor with ActorLogging {
 
@@ -84,7 +87,7 @@ object LocalShard {
     def ::(childProps: Props, childId: String) = getOrCreateChild(childProps, childId)
 
     def dismiss(child: ActorRef, stopMessage: Any) {
-      log.info(s"Passivating $child")
+      log.info(s"Passivate $child")
       child ! stopMessage
     }
   }
