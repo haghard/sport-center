@@ -46,18 +46,18 @@ class SeasonStanding extends SparkBatchJob[SeasonStandingView] {
           case "aw" => s.copy(aw = s.aw + 1, w = s.w + 1)
           case "al" => s.copy(al = s.al + 1, l = s.l + 1)
         }, { (f, s) => f.copy(f.team, f.hw + s.hw, f.hl + s.hl, f.aw + s.aw, f.al + s.al, f.w + s.w, f.l + s.l) })
+        .map(kv => kv._2.copy(team = kv._1))
+        .sortBy(_.w, ascending = false)
         .collect()
-        .map { kv => kv._2.copy(team = kv._1) }
-        .sortWith(_.w > _.w)
 
-      val (west, east) = array.toList.partition { item ⇒
+      val (west, east) = array.partition { item ⇒
         teamConf(item.team) match {
           case "west" ⇒ true
           case "east" ⇒ false
         }
       }
 
-      SeasonStandingView(west.size + east.size, west, east)
+      SeasonStandingView(west.size + east.size, west.toList, east.toList)
     } catch {
       case e: Exception => throw e
     } finally {

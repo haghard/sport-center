@@ -29,20 +29,12 @@ object AnalyticsMicroservice {
         val e = obj.error.fold(JsString("none")) { error ⇒ JsString(error) }
         obj.body match {
           case Some(SeasonStandingView(c, west, east)) ⇒
-            JsObject(
-              "western conference" -> JsArray(west.map(_.toJson)),
+            JsObject("western conference" -> JsArray(west.map(_.toJson)),
               "eastern conference" -> JsArray(east.map(_.toJson)),
-              "url" -> url,
-              "view" -> v,
-              "body" -> JsObject("count" -> JsNumber(c)),
-              "error" -> e)
+              "url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c)), "error" -> e)
           case Some(PlayoffStandingView(c, table)) =>
-            JsObject(
-              "standing" -> JsArray(table.map(_.toJson)),
-              "url" -> url,
-              "view" -> v,
-              "body" -> JsObject("count" -> JsNumber(c)),
-              "error" -> e)
+            JsObject("playoff" -> JsArray(table.map(_.toJson)),
+              "url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c)), "error" -> e)
           case None => JsObject("url" -> url, "view" -> v, "error" -> e)
         }
       }
