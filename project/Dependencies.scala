@@ -35,18 +35,10 @@ object Dependencies {
 
   val sparkCassandra    = "com.datastax.spark"  %% "spark-cassandra-connector"          % "1.3.0-SNAPSHOT" //current build, works fine
 
-/*
-  object Spark {
-    val spark_core      = "org.apache.spark" %% "spark-core"      % sparkVersion
-    val spark_sql       = "org.apache.spark" %% "spark-sql"       % sparkVersion
-    val mllib           = "org.apache.spark" %% "spark-mllib"     % sparkVersion
-
-  }*/
-
   object spark {
     val Spark = "1.3.1"
 
-    val core           = ("org.apache.spark"        %% "spark-core"            % Spark).exclude("akka.actor", "akka-actor")
+    val core           = ("org.apache.spark"        %% "spark-core"            % Spark).exclude("com.typesafe.akka", "akka-actor")
     //val sparkStreaming = "org.apache.spark"        %% "spark-streaming"       % Spark
     //val sparkSql       = "org.apache.spark"        %% "spark-sql"             % Spark
     //val mllib = ("org.apache.spark" %% "spark-mllib" % version).exclude("org.slf4j", "slf4j-api")

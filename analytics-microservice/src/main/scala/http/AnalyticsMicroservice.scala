@@ -12,7 +12,7 @@ import scalaz.{ -\/, \/- }
 import microservice.api.MicroserviceKernel
 import scala.concurrent.{ Future, ExecutionContext }
 import microservice.http.{ RestApiJunction, RestWithDiscovery }
-import cassandra.SparkJobManager.{ SparkJobView, Standing, SeasonStandingView, StandingBatchJobSubmit }
+import cassandra.SparkJobManager._
 
 object AnalyticsMicroservice {
   case class SparkJobHttpResponse(url: String, view: Option[String] = None,
@@ -28,13 +28,21 @@ object AnalyticsMicroservice {
         val v = obj.view.fold(JsString("none")) { view ⇒ JsString(view) }
         val e = obj.error.fold(JsString("none")) { error ⇒ JsString(error) }
         obj.body match {
-          case Some(SeasonStandingView(c, west, east)) ⇒ JsObject(
-            "western conference" -> JsArray(west.map(_.toJson)),
-            "eastern conference" -> JsArray(east.map(_.toJson)),
-            "url" -> url,
-            "view" -> v,
-            "body" -> JsObject("count" -> JsNumber(c)),
-            "error" -> e)
+          case Some(SeasonStandingView(c, west, east)) ⇒
+            JsObject(
+              "western conference" -> JsArray(west.map(_.toJson)),
+              "eastern conference" -> JsArray(east.map(_.toJson)),
+              "url" -> url,
+              "view" -> v,
+              "body" -> JsObject("count" -> JsNumber(c)),
+              "error" -> e)
+          case Some(PlayoffStandingView(c, table)) =>
+            JsObject(
+              "standing" -> JsArray(table.map(_.toJson)),
+              "url" -> url,
+              "view" -> v,
+              "body" -> JsObject("count" -> JsNumber(c)),
+              "error" -> e)
           case None => JsObject("url" -> url, "view" -> v, "error" -> e)
         }
       }

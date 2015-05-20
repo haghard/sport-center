@@ -37,7 +37,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   lazy val config = {
     val la = localAddress
 
-    val env = ConfigFactory.load("db.conf")
+    val env = ConfigFactory.load("internals.conf")
 
     val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
     val cassandraPort = env.getConfig("db.cassandra").getString("port")

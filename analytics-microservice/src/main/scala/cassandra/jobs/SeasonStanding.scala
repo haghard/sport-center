@@ -1,37 +1,42 @@
 package cassandra.jobs
 
 import cassandra._
+import java.util.Date
+import scala.collection.mutable
+import org.apache.spark.rdd.RDD
 import com.typesafe.config.Config
 import microservice.crawler.NbaResult
-import org.apache.spark.rdd.RDD
-import org.joda.time.Interval
-import scala.collection.mutable
-import org.apache.spark.{ SparkConf, SparkContext }
+import org.joda.time.{ DateTime, Interval }
+import com.datastax.spark.connector.CassandraRow
 import cassandra.SparkJobManager.{ Standing, SeasonStandingView }
 
-//val rr = rdd.aggregateByKey(List[NbaResult]())((acc, rec) => rec :: acc, (_ ::: _))
-//val rr = rdd.map(r => (r._1, 1)).reduceByKey(_ + _)
-//.aggregateByKey(0l)((c, rec) => 1l, (_ + _))
-
-class SeasonStanding extends BatchJob[SeasonStandingView] {
+class SeasonStanding extends SparkBatchJob[SeasonStandingView] {
 
   override def name = getClass.getSimpleName
 
-  override def execute(config: Config, teamConf: mutable.HashMap[String, String], interval: Interval): SeasonStandingView = {
-
+  override def execute(config: Config, teamConf: mutable.HashMap[String, String], timeFilter: Interval): SeasonStandingView = {
     val seeds = config.getString("db.cassandra.seeds")
     val host = seeds.split(",")
-    val CassandraHost = host(0)
 
-    val sc = new SparkContext(new SparkConf()
-      .setAppName(name)
-      .set("spark.cassandra.connection.host", CassandraHost)
-      .setMaster("local[2]"))
+    val sc = createSpark(config, host(0))
 
     try {
-      val rdd: RDD[NbaResult] = sc.cassandraRdd(teamConf.keySet, interval)
+      val rdd: RDD[CassandraRow] = sc.cassandraRdd(config).cache()
 
-      val result = rdd.flatMap { r =>
+      val array = rdd.mapPartitionsWithIndex { (index, rows) =>
+        for {
+          row <- rows
+          key = row.get[String]("processor_id")
+
+          if (row.get[String]("marker") == "A" && teamConf.keySet.contains(key))
+          event = tryDeserialize(row.getBytes("message").array(), endPos, 5)
+
+          if (timeFilter.contains(new DateTime(event.getResult.getTime).withZone(microservice.crawler.SCENTER_TIME_ZONE)))
+        } yield {
+          val r = event.getResult
+          NbaResult(r.getHomeTeam, r.getHomeScore, r.getAwayTeam, r.getAwayScore, new Date(r.getTime))
+        }
+      }.flatMap { r =>
         if (r.homeScore > r.awayScore) List((r.homeTeam, "hw"), (r.awayTeam, "al"))
         else List((r.homeTeam, "hl"), (r.awayTeam, "aw"))
       }.aggregateByKey(Standing())(
@@ -40,9 +45,10 @@ class SeasonStanding extends BatchJob[SeasonStandingView] {
           case "hl" => s.copy(hl = s.hl + 1, l = s.l + 1)
           case "aw" => s.copy(aw = s.aw + 1, w = s.w + 1)
           case "al" => s.copy(al = s.al + 1, l = s.l + 1)
-        }, { (f, s) => f.copy(f.team, f.hw + s.hw, f.hl + s.hl, f.aw + s.aw, f.al + s.al, f.w + s.w, f.l + s.l) }).cache()
-
-      val array = (result.collect() map { kv => kv._2.copy(team = kv._1) }).sortWith(_.w > _.w)
+        }, { (f, s) => f.copy(f.team, f.hw + s.hw, f.hl + s.hl, f.aw + s.aw, f.al + s.al, f.w + s.w, f.l + s.l) })
+        .collect()
+        .map { kv => kv._2.copy(team = kv._1) }
+        .sortWith(_.w > _.w)
 
       val (west, east) = array.toList.partition { item ⇒
         teamConf(item.team) match {

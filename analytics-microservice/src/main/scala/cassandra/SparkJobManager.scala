@@ -3,7 +3,7 @@ package cassandra
 import org.joda.time.Interval
 import microservice.domain.State
 import com.typesafe.config.Config
-import cassandra.jobs.{ Driver, SeasonStanding }
+import cassandra.jobs.{ PlayOffStanding, Driver, SeasonStanding }
 import akka.actor.{ Actor, ActorLogging, Props }
 import microservice.http.RestService.{ BasicHttpRequest, ResponseBody }
 import scala.collection.mutable
@@ -20,14 +20,12 @@ object SparkJobManager {
 
   case class SeasonStandingView(count: Int = 0, west: List[Standing] = List.empty, east: List[Standing] = List.empty) extends SparkJobView
 
-  case class PlayoffStandingView(count: Int = 0) extends SparkJobView
+  case class PlayoffStandingView(count: Int = 0, table: List[String]) extends SparkJobView
 
   def props(config: Config): Props = Props(new SparkJobManager(config)).withDispatcher("scheduler-dispatcher")
 }
 
-class SparkJobManager private (override val config: Config) extends Actor
-    with ActorLogging
-    with Driver {
+class SparkJobManager private (override val config: Config) extends Actor with Driver with ActorLogging {
   import SparkJobManager._
 
   val Season = "season"
@@ -38,12 +36,13 @@ class SparkJobManager private (override val config: Config) extends Actor
       val responder = sender()
       log.info(s"Start spark batch job [$stage]")
 
-      if (stage.contains(Season)) {
-        val result = submit(config, MapReduce[SeasonStanding], teamConf, interval)
-        responder ! result
+      val result = if (stage.contains(Season)) {
+        submit(config, MapReduce[SeasonStanding], teamConf, interval)
       } else if (stage.contains(PlayOff)) {
-
+        submit(config, MapReduce[PlayOffStanding], teamConf, interval)
       }
+
+      responder ! result
       context.stop(self)
   }
 }
