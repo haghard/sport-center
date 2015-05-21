@@ -1,9 +1,9 @@
 package cassandra.jobs
 
-import com.typesafe.config.Config
-import org.apache.spark.{ SparkConf, SparkContext }
 import org.joda.time.Interval
 import scala.collection.mutable
+import com.typesafe.config.Config
+import org.apache.spark.{ SparkConf, SparkContext }
 
 trait SparkBatchJob[T] {
 
