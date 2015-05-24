@@ -60,11 +60,15 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
         import DiscoveryMicroservice._
         import HystrixMetricsMicroservice._
         ctx.complete {
-          List(curl("GET", s"$hystrixStream"), curl("GET", s"$pathPrefix/crawler"),
-            curl("GET", s"$servicePrefix/$scalarResponce"), curl("GET", s"$servicePrefix/$streamResponse"),
+          List(
+            curl("GET", s"$hystrixStream"),
+            curl("GET", s"$pathPrefix/crawler"),
+            curl("GET", s"$servicePrefix/$scalarResponce"),
+            curl("GET", s"$servicePrefix/$streamResponse"),
             curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
             curl("""PUT -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
-            curl("DELETE", s"$servicePrefix/akka.tcp://SportCenter@192.168.0.62:3561")).toJson.prettyPrint
+            curl("DELETE", s"$servicePrefix/akka.tcp://SportCenter@192.168.0.62:3561")
+          ).toJson.prettyPrint
         }
       }
     }

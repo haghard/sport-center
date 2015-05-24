@@ -27,15 +27,16 @@ object DiscoveryMicroservice {
   val scalarResponce = "scalar"
   val streamResponse = "stream"
   val servicePrefix = "discovery"
+  val encoding = "UTF-8"
+  val error = "Can't parse KVRequest"
 
   trait Protocols extends DefaultJsonProtocol {
     implicit val kvFormat = jsonFormat2(KVRequest.apply)
 
     implicit def unmarshaller(implicit ec: ExecutionContext) = new FromRequestUnmarshaller[KVRequest]() {
-      override def apply(req: HttpRequest): Future[KVRequest] = {
-        Try(Future(req.entity.asInstanceOf[Strict].data.decodeString("UTF-8").parseJson.convertTo[KVRequest]))
-          .getOrElse(Future.failed(new Exception("Can't parse KVRequest")))
-      }
+      override def apply(req: HttpRequest): Future[KVRequest] =
+        Try(Future(req.entity.asInstanceOf[Strict].data.decodeString(encoding).parseJson.convertTo[KVRequest]))
+          .getOrElse(Future.failed(new Exception(error)))
     }
   }
 }

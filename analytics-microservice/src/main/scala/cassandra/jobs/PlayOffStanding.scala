@@ -44,9 +44,9 @@ class PlayOffStanding extends SparkBatchJob[PlayoffStandingView] {
           (key, NbaResult(r.getHomeTeam, r.getHomeScore, r.getAwayTeam, r.getAwayScore, new Date(r.getTime)))
         }
       }.aggregateByKey(TreeMap[Date, String]())((round, r) =>
-          if (r.homeScore > r.awayScore) round + (r.dt -> s"[${r.homeScore}:${r.awayScore} ${r.homeTeam} wins]")
-          else round + (r.dt -> s"[${r.homeScore}:${r.awayScore} ${r.awayTeam} wins]"),
-         (m0, m1) => m0 ++ m1)
+        if (r.homeScore > r.awayScore) round + (r.dt -> s"[${r.homeScore}:${r.awayScore} ${r.homeTeam} wins]")
+        else round + (r.dt -> s"[${r.homeScore}:${r.awayScore} ${r.awayTeam} wins]"),
+        (m0, m1) => m0 ++ m1)
         .map(kv => (kv._2.lastKey, kv._1.head + "-" + kv._1.last + "  " + kv._2.values.mkString(", ")))
         .sortByKey()
         .map(_._2)
