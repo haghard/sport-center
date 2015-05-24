@@ -1,8 +1,8 @@
 package http
 
-import akka.http.scaladsl.marshalling.{ Marshaller, ToResponseMarshaller }
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Source
+import akka.http.scaladsl.marshalling.{ Marshaller, ToResponseMarshaller }
 
 import scala.concurrent.ExecutionContext
 
@@ -17,8 +17,7 @@ trait SSEventsMarshalling {
 
   def messageToResponseMarshaller[A: ToMessage, B](implicit ec: ExecutionContext): ToResponseMarshaller[Source[A, B]] =
     Marshaller.withFixedCharset(`text/event-stream`, HttpCharsets.`UTF-8`) { messages ⇒
-      HttpResponse(entity = HttpEntity.CloseDelimited(`text/event-stream`,
-        messages.mapMaterialized(_ => ()).map(_.toByteString)))
+      HttpResponse(entity = HttpEntity.CloseDelimited(`text/event-stream`, messages.map(_.toByteString)))
     }
 }
 
