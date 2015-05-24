@@ -38,7 +38,6 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val la = localAddress
 
     val env = ConfigFactory.load("internals.conf")
-
     val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
     val cassandraPort = env.getConfig("db.cassandra").getString("port")
     val contactPoints = cassandraEPs.split(",").map(_.trim).mkString("\"", "\",\"", "\"")
@@ -63,7 +62,12 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
-      .withFallback(ConfigFactory.parseString("akka.cluster.min-nr-of-members = 3"))
+      .withFallback(ConfigFactory.parseString(s"""
+        akka.cluster.role {
+          $GatewayRole.min-nr-of-members = 2
+          $CrawlerRole.min-nr-of-members = 1
+        }
+       """))
       .withFallback(ConfigFactory.parseString(s"cassandra-journal.contact-points=[$contactPoints]"))
       .withFallback(ConfigFactory.parseString(s"cassandra-snapshot-store.contact-points=[$contactPoints]"))
       .withFallback(ConfigFactory.parseString(s"cassandra-journal.port=$cassandraPort"))
@@ -73,7 +77,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.load("crawler.conf"))
 
     if (clusterRole == DomainRole)
-      local.withFallback(ConfigFactory.parseString(s"akka.contrib.cluster.sharding.role=${clusterRole}"))
+      local.withFallback(ConfigFactory.parseString(s"akka.cluster.sharding.role=${clusterRole}"))
 
     local
   }
