@@ -24,17 +24,17 @@ val mainJarClass = settingKey[String]("Main class to run")
 
 val clusterNodeType = settingKey[String]("Type of node that we gonna build")
 
-//clusterNodeType := "gateway-microservice"
+clusterNodeType := "gateway-microservice"
 //clusterNodeType := "crawler-microservice"
 //clusterNodeType := "query-side-results"
 //clusterNodeType := "query-side-standings"
-clusterNodeType := "spark-analytics-microservice"
+//clusterNodeType := "spark-analytics-microservice"
 
-//mainJarClass := "configuration.container.GatewayBootstrap"
+mainJarClass := "configuration.container.GatewayBootstrap"
 //mainJarClass := "configuration.container.CrawlerBootstrap"
 //mainJarClass := "configuration.container.QueryResultsBootstrap"
 //mainJarClass := "configuration.container.QueryStandingBootstrap"
-mainJarClass := "configuration.container.AnalyticsBootstrap"
+//mainJarClass := "configuration.container.AnalyticsBootstrap"
 
 assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 
