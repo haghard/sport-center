@@ -2,8 +2,8 @@ package domain
 
 import akka.actor.PoisonPill
 import domain.update.NbaChangeDataCaptureSubscriber
-import akka.contrib.pattern.ClusterSingletonManager
 import microservice.api.{ MicroserviceKernel, BootableMicroservice }
+import akka.cluster.singleton.{ ClusterSingletonManagerSettings, ClusterSingletonManager }
 
 trait DomainSupport extends BootableMicroservice {
 
@@ -12,10 +12,14 @@ trait DomainSupport extends BootableMicroservice {
   abstract override def startup(): Unit = {
     system.actorOf(ClusterSingletonManager.props(
       singletonProps = NbaChangeDataCaptureSubscriber.props,
-      singletonName = "change-set-subscriber",
+      //singletonName = "change-set-subscriber",
       terminationMessage = PoisonPill,
-      role = Some(MicroserviceKernel.DomainRole)),
-      name = "singleton-change-set-subscriber")
+      settings = ClusterSingletonManagerSettings(system)
+        .withRole(MicroserviceKernel.DomainRole)
+        .withSingletonName("change-set-subscriber")
+    //role = Some(MicroserviceKernel.DomainRole)),
+    //name = "singleton-change-set-subscriber"
+    ))
     super.startup()
   }
 }

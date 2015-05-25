@@ -19,3 +19,5 @@ query-side-standings/target
 activator.bat
 activator-launch-1.2.3.jar
 activator
+crawler-microservice/src/main/java/
+domain/src/main/java/

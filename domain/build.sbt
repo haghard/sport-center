@@ -2,7 +2,6 @@ import Dependencies._
 
 import scalariform.formatter.preferences._
 
-
 name := "domain"
 
 scalaVersion := Scala
@@ -16,16 +15,18 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+//domain/dependency-Tree
+
+
 libraryDependencies ++= Seq(
   protobuf,
   akka.actor,
   akka.cluster,
-  akka.contrib,
   //
   akka.persistence_cassandra,
   akka.slf4j,
   akka.streams.streamz_akka_persistence,
-  //akka.akka_ddd_core,
   //TEST
   akka.testkit % "test",
   scalatest,

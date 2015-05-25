@@ -1,8 +1,9 @@
 package ddd
 
+import akka.cluster.sharding.ClusterSharding
+import akka.cluster.sharding.ShardRegion.Passivate
+
 import scala.reflect.ClassTag
-import akka.contrib.pattern.ClusterSharding
-import akka.contrib.pattern.ShardRegion.Passivate
 import akka.actor.{ PoisonPill, ActorSystem, ActorRef }
 
 object ClusteredShard {
@@ -33,6 +34,8 @@ object ClusteredShard {
         ClusterSharding(system).start(
           typeName = entityClass.getSimpleName,
           entryProps = Some(entityProps),
+          roleOverride = None,
+          rememberEntries = true,
           idExtractor = sr.idExtractor,
           shardResolver = sr.shardResolver)
       }

@@ -1,7 +1,7 @@
 package hystrix
 
 import akka.actor.PoisonPill
-import akka.contrib.pattern.ClusterSingletonManager
+import akka.cluster.singleton.{ ClusterSingletonManagerSettings, ClusterSingletonManager }
 import microservice.api.{ MicroserviceKernel, BootableMicroservice, ClusterNetworkSupport }
 
 /**
@@ -15,10 +15,14 @@ trait HystrixTurbineSupport extends BootableMicroservice {
     akka.cluster.Cluster(system).registerOnMemberUp {
       system.actorOf(ClusterSingletonManager.props(
         singletonProps = HystrixTurbineManager.props,
-        singletonName = "hystrix-turbine-manager",
+        //singletonName = "hystrix-turbine-manager",
         terminationMessage = PoisonPill,
-        role = Some(MicroserviceKernel.GatewayRole)),
-        name = "singleton-hystrix-turbine-manager")
+        settings = ClusterSingletonManagerSettings(system)
+          .withRole(MicroserviceKernel.GatewayRole)
+          .withSingletonName("hystrix-turbine-manager")
+      //role = Some(MicroserviceKernel.GatewayRole)),
+      //name = "singleton-hystrix-turbine-manager"
+      ))
     }
     super.startup()
   }

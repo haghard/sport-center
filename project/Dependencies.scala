@@ -6,9 +6,9 @@ object Dependencies {
   val crossScala = Seq(Scala, "2.10.5")
 
 
-  val Akka = "2.3.11"
-  val AkkaDataReplication = "0.11"
-  val AkkaStreamsVersion = "1.0-RC2"
+  val Akka = "2.4-M1" //"2.3.11"
+  val AkkaDataReplication = "0.12-local" //"0.11"
+  val AkkaStreamsVersion = "1.0-RC3"
   val Hystrix = "1.4.0"
 
   implicit class Exclude(module: ModuleID) {
@@ -19,10 +19,13 @@ object Dependencies {
       //.exclude("com.typesafe.akka", "akka-cluster")
   }
 
-    object akka {
+  object akka {
     val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()
     val cluster               = "com.typesafe.akka"       %%    "akka-cluster"                  % Akka withSources()
-    val contrib               = "com.typesafe.akka"       %%    "akka-contrib"                  % Akka intransitive()
+    //val contrib               = "com.typesafe.akka"       %%    "akka-contrib"                  % Akka intransitive()
+
+    val sharding              = "com.typesafe.akka"       %%    "akka-cluster-sharding"       %  Akka withSources()
+    val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"          %  Akka withSources()
 
     //val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
 
@@ -33,7 +36,7 @@ object Dependencies {
     object streams {
       val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"      % "0.2"    withSources()
       val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"      % AkkaStreamsVersion withSources()
-      val akka_http                = "com.typesafe.akka"    %%    "akka-http-scala-experimental"  % AkkaStreamsVersion withSources()
+      val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"        % AkkaStreamsVersion withSources()
       val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental"   % AkkaStreamsVersion withSources()
     }
 
@@ -88,7 +91,4 @@ object Dependencies {
   val rxscala          = "io.reactivex"           %% "rxscala"                % "0.23.1"
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
-
-  //val spark            =  "org.apache.spark"      %% "spark-core"              % "1.3.1"
-  //val spark_streaming  =  "org.apache.spark"      %% "spark-streaming"         % "1.3.1"
 }

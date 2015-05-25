@@ -13,5 +13,6 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
+//gatewayMicroservices/dependency-graph
 
 libraryDependencies ++= Seq(sparkCassandra, spark.core)

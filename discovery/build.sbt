@@ -9,23 +9,24 @@ scalaVersion := Scala
 
 scalariformSettings
 
-//net.virtualvoid.sbt.graph.Plugin.graphSettings
-
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(AlignSingleLineCaseStatements, true)
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+//discovery/dependency-graph
+
 libraryDependencies ++= Seq(
   akka.cluster,
-  akka.contrib,
+  akka.cluster_tools,
   akka.akka_data_replication,
   akka.streams.akka_http,
   akka.multi_node_testkit,
   scalatest
 )
-/*
 
+/*
 Project.settings ++ SbtMultiJvm.multiJvmSettings ++ Seq(
   compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
 

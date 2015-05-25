@@ -1,7 +1,7 @@
 package domain
 
 import akka.actor.{ ActorRef, ActorSystem, Props }
-import akka.contrib.pattern.{ ClusterSharding, ShardRegion }
+import akka.cluster.sharding.{ ShardRegion, ClusterSharding }
 import akka.pattern.{ AskTimeoutException, ask }
 import akka.util.Timeout
 import domain.TeamAggregate.TeamMessage
@@ -20,7 +20,8 @@ trait Sharding {
 
   protected def typeName = TeamAggregate.shardName
 
-  def start() = ClusterSharding(system).start(typeName, Some(props), idExtractor, shardResolver(shardCount))
+  def start() = ClusterSharding(system)
+    .start(typeName, Some(props), None, true, idExtractor, shardResolver(shardCount))
 
   protected def tellEntry[T <: QueryCommand](command: T)(implicit sender: ActorRef): Unit = {
     shardRegion ! command

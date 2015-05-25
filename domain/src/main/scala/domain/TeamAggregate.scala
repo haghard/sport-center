@@ -5,11 +5,11 @@ import akka.persistence._
 import microservice.domain._
 import org.joda.time.DateTime
 import domain.TeamAggregate.TeamState
-import akka.contrib.pattern.ShardRegion
 import akka.actor.{ ActorLogging, Props }
 import com.github.nscala_time.time.Imports
 import com.github.nscala_time.time.Imports._
 import scala.util.control.NoStackTrace
+import akka.cluster.sharding.ShardRegion
 import microservice.crawler.{ CrawledNbaResult, Location, NbaResult }
 
 object TeamAggregate {

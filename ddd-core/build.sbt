@@ -17,8 +17,9 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 libraryDependencies ++= Seq(
   akka.actor,
   akka.cluster,
-  akka.contrib,
   //
+  akka.cluster_tools,
+  akka.sharding,
   akka.persistence_cassandra,
   akka.slf4j,
   akka.streams.streamz_akka_persistence,

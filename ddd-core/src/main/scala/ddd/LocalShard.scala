@@ -1,9 +1,9 @@
 package ddd
 
 import akka.actor._
+import akka.cluster.sharding.ShardRegion.Passivate
 import scala.reflect.ClassTag
 import scala.collection.immutable
-import akka.contrib.pattern.ShardRegion.Passivate
 
 object LocalShard {
 

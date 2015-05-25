@@ -12,6 +12,9 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+//gatewayMicroservices/dependency-graph
+
 libraryDependencies ++= Seq(
   hystrix,
   hystrix_stream,

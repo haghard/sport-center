@@ -18,7 +18,6 @@ promptTheme := Scalapenos
 
 scalariformSettings
 
-
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(AlignParameters, true)
@@ -51,10 +50,6 @@ lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).depen
 lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
 
 lazy val `analyticsMicroservice` = project.in(file("analytics-microservice")).dependsOn(`core`, `domain`, `discovery`)
-
-
-//future work
-//lazy val `seedsMicroservices` = project.in(file("cluster-seeds-discovery")).dependsOn(`core`)
 
 
 /**

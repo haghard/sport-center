@@ -7,7 +7,7 @@ import microservice.domain.DomainEvent
 import ddd.IdResolution.EntityIdResolver
 import scala.concurrent.duration.Duration
 import ddd.ShardResolution.ShardResolutionStrategy
-import akka.contrib.pattern.ShardRegion.{ IdExtractor, ShardResolver }
+import akka.cluster.sharding.ShardRegion.{ IdExtractor, ShardResolver }
 
 import scala.util.{ Success, Try }
 
