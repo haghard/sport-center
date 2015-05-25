@@ -14,6 +14,4 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
-//analyticsMicroservice/dependency-graph
-
-libraryDependencies ++= Seq(sparkCassandra, spark.core/*, spark.sparkStreaming, spark.sparkSql*/)
+libraryDependencies ++= Seq(sparkCassandra, spark.core)

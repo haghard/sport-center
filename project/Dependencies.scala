@@ -2,20 +2,29 @@ import sbt._
 
 object Dependencies {
 
-  val crossScala = Seq("2.11.6", "2.10.5")
   val Scala = "2.11.6"
+  val crossScala = Seq(Scala, "2.10.5")
+
 
   val Akka = "2.3.11"
   val AkkaDataReplication = "0.11"
   val AkkaStreamsVersion = "1.0-RC2"
   val Hystrix = "1.4.0"
 
-  object akka {
+  implicit class Exclude(module: ModuleID) {
+    def akkaExclude: ModuleID = module
+      .excludeAll(ExclusionRule("com.typesafe"))
+      .excludeAll(ExclusionRule("org.slf4j"))
+      //.exclude("com.typesafe.akka", "akka-actor")
+      //.exclude("com.typesafe.akka", "akka-cluster")
+  }
+
+    object akka {
     val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()
     val cluster               = "com.typesafe.akka"       %%    "akka-cluster"                  % Akka withSources()
     val contrib               = "com.typesafe.akka"       %%    "akka-contrib"                  % Akka intransitive()
 
-    val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
+    //val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
 
     val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.3.7"
 
@@ -38,7 +47,7 @@ object Dependencies {
   object spark {
     val Spark = "1.3.1"
 
-    val core           = ("org.apache.spark"        %% "spark-core"            % Spark).exclude("com.typesafe.akka", "akka-actor")
+    val core           = ("org.apache.spark"        %% "spark-core"            % Spark) akkaExclude
     //val sparkStreaming = "org.apache.spark"        %% "spark-streaming"       % Spark
     //val sparkSql       = "org.apache.spark"        %% "spark-sql"             % Spark
     //val mllib = ("org.apache.spark" %% "spark-mllib" % version).exclude("org.slf4j", "slf4j-api")
@@ -57,8 +66,6 @@ object Dependencies {
   val logback_core = "ch.qos.logback"   %     "logback-core"    % "1.1.2"
   val logback      = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
   val slf4j_api    = "org.slf4j"        %     "slf4j-api"       % "1.7.7"
-
-  //val scalacompiler    = "org.scala-lang"         %  "scala-compiler"        % Scala
 
   val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
   val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.0"    %   "test"

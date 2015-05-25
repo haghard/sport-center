@@ -22,7 +22,6 @@ libraryDependencies ++= Seq(
   akka.cluster,
   akka.contrib,
   //
-  akka.persistence,
   akka.persistence_cassandra,
   akka.slf4j,
   akka.streams.streamz_akka_persistence,
