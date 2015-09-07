@@ -2,11 +2,10 @@ import sbt._
 
 object Dependencies {
 
-  val Scala = "2.11.6"
+  val Scala = "2.11.7"
   val crossScala = Seq(Scala, "2.10.5")
 
   val Akka = "2.4.0-RC2"
-  val AkkaDataReplication = "0.12-local" //"0.11"
   val AkkaStreamsVersion = "1.0"
   val Hystrix = "1.4.0"
 
@@ -14,8 +13,6 @@ object Dependencies {
     def akkaExclude: ModuleID = module
       .excludeAll(ExclusionRule("com.typesafe"))
       .excludeAll(ExclusionRule("org.slf4j"))
-      //.exclude("com.typesafe.akka", "akka-actor")
-      //.exclude("com.typesafe.akka", "akka-cluster")
   }
 
   object akka {
@@ -25,10 +22,10 @@ object Dependencies {
     val sharding              = "com.typesafe.akka"       %%    "akka-cluster-sharding"         %  Akka withSources()
     val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"            %  Akka withSources()
 
-    val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
+    val persistence           = "com.typesafe.akka"       %%    "akka-persistence" % Akka withSources() intransitive()
     val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.4-SNAPSHOT"
 
-    val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication intransitive()
+    val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
     
     object streams {
       val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"      % "0.2"    withSources()
@@ -43,17 +40,6 @@ object Dependencies {
     val multi_node_testkit    = "com.typesafe.akka"       %%    "akka-multi-node-testkit"       % Akka
   }
 
-  val sparkCassandra    = "com.datastax.spark"  %% "spark-cassandra-connector"          % "1.3.0-SNAPSHOT" //current build, works fine
-
-  object spark {
-    val Spark = "1.3.1"
-
-    val core           = ("org.apache.spark"        %% "spark-core"            % Spark) akkaExclude
-    //val sparkStreaming = "org.apache.spark"        %% "spark-streaming"       % Spark
-    //val sparkSql       = "org.apache.spark"        %% "spark-sql"             % Spark
-    //val mllib = ("org.apache.spark" %% "spark-mllib" % version).exclude("org.slf4j", "slf4j-api")
-  }
-
   val json4s = "org.json4s"             %%    "json4s-native"   % "3.2.10"
 
   val spray_json = "io.spray"           %%    "spray-json"      % "1.2.6" withSources()
@@ -64,7 +50,6 @@ object Dependencies {
 
   val nscala_time = "com.github.nscala-time" %% "nscala-time"   % "1.6.0"
 
-  //val logback_core = "ch.qos.logback"   %     "logback-core"    % "1.1.2"
   val slf4j_api    = "org.slf4j"        %     "slf4j-api"       % Akka
   val logback      = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
 

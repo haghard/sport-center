@@ -1,9 +1,9 @@
 package gateway
 
 import akka.actor._
-import akka.contrib.datareplication.LWWMap
 import java.util.concurrent.ThreadLocalRandom
-import akka.contrib.datareplication.Replicator.Changed
+import akka.cluster.ddata.{ LWWMapKey, LWWMap }
+import akka.cluster.ddata.Replicator.Changed
 import discovery.ServiceDiscovery.DiscoveryLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
@@ -47,8 +47,8 @@ class ApiGateway private (localAddress: String, httpPort: Int) extends Actor wit
     log.info("Balancer was restarted and lost all routees {}", reason.getMessage)
 
   override def receive: Receive = {
-    case Changed(key, replica) if replica.isInstanceOf[LWWMap[DiscoveryLine]] ⇒
-      routees = Option(updateRoutees(replica.asInstanceOf[LWWMap[DiscoveryLine]]))
+    case r @ Changed(LWWMapKey(_)) if r.dataValue.isInstanceOf[LWWMap[DiscoveryLine]] ⇒
+      routees = Option(updateRoutees(r.dataValue.asInstanceOf[LWWMap[DiscoveryLine]]))
       log.info("Cluster configuration has changed {}", routees)
 
     case r: HttpRequest ⇒

@@ -20,7 +20,7 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 libraryDependencies ++= Seq(
   akka.cluster,
   akka.cluster_tools,
-  akka.akka_data_replication,
+  akka.akka_distributed_data,
   akka.streams.akka_http,
   akka.multi_node_testkit,
   scalatest

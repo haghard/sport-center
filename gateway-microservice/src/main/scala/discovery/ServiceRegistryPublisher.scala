@@ -1,8 +1,8 @@
 package discovery
 
 import akka.actor.{ ActorLogging, Props }
-import akka.contrib.datareplication.LWWMap
-import akka.contrib.datareplication.Replicator.Changed
+import akka.cluster.ddata.{ LWWMapKey, LWWMap }
+import akka.cluster.ddata.Replicator.Changed
 import akka.stream.actor.{ ActorPublisher, ActorPublisherMessage }
 import discovery.ServiceDiscovery.DiscoveryLine
 
@@ -17,8 +17,8 @@ class ServiceRegistryPublisher extends ActorPublisher[LWWMap[DiscoveryLine]] wit
   ServiceDiscovery(context.system).subscribe(self)
 
   override def receive: Receive = {
-    case Changed(key, replica) if (isActive && totalDemand > 0 && replica.isInstanceOf[LWWMap[DiscoveryLine]]) ⇒
-      onNext(replica.asInstanceOf[LWWMap[DiscoveryLine]])
+    case r @ Changed(LWWMapKey(key)) if (isActive && totalDemand > 0 && r.dataValue.isInstanceOf[LWWMap[DiscoveryLine]]) ⇒
+      onNext(r.dataValue.asInstanceOf[LWWMap[DiscoveryLine]])
 
     case ActorPublisherMessage.Request(n) ⇒
 

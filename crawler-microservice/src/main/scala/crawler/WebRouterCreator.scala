@@ -15,7 +15,7 @@ trait WebRouterCreator {
 }
 
 trait ProgrammaticallyCreator extends WebRouterCreator {
-  mixin => def context: ActorContext
+  def context: ActorContext
 
   def teams: Seq[String]
 
@@ -33,7 +33,7 @@ trait ProgrammaticallyCreator extends WebRouterCreator {
 }
 
 trait FromConfigCreator extends WebRouterCreator {
-  mixin => def context: ActorContext
+  def context: ActorContext
 
   def teams: Seq[String]
 

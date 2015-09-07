@@ -28,12 +28,12 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 lazy val root = project.in(file("."))
   .aggregate(`discovery`, `core`, `bootstrap`, `domain`,
-             `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`, `analyticsMicroservice`)
+             `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
 
 
 lazy val `core` = project.in(file("core"))
 
-lazy val `bootstrap` = project.in(file("bootstrap")).dependsOn(`gatewayMicroservices`, `querySideResults`, `querySideStandings`, `analyticsMicroservice`, `crawlerMicroservices`)
+lazy val `bootstrap` = project.in(file("bootstrap")).dependsOn(`gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
 
 lazy val `discovery` = project.in(file("discovery")).dependsOn(`core`).configs(MultiJvm)
 
@@ -48,9 +48,6 @@ lazy val `querySideStandings` = project.in(file("query-side-standings")).depends
 lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).dependsOn(`core`, `domain`, `discovery`, `dddCore`)
 
 lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
-
-lazy val `analyticsMicroservice` = project.in(file("analytics-microservice")).dependsOn(`core`, `domain`, `discovery`)
-
 
 /**
  *

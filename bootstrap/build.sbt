@@ -105,8 +105,6 @@ addCommandAlias("lresults1", "bootstrap/run-main configuration.local.QueryResult
 addCommandAlias("lstanding0", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2557 --HTTP_PORT=9012 --DB_HOSTS=" + cassandra)
 addCommandAlias("lstanding1", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2558 --HTTP_PORT=9013 --DB_HOSTS=" + cassandra)
 
-addCommandAlias("lanalytics0", "bootstrap/run-main configuration.local.AnalyticsBootstrap --AKKA_PORT=2559 --HTTP_PORT=9014 --DB_HOSTS=" + cassandra)
-
 
 //bootstrap/*:docker
 //https://github.com/marcuslonnberg/sbt-docker

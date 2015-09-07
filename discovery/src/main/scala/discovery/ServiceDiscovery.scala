@@ -2,8 +2,6 @@ package discovery
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.contrib.datareplication.Replicator.{ Subscribe, UpdateResponse }
-import akka.contrib.datareplication.{ DataReplication, LWWMap, Replicator }
 import akka.pattern.{ AskTimeoutException, ask }
 import spray.json.DefaultJsonProtocol
 
@@ -11,6 +9,8 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scalaz.{ -\/, \/, \/- }
+import akka.cluster.ddata.{ LWWMapKey, Replicator, DistributedData, LWWMap }
+import akka.cluster.ddata.Replicator._
 
 object ServiceDiscovery extends ExtensionKey[ServiceDiscovery] {
 
@@ -24,7 +24,7 @@ object ServiceDiscovery extends ExtensionKey[ServiceDiscovery] {
   case class UnsetKey(override val key: KV) extends KeyOps
   case class UnsetAddress(val key: String)
 
-  case class Update(r: UpdateResponse)
+  case class Update(r: UpdateResponse[LWWMap[DiscoveryLine]])
 
   case class DiscoveryLine(address: String, urls: Set[String])
   object DiscoveryLine extends DefaultJsonProtocol { implicit val format = jsonFormat2(apply) }
@@ -53,7 +53,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
 
   private implicit val sys = system
 
-  private val replicator = DataReplication(system).replicator
+  private val replicator = DistributedData(system).replicator
 
   private def --(map: LWWMap[DiscoveryLine], kv: KV): LWWMap[DiscoveryLine] = {
     map.get(kv.address) match {
@@ -83,16 +83,16 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
     }
 
   def subscribe(subscriber: ActorRef): Unit = {
-    replicator ! Subscribe(ServiceDiscovery.DataKey, subscriber)
+    replicator ! Subscribe(LWWMapKey[DiscoveryLine](DataKey), subscriber)
   }
 
   def setKey(op: SetKey)(implicit ec: ExecutionContext): Future[String \/ Update] =
     replicator
       .ask(update(map ⇒ ++(map, op.key)))(writeTimeout)
-      .mapTo[UpdateResponse]
+      .mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
       .map {
-        case r @ Replicator.UpdateSuccess(DataKey, _) ⇒ \/-(Update(r))
-        case response                                 ⇒ -\/(s"SetKey op unexpected response $response")
+        case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ \/-(Update(r))
+        case response ⇒ -\/(s"SetKey op unexpected response $response")
       }.recoverWith {
         case ex: ClassCastException  ⇒ Future.successful(-\/(s"SetKey op error ${ex.getMessage}"))
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"SetKey op error timeout ${ex.getMessage}"))
@@ -101,10 +101,10 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def unsetKey(op: UnsetKey)(implicit ec: ExecutionContext): Future[String \/ Update] = {
     replicator
       .ask(update(map ⇒ --(map, op.key)))(writeTimeout)
-      .mapTo[UpdateResponse]
+      .mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
       .flatMap {
-        case r @ Replicator.UpdateSuccess(DataKey, _) ⇒ Future.successful(\/-(Update(r)))
-        case r @ Replicator.ModifyFailure(DataKey, _, error: UnknownKey, _) ⇒ Future.successful(-\/(s"Delete error $error"))
+        case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ Future.successful(\/-(Update(r)))
+        case r @ Replicator.ModifyFailure(LWWMapKey(DataKey), _, error: UnknownKey, _) ⇒ Future.successful(-\/(s"Delete error $error"))
         case other ⇒ Future.successful(-\/(s"Delete error $other"))
       }
   }
@@ -112,10 +112,10 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def deleteAll(op: UnsetAddress)(implicit ec: ExecutionContext): Future[String \/ Update] = {
     replicator
       .ask(update(map ⇒ --(map, op.key)))(writeTimeout)
-      .mapTo[UpdateResponse]
+      .mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
       .flatMap {
-        case r @ Replicator.UpdateSuccess(DataKey, _) ⇒ Future.successful(\/-(Update(r)))
-        case r @ Replicator.ModifyFailure(DataKey, _, error: UnknownKey, _) ⇒ Future.successful(-\/(s"Delete error $error"))
+        case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ Future.successful(\/-(Update(r)))
+        case r @ Replicator.ModifyFailure(LWWMapKey(DataKey), _, error: UnknownKey, _) ⇒ Future.successful(-\/(s"Delete error $error"))
         case other ⇒ Future.successful(-\/(s"Delete error $other"))
       }
   }
@@ -123,47 +123,43 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def findAll(implicit ec: ExecutionContext): Future[String \/ Registry] = {
     replicator
       .ask(read)(readTimeout)
-      .mapTo[Replicator.GetResponse]
+      .mapTo[Replicator.GetResponse[LWWMap[DiscoveryLine]]]
       .flatMap(respond)
       .recoverWith {
         case ex: AskTimeoutException ⇒
           replicator.ask(readLocal)(readTimeout)
-            .mapTo[Replicator.GetResponse]
+            .mapTo[Replicator.GetResponse[LWWMap[DiscoveryLine]]]
             .flatMap(respond)
         case ex: Exception ⇒
           replicator.ask(readLocal)(readTimeout)
-            .mapTo[Replicator.GetResponse]
+            .mapTo[Replicator.GetResponse[LWWMap[DiscoveryLine]]]
             .flatMap(respond)
       }
   }
 
-  private def respond: PartialFunction[Replicator.GetResponse, Future[String \/ Registry]] = {
-    case Replicator.GetSuccess(DataKey, registry: LWWMap[DiscoveryLine], _) ⇒
+  private def respond: PartialFunction[Replicator.GetResponse[LWWMap[DiscoveryLine]], Future[String \/ Registry]] = {
+    case res @ Replicator.GetSuccess(LWWMapKey(DataKey), _) =>
       Future.successful {
-        \/-(Registry((registry.entries.values map { case line: DiscoveryLine ⇒ line })
+        \/-(Registry(res.dataValue.entries.values.map { case line: DiscoveryLine ⇒ line }
           .foldLeft(new mutable.HashMap[String, Set[String]]()) { (acc, c) ⇒
-            acc.get(c.address).fold {
-              acc += (c.address -> c.urls)
-            } { existed ⇒ acc += (c.address -> c.urls.++(existed)) }
-          })
-        )
+            acc.get(c.address).fold(acc += (c.address -> c.urls)) { existed ⇒ acc += (c.address -> c.urls.++(existed)) }
+          }))
       }
-    case Replicator.NotFound(DataKey, _) ⇒ Future.successful(-\/(s"NotFound registry"))
-    case other                           ⇒ Future.successful(-\/(s"Find error $other"))
+    case Replicator.NotFound(LWWMapKey(DataKey), _) ⇒ Future.successful(-\/(s"NotFound registry"))
+    case other                                      ⇒ Future.successful(-\/(s"Find error $other"))
   }
 
-  private def read: Replicator.Get =
-    Replicator.Get(DataKey, Replicator.ReadQuorum(readTimeout))
+  private def read: Replicator.Get[LWWMap[DiscoveryLine]] =
+    Replicator.Get(LWWMapKey[DiscoveryLine](DataKey), Replicator.ReadMajority(readTimeout))
 
-  private def readLocal: Replicator.Get =
-    Replicator.Get(DataKey, Replicator.ReadLocal)
+  private def readLocal: Replicator.Get[LWWMap[DiscoveryLine]] =
+    Replicator.Get(LWWMapKey[DiscoveryLine](DataKey), Replicator.ReadLocal)
 
-  private def update(modify: LWWMap[DiscoveryLine] ⇒ LWWMap[DiscoveryLine]): Replicator.Update[LWWMap[DiscoveryLine]] = {
+  private def update(modify: LWWMap[DiscoveryLine] ⇒ LWWMap[DiscoveryLine]): Replicator.Update[LWWMap[DiscoveryLine]] =
     Replicator.Update(
-      DataKey,
+      LWWMapKey[DiscoveryLine](DataKey),
       LWWMap.empty[DiscoveryLine],
-      Replicator.ReadQuorum(readTimeout),
-      Replicator.WriteQuorum(writeTimeout)
+      //Replicator.ReadMajority(readTimeout),
+      Replicator.WriteMajority(writeTimeout)
     )(modify)
-  }
 }
