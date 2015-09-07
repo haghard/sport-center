@@ -28,7 +28,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
   private def curl(method: String, resourcePath: String) = s"curl -i -X $method http://$localAddress:$httpPort/$resourcePath"
 
   /*
-   * If this actors failed so we lose all routes
+   * If this actor fails we will lost all routes
    * We must to provide supervisor with resume strategy
    */
   abstract override def configureApi() =

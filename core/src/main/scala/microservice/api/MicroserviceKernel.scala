@@ -10,7 +10,7 @@ object MicroserviceKernel {
   val ipExpression = """\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}"""
 
   val CrawlerRole = "Crawler"
-  val DomainRole = "Domain" //if you change this value you should've changed it in application.conf
+  val DomainRole = "Domain" //if you change this value you have to changed it in application.conf too
   val GatewayRole = "Gateway"
   val AnalyticRole = "Analytic"
 }
@@ -40,7 +40,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val env = ConfigFactory.load("internals.conf")
     val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
     val cassandraPort = env.getConfig("db.cassandra").getString("port")
-    val contactPoints = cassandraEPs.split(",").map(_.trim).mkString("\"", "\",\"", "\"")
+    val cassandraContactPoints = cassandraEPs.split(",").map(_.trim).mkString("\"", "\",\"", "\"")
 
     val akkaSeeds = if (clusterRole == GatewayRole) {
       Option(System.getProperty(SEEDS_ENV_VAR)).map(line => line.split(",").toList)
@@ -68,8 +68,8 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
           $CrawlerRole.min-nr-of-members = 1
         }
        """))
-      .withFallback(ConfigFactory.parseString(s"cassandra-journal.contact-points=[$contactPoints]"))
-      .withFallback(ConfigFactory.parseString(s"cassandra-snapshot-store.contact-points=[$contactPoints]"))
+      .withFallback(ConfigFactory.parseString(s"cassandra-journal.contact-points=[$cassandraContactPoints]"))
+      .withFallback(ConfigFactory.parseString(s"cassandra-snapshot-store.contact-points=[$cassandraContactPoints]"))
       .withFallback(ConfigFactory.parseString(s"cassandra-journal.port=$cassandraPort"))
       .withFallback(ConfigFactory.parseString(s"cassandra-snapshot-store.port=$cassandraPort"))
       .withFallback(ConfigFactory.load("application.conf"))

@@ -5,10 +5,9 @@ object Dependencies {
   val Scala = "2.11.6"
   val crossScala = Seq(Scala, "2.10.5")
 
-
-  val Akka = "2.4-M1" //"2.3.11"
+  val Akka = "2.4.0-RC2"
   val AkkaDataReplication = "0.12-local" //"0.11"
-  val AkkaStreamsVersion = "1.0-RC3"
+  val AkkaStreamsVersion = "1.0"
   val Hystrix = "1.4.0"
 
   implicit class Exclude(module: ModuleID) {
@@ -22,14 +21,12 @@ object Dependencies {
   object akka {
     val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()
     val cluster               = "com.typesafe.akka"       %%    "akka-cluster"                  % Akka withSources()
-    //val contrib               = "com.typesafe.akka"       %%    "akka-contrib"                  % Akka intransitive()
 
-    val sharding              = "com.typesafe.akka"       %%    "akka-cluster-sharding"       %  Akka withSources()
-    val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"          %  Akka withSources()
+    val sharding              = "com.typesafe.akka"       %%    "akka-cluster-sharding"         %  Akka withSources()
+    val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"            %  Akka withSources()
 
-    //val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
-
-    val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.3.7"
+    val persistence           = "com.typesafe.akka"       %%    "akka-persistence-experimental" % Akka withSources() intransitive()
+    val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.4-SNAPSHOT"
 
     val akka_data_replication = "com.github.patriknw"     %%    "akka-data-replication"         % AkkaDataReplication intransitive()
     
@@ -38,6 +35,7 @@ object Dependencies {
       val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"      % AkkaStreamsVersion withSources()
       val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"        % AkkaStreamsVersion withSources()
       val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental"   % AkkaStreamsVersion withSources()
+      val akka_http_session        = "com.softwaremill"     %%    "akka-http-session"             % "0.1.4"
     }
 
     val slf4j                 = "com.typesafe.akka"       %%    "akka-slf4j"                    % Akka
@@ -66,9 +64,9 @@ object Dependencies {
 
   val nscala_time = "com.github.nscala-time" %% "nscala-time"   % "1.6.0"
 
-  val logback_core = "ch.qos.logback"   %     "logback-core"    % "1.1.2"
+  //val logback_core = "ch.qos.logback"   %     "logback-core"    % "1.1.2"
+  val slf4j_api    = "org.slf4j"        %     "slf4j-api"       % Akka
   val logback      = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
-  val slf4j_api    = "org.slf4j"        %     "slf4j-api"       % "1.7.7"
 
   val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
   val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.0"    %   "test"
@@ -78,7 +76,7 @@ object Dependencies {
 
   val typesafe_config  = "com.typesafe"           %  "config"                % "1.2.1"
 
-  val scalaz           = "org.scalaz"             %% "scalaz-core"            % "7.1.0" withSources()
+  val scalaz           = "org.scalaz"             %% "scalaz-core"            % "7.1.3" withSources()
 
   val guava            = "com.google.guava"       % "guava"                   % "18.0" withSources()
 
@@ -88,7 +86,7 @@ object Dependencies {
   
   val turbine          = "com.netflix.turbine"    %  "turbine-core"          % "2.0.0-DP.2"
 
-  val rxscala          = "io.reactivex"           %% "rxscala"                % "0.23.1"
+  val rxscala          = "io.reactivex"           %% "rxscala"                % "0.25.0"
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
 }

@@ -7,7 +7,7 @@ import microservice.domain.DomainEvent
 import ddd.IdResolution.EntityIdResolver
 import scala.concurrent.duration.Duration
 import ddd.ShardResolution.ShardResolutionStrategy
-import akka.cluster.sharding.ShardRegion.{ IdExtractor, ShardResolver }
+import akka.cluster.sharding.ShardRegion.{ ExtractEntityId, ExtractShardId }
 
 import scala.util.{ Success, Try }
 
@@ -183,7 +183,7 @@ package object ddd {
 
   object ShardResolution {
 
-    type ShardResolutionStrategy = EntityIdResolver => ShardResolver
+    type ShardResolutionStrategy = EntityIdResolver => ExtractShardId //ShardResolver
 
     private val defaultShardResolutionStrategy: ShardResolutionStrategy = {
       entityIdResolver =>
@@ -197,9 +197,9 @@ package object ddd {
 
     def shardResolutionStrategy: ShardResolutionStrategy = ShardResolution.defaultShardResolutionStrategy
 
-    val shardResolver: ShardResolver = shardResolutionStrategy(entityIdResolver)
+    val shardResolver: ExtractShardId = shardResolutionStrategy(entityIdResolver)
 
-    val idExtractor: IdExtractor = {
+    val idExtractor: ExtractEntityId = {
       case em: EntityMessage => (entityIdResolver(em), em)
       case c: DomainCommand  => (entityIdResolver(c), CommandMessage(c))
     }
@@ -210,5 +210,4 @@ package object ddd {
       case em: EntityMessage => em.entityId
     }
   }
-
 }

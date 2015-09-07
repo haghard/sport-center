@@ -20,7 +20,7 @@ object TeamAggregate {
 
   val shardName: String = "teams"
 
-  val idExtractor: ShardRegion.IdExtractor = {
+  val idExtractor: ShardRegion.ExtractEntityId = {
     case u: TeamMessage ⇒ (u.aggregateRootId, u)
   }
 

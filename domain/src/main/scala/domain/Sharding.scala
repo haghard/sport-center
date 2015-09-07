@@ -1,11 +1,11 @@
 package domain
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
-import akka.cluster.sharding.{ ShardRegion, ClusterSharding }
-import akka.pattern.{ AskTimeoutException, ask }
 import akka.util.Timeout
 import domain.TeamAggregate.TeamMessage
+import akka.pattern.{ AskTimeoutException, ask }
+import akka.actor.{ ActorRef, ActorSystem, Props }
 import microservice.domain.{ Command, QueryCommand, State }
+import akka.cluster.sharding.{ ClusterShardingSettings, ShardRegion, ClusterSharding }
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.reflect.ClassTag
@@ -21,7 +21,9 @@ trait Sharding {
   protected def typeName = TeamAggregate.shardName
 
   def start() = ClusterSharding(system)
-    .start(typeName, Some(props), None, true, idExtractor, shardResolver(shardCount))
+    .start(
+      typeName, props, ClusterShardingSettings(system).withRememberEntities(true),
+      idExtractor, shardResolver(shardCount))
 
   protected def tellEntry[T <: QueryCommand](command: T)(implicit sender: ActorRef): Unit = {
     shardRegion ! command
@@ -40,11 +42,11 @@ trait Sharding {
         case ex: ClassCastException  ⇒ Future.failed[T](new Exception(ex))
       }
 
-  private def idExtractor: ShardRegion.IdExtractor = {
+  private def idExtractor: ShardRegion.ExtractEntityId = {
     case m: TeamMessage ⇒ (m.aggregateRootId, m)
   }
 
-  private def shardResolver(shardCount: Int): ShardRegion.ShardResolver = {
+  private def shardResolver(shardCount: Int): ShardRegion.ExtractShardId = {
     case (m: TeamMessage) ⇒ (m.aggregateRootId.hashCode % shardCount).toString
   }
 

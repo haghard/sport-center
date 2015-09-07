@@ -56,10 +56,8 @@ package object crawler {
   }
 
   implicit def M(teams: List[String]) = new Monoid[JsValue] {
-    override def zero: JsValue =
-      JsObject(teams.map { r ⇒
-        (r -> JsObject("w" -> JsNumber(0), "l" -> JsNumber(0)))
-      }.toList)
+    override val zero: JsValue =
+      JsObject(teams.map(r ⇒ (r -> JsObject("w" -> JsNumber(0), "l" -> JsNumber(0)))): _*)
 
     override def append(f1: JsValue, f2: ⇒ JsValue): JsValue = {
       var standing: JsObject = null

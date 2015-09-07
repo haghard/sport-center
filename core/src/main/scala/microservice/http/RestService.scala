@@ -1,11 +1,11 @@
 package microservice.http
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.{ Directives, Route }
 import spray.json.DefaultJsonProtocol
 import microservice.api.MicroserviceKernel
 import akka.actor.{ Actor, ActorLogging, Props }
-import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
+import akka.http.scaladsl.server.{ Directives, Route }
+import akka.stream.{ ActorMaterializerSettings, ActorMaterializer }
 
 import scala.concurrent.ExecutionContext
 
@@ -35,8 +35,8 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
     with DefaultJsonProtocol
     with Directives {
 
-  implicit val materializer = ActorFlowMaterializer(
-    ActorFlowMaterializerSettings(context.system)
+  implicit val materializer = ActorMaterializer(
+    ActorMaterializerSettings(context.system)
       .withDispatcher(MicroserviceKernel.microserviceDispatcher))(context.system)
 
   Http()(context.system)

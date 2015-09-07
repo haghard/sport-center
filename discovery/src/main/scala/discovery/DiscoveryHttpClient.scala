@@ -10,12 +10,12 @@ import microservice.http.RestWithDiscovery
 import spray.json.DefaultJsonProtocol
 import scalaz.{ -\/, \/- }
 import scala.concurrent.Future
-import scala.concurrent.forkjoin.ThreadLocalRandom
-import akka.stream.{ ActorFlowMaterializerSettings, ActorFlowMaterializer }
-import akka.http.scaladsl.model.{ HttpResponse, HttpEntity, HttpRequest, StatusCode }
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.StatusCodes._
+import scala.concurrent.forkjoin.ThreadLocalRandom
+import akka.stream.{ ActorMaterializerSettings, ActorMaterializer }
+import akka.http.scaladsl.model.{ HttpResponse, HttpEntity, HttpRequest, StatusCode }
 
 object DiscoveryHttpClient {
 
@@ -33,8 +33,8 @@ trait DiscoveryHttpClient extends DiscoveryClient
     with Protocols {
   mixin: RestWithDiscovery with DiscoveryClientSupport ⇒
 
-  implicit val materializer = ActorFlowMaterializer(
-    ActorFlowMaterializerSettings(system)
+  implicit val materializer = ActorMaterializer(
+    ActorMaterializerSettings(system)
       .withDispatcher(discoveryDispatcherName))(system)
 
   implicit val ec = system.dispatchers.lookup(discoveryDispatcherName)

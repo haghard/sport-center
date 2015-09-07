@@ -1,6 +1,6 @@
 package ddd
 
-import akka.cluster.sharding.ClusterSharding
+import akka.cluster.sharding.{ ClusterShardingSettings, ClusterSharding }
 import akka.cluster.sharding.ShardRegion.Passivate
 
 import scala.reflect.ClassTag
@@ -27,17 +27,14 @@ object ClusteredShard {
 
       private def startSharding(): Unit = {
         val entityFactory = implicitly[BusinessEntityActorFactory[T]]
-        val entityProps = entityFactory.props(new PassivationConfig(Passivate(PoisonPill), entityFactory.inactivityTimeout))
+        val EntityProps = entityFactory.props(new PassivationConfig(Passivate(PoisonPill), entityFactory.inactivityTimeout))
         val entityClass = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
         val sr = implicitly[ShardResolution[T]]
 
-        ClusterSharding(system).start(
-          typeName = entityClass.getSimpleName,
-          entryProps = Some(entityProps),
-          roleOverride = None,
-          rememberEntries = true,
-          idExtractor = sr.idExtractor,
-          shardResolver = sr.shardResolver)
+        ClusterSharding(system)
+          .start(entityClass.getSimpleName, EntityProps,
+            ClusterShardingSettings(system).withRememberEntities(true),
+            sr.idExtractor, sr.shardResolver)
       }
     }
   }
