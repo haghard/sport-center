@@ -3,7 +3,7 @@ package ddd
 import ddd.AggregateRoot.Event
 import microservice.domain.DomainEvent
 import akka.actor.{ ActorRef, Props, ActorLogging }
-import akka.persistence.{ RecoveryFailure, RecoveryCompleted, PersistentActor }
+import akka.persistence.{ RecoveryCompleted, PersistentActor }
 
 import scala.concurrent.duration._
 import scala.util.{ Success, Try }
@@ -51,9 +51,13 @@ trait AggregateRoot[T <: AggregateState] extends BusinessEntity
   }
 
   override def receiveRecover: Receive = {
-    case em: EventMessage   => updateState(em)
-    case RecoveryCompleted  => log.info("RecoveryCompleted {}", internalState)
-    case RecoveryFailure(e) => log.info("RecoveryFailure {}", e.getMessage)
+    case em: EventMessage  => updateState(em)
+    case RecoveryCompleted => log.info("RecoveryCompleted {}", internalState)
+  }
+
+  override def onRecoveryFailure(cause: Throwable, ev: Option[Any]) = {
+    log.info("RecoveryFailure {}", cause.getMessage)
+    super.onRecoveryFailure(cause, ev)
   }
 
   /**

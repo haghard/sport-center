@@ -5,9 +5,9 @@ object Dependencies {
   val Scala = "2.11.7"
   val crossScala = Seq(Scala, "2.10.5")
 
-  val Akka = "2.4.0-RC2"
+  val Akka = "2.4.0"
   val AkkaStreamsVersion = "1.0"
-  val Hystrix = "1.4.0"
+  val Hystrix = "1.4.14"
 
   implicit class Exclude(module: ModuleID) {
     def akkaExclude: ModuleID = module
@@ -22,17 +22,15 @@ object Dependencies {
     val sharding              = "com.typesafe.akka"       %%    "akka-cluster-sharding"         %  Akka withSources()
     val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"            %  Akka withSources()
 
-    val persistence           = "com.typesafe.akka"       %%    "akka-persistence" % Akka withSources() intransitive()
-    val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.4-SNAPSHOT"
+    val persistence           = "com.typesafe.akka"       %%    "akka-persistence"              % Akka withSources() intransitive()
+    val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra"    % "0.4"
 
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
     
     object streams {
-      val streamz_akka_persistence = "com.github.krasserm"  %%    "streamz-akka-persistence"      % "0.2"    withSources()
       val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"      % AkkaStreamsVersion withSources()
       val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"        % AkkaStreamsVersion withSources()
       val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental"   % AkkaStreamsVersion withSources()
-      val akka_http_session        = "com.softwaremill"     %%    "akka-http-session"             % "0.1.4"
     }
 
     val slf4j                 = "com.typesafe.akka"       %%    "akka-slf4j"                    % Akka
@@ -61,7 +59,8 @@ object Dependencies {
 
   val typesafe_config  = "com.typesafe"           %  "config"                % "1.2.1"
 
-  val scalaz           = "org.scalaz"             %% "scalaz-core"            % "7.1.3" withSources()
+  val scalaz           = "org.scalaz"             %% "scalaz-core"            % "7.1.4"  withSources()
+  val scalaz_stream    = "org.scalaz.stream"      %% "scalaz-stream"          % "0.7.2a" withSources()
 
   val guava            = "com.google.guava"       % "guava"                   % "18.0" withSources()
 
@@ -74,4 +73,6 @@ object Dependencies {
   val rxscala          = "io.reactivex"           %% "rxscala"                % "0.25.0"
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
+
+  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.0.4"
 }

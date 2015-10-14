@@ -29,6 +29,7 @@ object Project {
       "patriknw at bintray"      at "http://dl.bintray.com/patriknw/maven",
       "Local Maven Repository"   at "file://" + Path.userHome.absolutePath + "/.m2/repository",
       "Local Ivy Repository"     at "file:///" + ivy,
+      "haghard-bintray"          at "http://dl.bintray.com/haghard/releases",
       Resolver.defaultLocal,
       Resolver.mavenLocal
     ),

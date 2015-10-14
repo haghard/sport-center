@@ -99,18 +99,22 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
         sender() ! WriteAck(team)
       }
 
-    case "boom"                                     ⇒ throw TestException("TeamAggregate test error")
-    case SaveSnapshotSuccess(metadata)              ⇒ log.info("Team {} have been restored from snapshot {}", state.name, metadata)
-    case SaveSnapshotFailure(metadata, cause)       ⇒ log.info("Failure restore from snapshot {}", cause.getMessage)
-    case MakeSnapshot                               ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate))
-    case PersistenceFailure(payload, seqNum, cause) ⇒ log.info("Journal fails to write a event: {}", cause.getMessage)
+    case "boom"                               ⇒ throw TestException("TeamAggregate test error")
+    case SaveSnapshotSuccess(metadata)        ⇒ log.info("Team {} have been restored from snapshot {}", state.name, metadata)
+    case SaveSnapshotFailure(metadata, cause) ⇒ log.info("Failure restore from snapshot {}", cause.getMessage)
+    case MakeSnapshot                         ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate))
   }
 
   override def receiveRecover: Receive = {
     case event: ResultAdded                                     ⇒ updateState(event)
     case SnapshotOffer(m: SnapshotMetadata, s: SnapshotCreated) ⇒ updateState(s)
-    case event @ RecoveryFailure(ex)                            ⇒ updateState(RecoveryError(ex))
     case RecoveryCompleted                                      ⇒ log.info("RecoveryCompleted for {} up to {}", persistenceId, state.lastDate)
+  }
+
+  override def onRecoveryFailure(cause: Throwable, ev: Option[Any]) = {
+    log.info("RecoveryFailure {}", cause.getMessage)
+    updateState(RecoveryError(cause))
+    super.onRecoveryFailure(cause, ev)
   }
 
   private def updateState(e: DomainEvent) = e match {

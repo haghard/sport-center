@@ -29,10 +29,6 @@ class NbaCampaignView extends akka.persistence.PersistentView with ActorLogging 
 
   override def persistenceId = path
 
-  override def preStart = {
-    log.info("****NbaCampaignView {}***", self)
-  }
-
   override def receive: Receive = {
     case q: GetLastCrawlDate              ⇒ sender() ! state
     case CampaignPersistedEvent(_, dt, _) ⇒ state = state.copy(Some(dt))

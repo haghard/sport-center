@@ -35,7 +35,7 @@ object Domains extends ExtensionKey[Domains] {
     }
   }
 
-  val BatchWriteComplete = "Done"
+  //val BatchWriteComplete = "Done"
 }
 
 class Domains(protected val system: ExtendedActorSystem) extends Extension with Sharding {
@@ -63,16 +63,18 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension with 
   def askQuery[T <: State](command: QueryCommand)(implicit timeout: Timeout, sender: ActorRef, ec: ExecutionContext): Future[T] =
     askEntry(command)
 
-  def tellBatchWrite[T <: State](seqNumber: Long, results: Map[String, SortedSet[CreateResult]])(implicit sender: ActorRef, factory: ActorRefFactory, ec: ExecutionContext) = {
+  def distributedWrite[T <: State](seqNumber: Long,
+    results: Map[String, SortedSet[CreateResult]],
+    timeout: FiniteDuration)(implicit sender: ActorRef, factory: ActorRefFactory, ec: ExecutionContext) = {
 
     def atLeastOnceWriter(replyTo: ActorRef, seqNumber: Long, results: Map[String, SortedSet[CreateResult]])(implicit factory: ActorRefFactory, ec: ExecutionContext) =
       actor(new Act {
         val size = results.size
         var respNumber = 0
-        context.setReceiveTimeout(5 seconds)
+        context.setReceiveTimeout(timeout)
         become {
           case ReceiveTimeout ⇒
-            system.log.info("Redeliver changeset {}. Cause expected {} actual {}", seqNumber, size, respNumber)
+            system.log.info("Redeliver changeset № {}. Cause expected {} actual {}", seqNumber, size, respNumber)
             respNumber = 0
             for { (k, orderedTeamResults) ← results } yield {
               orderedTeamResults.foreach(r ⇒ writeEntry(r)(self))
@@ -80,8 +82,7 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension with 
           case event: WriteAck ⇒
             respNumber += 1
             if (respNumber == size) {
-              replyTo ! BatchWriteComplete
-              system.log.info("Changeset {} has been applied", seqNumber)
+              replyTo ! seqNumber
               context stop self
             }
         }
@@ -119,5 +120,5 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension with 
    *
    * @return
    */
-  override protected def typeName: String = "teams"
+  override protected def name: String = "teams"
 }

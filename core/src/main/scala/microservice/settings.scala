@@ -1,8 +1,10 @@
 package microservice
 
+import java.net.InetSocketAddress
 import akka.actor._
 import java.util.concurrent.TimeUnit
 import com.github.nscala_time.time.Imports._
+import com.typesafe.config.ConfigFactory
 import org.joda.time.{ DateTime, DateTimeZone }
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -27,11 +29,18 @@ object settings {
   case class Paths(crawlerPaths: ItemPaths, tweeterPaths: ItemPaths, updaterPaths: ItemPaths)
   case class ItemPaths(proxyName: String, singletonName: String, name: String) extends SingletonPaths
   case class TwitterAuth(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)
+  case class Cassandra(keyspace: String, table: String, address: InetSocketAddress)
 
   object CustomSettings extends ExtensionKey[CustomSettings]
 
   final class CustomSettings(system: ExtendedActorSystem) extends Extension {
     import scala.collection.JavaConversions.asScalaBuffer
+
+    lazy val cassandra = {
+      val dbCfg = ConfigFactory.load("internals").getConfig("db.cassandra")
+      val casConf = system.settings.config.getConfig("cassandra-journal")
+      Cassandra(casConf.getString("keyspace"), casConf.getString("table"), new InetSocketAddress(dbCfg.getString("seeds"), dbCfg.getInt("port")))
+    }
 
     val teams = asScalaBuffer(system.settings.config
       .getConfig("app-settings")

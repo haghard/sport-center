@@ -36,15 +36,13 @@ final class CampaignPersistedSerializer(system: ExtendedActorSystem) extends Ser
     case _                         => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
   }
 
-  private def toDomainEvent(f: PersistedCampaignFormat): CampaignPersistedEvent = {
-    CampaignPersistedEvent(
-      f.getAggregateRootId,
+  private def toDomainEvent(f: PersistedCampaignFormat) =
+    CampaignPersistedEvent(f.getAggregateRootId,
       new DateTime(f.getDate).withZone(SCENTER_TIME_ZONE).toDate,
       f.getResultsList.asScala.foldRight(List[NbaResult]()) { (r, acc) =>
         NbaResult(r.getHomeTeam, r.getHomeScore, r.getAwayTeam, r.getAwayScore, new DateTime(r.getTime).withZone(SCENTER_TIME_ZONE).toDate) :: acc
       }
     )
-  }
 
   private def eventBuilder(e: CampaignPersistedEvent) = {
     val b = PersistedCampaignFormat.newBuilder()

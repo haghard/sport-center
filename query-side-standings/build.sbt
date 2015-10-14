@@ -12,4 +12,4 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(DoubleIndentClassDeclaration, true)
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
-libraryDependencies ++= Seq(hystrix)
+libraryDependencies ++= Seq(hystrix, scalaz_stream)

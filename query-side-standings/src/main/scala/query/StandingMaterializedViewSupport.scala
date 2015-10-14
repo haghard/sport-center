@@ -15,13 +15,14 @@ object StandingMaterializedViewSupport {
 }
 
 trait StandingMaterializedViewSupport {
-  self: Actor with ActorLogging ⇒
-  import streamz.akka._
+  this: Actor with ActorLogging ⇒
+
+  //import streamz.akka._
   import scalaz.stream.Process._
   import query.StandingMaterializedViewSupport._
 
-  private lazy val executor =
-    scalaz.concurrent.Strategy.Executor(microservice.executor("materialized-view-executor", 2))
+  lazy val executor = scalaz.concurrent.Strategy.Executor(
+    microservice.executor("materialized-view-executor", 2))
 
   def settings: CustomSettings
 
@@ -34,9 +35,10 @@ trait StandingMaterializedViewSupport {
     }
 
   private def subscriber(domainActorName: String): Process[Task, NbaResult] =
-    persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
+    Process.halt
+  //persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
 
-  private val childViewRouter: Sink[Task, NbaResult] = io.channel(result ⇒ Task.delay {
+  private val childViewRouter: Sink[Task, NbaResult] = sink.lift[Task, NbaResult](result ⇒ Task.delay {
     getChildView(new DateTime(result.dt)).fold { log.info("StandingMaterializedView wasn't found for {}", result.dt) } {
       view ⇒ view ! result
     }
@@ -44,18 +46,12 @@ trait StandingMaterializedViewSupport {
 
   private def pull() = {
     val P = emitAll(settings.teams) |> process1.lift(subscriber)
-    (merge.mergeN(P)(executor)
-      to childViewRouter).run.runAsync(_ ⇒ ())
+    (merge.mergeN(P)(executor) to childViewRouter).run.runAsync(_ ⇒ ())
   }
 
   override def preStart() = pull()
 
-  /**
-   *
-   * @param dt
-   * @return
-   */
-  protected def getChildView(dt: DateTime): Option[ActorRef] = {
+  def getChildView(dt: DateTime): Option[ActorRef] = {
     (for {
       (interval, intervalName) ← settings.intervals
       if interval.contains(dt)

@@ -30,12 +30,10 @@ object DiscoveryMicroservice {
 
   trait Protocols extends DefaultJsonProtocol {
     implicit val kvFormat = jsonFormat2(KVRequest.apply)
-
     implicit def unmarshaller(implicit ec: ExecutionContext) = new FromRequestUnmarshaller[KVRequest]() {
-      override def apply(req: HttpRequest)(implicit ec: ExecutionContext): Future[KVRequest] = {
+      override def apply(req: HttpRequest)(implicit ec: ExecutionContext): Future[KVRequest] =
         Try(Future(req.entity.asInstanceOf[Strict].data.decodeString("UTF-8").parseJson.convertTo[KVRequest]))
           .getOrElse(Future.failed(new Exception("Can't parse KVRequest")))
-      }
     }
   }
 }
@@ -47,7 +45,6 @@ trait DiscoveryMicroservice extends BootableRestService
     with DefaultJsonProtocol {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
   import DiscoveryMicroservice._
-
   implicit val ec = system.dispatchers.lookup(httpDispatcher)
 
   abstract override def configureApi() =

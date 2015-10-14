@@ -18,20 +18,21 @@ trait Sharding {
 
   protected def shardCount: Int
 
-  protected def typeName = TeamAggregate.shardName
+  protected def name: String = TeamAggregate.shardName
 
-  def start() = ClusterSharding(system)
-    .start(
-      typeName, props, ClusterShardingSettings(system).withRememberEntities(true),
-      idExtractor, shardResolver(shardCount))
+  def start() = ClusterSharding(system).start(
+    typeName = name,
+    entityProps = props,
+    settings = ClusterShardingSettings(system).withRememberEntities(true),
+    extractEntityId = idExtractor,
+    extractShardId = shardResolver(shardCount)
+  )
 
-  protected def tellEntry[T <: QueryCommand](command: T)(implicit sender: ActorRef): Unit = {
+  protected def tellEntry[T <: QueryCommand](command: T)(implicit sender: ActorRef): Unit =
     shardRegion ! command
-  }
 
-  protected def writeEntry[T <: Command](command: T)(implicit sender: ActorRef): Unit = {
+  protected def writeEntry[T <: Command](command: T)(implicit sender: ActorRef): Unit =
     shardRegion ! command
-  }
 
   protected def askEntry[T <: State](command: QueryCommand)(implicit timeout: Timeout, sender: ActorRef, ec: ExecutionContext, tag: ClassTag[T]): Future[T] =
     shardRegion
@@ -50,5 +51,6 @@ trait Sharding {
     case (m: TeamMessage) ⇒ (m.aggregateRootId.hashCode % shardCount).toString
   }
 
-  private lazy val shardRegion = ClusterSharding(system).shardRegion(typeName)
+  private lazy val shardRegion = ClusterSharding(system)
+    .shardRegion(name)
 }

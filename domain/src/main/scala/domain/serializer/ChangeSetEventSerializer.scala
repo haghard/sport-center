@@ -3,10 +3,10 @@ package domain.serializer
 import akka.actor.ExtendedActorSystem
 import akka.serialization.Serializer
 import domain.formats.DomainEventFormats.ChangeSetFormat
-import domain.update.CampaignChangeCapture.ChangeSetLogicalTimeline
+import domain.update.DistributedDomainWriter.BeginTransaction
 
 final class ChangeSetEventSerializer(system: ExtendedActorSystem) extends Serializer {
-  private val EventClass = classOf[ChangeSetLogicalTimeline]
+  private val EventClass = classOf[BeginTransaction]
 
   override val identifier = 18
 
@@ -21,13 +21,13 @@ final class ChangeSetEventSerializer(system: ExtendedActorSystem) extends Serial
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
-    case e: ChangeSetLogicalTimeline => eventBuilder(e).build().toByteArray
-    case _                           => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
+    case e: BeginTransaction => eventBuilder(e).build().toByteArray
+    case _                   => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
   }
 
-  private def eventBuilder(e: ChangeSetLogicalTimeline) =
+  private def eventBuilder(e: BeginTransaction) =
     ChangeSetFormat.newBuilder().setSeqNumber(e.sn).setSize(e.size)
 
-  private def toDomainEvent(format: ChangeSetFormat): ChangeSetLogicalTimeline =
-    ChangeSetLogicalTimeline(format.getSeqNumber, format.getSize)
+  private def toDomainEvent(format: ChangeSetFormat): BeginTransaction =
+    BeginTransaction(format.getSeqNumber, format.getSize)
 }

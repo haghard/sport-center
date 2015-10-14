@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   akka.sharding,
   akka.persistence_cassandra,
   akka.slf4j,
-  akka.streams.streamz_akka_persistence,
+  //akka.streams.streamz_akka_persistence,
   //TEST
   akka.testkit % "test",
   scalatest,

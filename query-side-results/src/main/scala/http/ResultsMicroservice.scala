@@ -10,6 +10,7 @@ import microservice.crawler.{ Location, NbaResult }
 import microservice.http.RestWithDiscovery.DateFormatToJson
 import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
+import query.PersistentQuery
 import spray.json._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import view.ResultsViewRouter
@@ -95,7 +96,9 @@ trait ResultsMicroservice extends RestWithDiscovery
   //import query.DomainFinder
   //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
 
-  private val view = system.actorOf(ResultsViewRouter.props(settings), "results-view")
+  //private val view = system.actorOf(ResultsViewRouter.props(settings), "results-view")
+  private val view: akka.actor.ActorRef = null
+  //system.actorOf(PersistentQuery.props(settings), "results-query")
 
   abstract override def configureApi() =
     super.configureApi() ~

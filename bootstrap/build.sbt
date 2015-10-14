@@ -5,7 +5,7 @@ import com.typesafe.sbt.SbtScalariform._
 import sbtdocker.ImageName
 import scalariform.formatter.preferences._
 
-organization := "github.com"
+organization := "github/haghard"
 
 scalariformSettings
 
@@ -95,6 +95,7 @@ val cassandra = "192.168.0.171"
 
 addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2551 --HTTP_PORT=2561")
 addCommandAlias("lgateway1", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562")
+addCommandAlias("lgateway2", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2550 --HTTP_PORT=2560")
 
 addCommandAlias("lcrawler0", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2553 --HTTP_PORT=9001 --DB_HOSTS=" + cassandra)
 addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2554 --HTTP_PORT=9002 --DB_HOSTS=" + cassandra)

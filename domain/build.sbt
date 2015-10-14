@@ -26,7 +26,9 @@ libraryDependencies ++= Seq(
   //
   akka.persistence_cassandra,
   akka.slf4j,
-  akka.streams.streamz_akka_persistence,
+  //akka.streams.streamz_akka_persistence,
+  //scalaz_stream,
+  nosql_join,
   //TEST
   akka.testkit % "test",
   scalatest,

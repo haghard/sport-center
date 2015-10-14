@@ -24,9 +24,9 @@ object ResultsViewRouter {
   case class ResultsByDateBody(count: Int = 0, results: ArrayBuffer[NbaResult]) extends ResponseBody with State
   case class ResultsByTeamBody(count: Int = 0, results: List[NbaResult]) extends ResponseBody with State
 
-  def props(settings: CustomSettings) = Props(new ResultsViewRouter(settings))
+  //def props(settings: CustomSettings) = Props(new ResultsViewRouter(settings))
 }
-
+/*
 class ResultsViewRouter private (settings: CustomSettings) extends Actor with ActorLogging {
   import ResultsViewRouter._
 
@@ -38,7 +38,7 @@ class ResultsViewRouter private (settings: CustomSettings) extends Actor with Ac
     streamz.akka.persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
 
   private val sink: scalaz.stream.Sink[Task, NbaResult] =
-    scalaz.stream.io.channel(result ⇒ Task.delay { self ! result })
+    scalaz.stream.sink.lift[Task, NbaResult](result ⇒ Task.delay(self ! result))
 
   override def preStart =
     (scalaz.stream.merge.mergeN(scalaz.stream.Process.emitAll(settings.teams) |> scalaz.stream.process1.lift(subscriber))
@@ -77,4 +77,4 @@ class ResultsViewRouter private (settings: CustomSettings) extends Actor with Ac
           }
       }
   }
-}
+}*/
