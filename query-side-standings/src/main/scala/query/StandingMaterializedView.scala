@@ -68,7 +68,6 @@ object StandingMaterializedView {
   }
 
   private[StandingMaterializedView] final class SeasonViewBuilder(settings: CustomSettings) extends ViewBuilder {
-
     private var storage = {
       val local = mutable.HashMap[String, SeasonMetrics]()
       settings.teams.foreach { t ⇒

@@ -1,7 +1,11 @@
 package query
 
+import akka.serialization.SerializationExtension
+import akka.stream.{ ActorMaterializerSettings, ActorMaterializer, Supervision }
+import domain.update.CassandraQueriesSupport
 import org.joda.time.DateTime
 import akka.actor.ActorDSL._
+import scala.collection.immutable
 import scalaz.{ -\/, \/, \/- }
 import microservice.settings.CustomSettings
 import microservice.crawler.searchFormatter
@@ -21,14 +25,31 @@ object StandingViewRouter {
 
   case class QueryStandingByDate(date: DateTime) extends QueryCommand
 
+  def viewName(name: String): String = s"materialized-view-$name"
+
   def props(settings: CustomSettings): Props = Props(new StandingViewRouter(settings))
 }
 
 class StandingViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
-    with StandingMaterializedViewSupport {
+    with CassandraQueriesSupport {
+  import scala.concurrent.duration._
   import query.StandingViewRouter._
 
-  private val formatter = searchFormatter()
+  var seqNumber = 0l
+  val default = 30 seconds
+  val formatter = searchFormatter()
+  val serialization = SerializationExtension(context.system)
+
+  val decider: Supervision.Decider = {
+    case ex ⇒
+      log.error(ex, "StandingView fetch error")
+      Supervision.stop
+  }
+
+  implicit val Mat = ActorMaterializer(ActorMaterializerSettings(context.system)
+    .withDispatcher("stream-dispatcher")
+    .withSupervisionStrategy(decider)
+    .withInputBuffer(32, 64))(context.system)
 
   private def receiver(replyTo: ActorRef) = actor(new Act {
     become {
@@ -44,12 +65,42 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
     }
   })
 
+  override def preStart() = pull()
+
   override def receive: Receive = {
+    case sn: Long =>
+      log.info("StandingView sequence number №{}", sn)
+      sender() ! seqNumber
     case GetStandingByDate(uri, dateTime) ⇒
       getChildView(dateTime).fold {
         val error = s"Can't find view for requested date ${formatter.format(dateTime.toDate)}"
-        log.debug(error)
+        log.error(error)
         sender() ! StandingBody(error = Option(error))
       } { view ⇒ view.tell(QueryStandingByDate(dateTime), receiver(sender())) }
+  }
+
+  private def getChildView(dt: DateTime): Option[ActorRef] = {
+    (for {
+      (interval, intervalName) ← settings.intervals
+      if interval.contains(dt)
+    } yield intervalName).headOption
+      .flatMap { v ⇒
+        childViews.get(viewName(v))
+      }
+  }
+
+  private val childViews: immutable.Map[String, ActorRef] =
+    settings.stages.foldLeft(immutable.Map[String, ActorRef]()) { (map, c) ⇒
+      val vName = viewName(c._1)
+      val view = context.actorOf(StandingMaterializedView.props(settings), name = vName)
+      log.info("{} was created", vName)
+      map + (vName -> view)
+    }
+
+  private def pull() = {
+    viewStream(0l, default, newClient, self, 0, { result =>
+      seqNumber += 1l
+      getChildView(new DateTime(result.dt))
+    })
   }
 }

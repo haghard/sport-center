@@ -60,7 +60,6 @@ object Dependencies {
   val typesafe_config  = "com.typesafe"           %  "config"                % "1.2.1"
 
   val scalaz           = "org.scalaz"             %% "scalaz-core"            % "7.1.4"  withSources()
-  val scalaz_stream    = "org.scalaz.stream"      %% "scalaz-stream"          % "0.7.2a" withSources()
 
   val guava            = "com.google.guava"       % "guava"                   % "18.0" withSources()
 

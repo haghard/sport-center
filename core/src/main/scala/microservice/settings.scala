@@ -109,31 +109,6 @@ object settings {
         config.getString("Access-Token"), config.getString("Access-Token-Secret"))
     }
 
-    /*val twitterTeams = asScalaBuffer(system.settings.config
-      .getConfig("app-settings").getObjectList("tweeter-teams"))
-      .foldLeft(scala.collection.mutable.HashMap[String, String]()) { (acc, c) ⇒
-        val it = c.entrySet().iterator()
-        if (it.hasNext) {
-          val entry = it.next()
-          acc += (entry.getKey -> entry.getValue.render().replace("\"", ""))
-        }
-        acc
-      }
-
-
-    val clusterSingletons = {
-      val paths = system.settings.config.getConfig("singletons")
-      val crawlerPaths = paths.getConfig("crawler")
-      val tweeterPaths = paths.getConfig("twitter")
-      val updaterPaths = paths.getConfig("updater")
-
-      Paths(
-        ItemPaths(crawlerPaths.getString("proxyName"), crawlerPaths.getString("singletonName"), crawlerPaths.getString("name")),
-        ItemPaths(tweeterPaths.getString("proxyName"), tweeterPaths.getString("singletonName"), tweeterPaths.getString("name")),
-        ItemPaths(updaterPaths.getString("proxyName"), updaterPaths.getString("singletonName"), updaterPaths.getString("name"))
-      )
-    }*/
-
-    lazy val cloudToken = system.settings.config.getString("digital_ocean_api_token")
+    //lazy val cloudToken = system.settings.config.getString("digital_ocean_api_token")
   }
 }

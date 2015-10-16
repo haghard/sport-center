@@ -18,7 +18,7 @@ object DistributedDomainWriter {
 
 class DistributedDomainWriter extends PersistentActor with ActorLogging {
   import DistributedDomainWriter._
-  private var currentSequenceNr = 0l
+  private var sequenceNum = 0l
 
   import scala.concurrent.duration._
   implicit val ts = 5 second
@@ -31,12 +31,12 @@ class DistributedDomainWriter extends PersistentActor with ActorLogging {
     case e: BeginTransaction ⇒
       updateState(e)
     case RecoveryCompleted ⇒
-      log.info("Completely recovered up to changeSet №{}", currentSequenceNr)
+      log.info("Completely recovered up to change-set №{}", sequenceNum)
       Domains(context.system).start()
   }
 
   private def updateState(event: DomainEvent) = event match {
-    case BeginTransaction(number, size) ⇒ currentSequenceNr = number
+    case BeginTransaction(number, size) ⇒ sequenceNum = number
   }
 
   override def onRecoveryFailure(cause: Throwable, ev: Option[Any]) = {
@@ -50,17 +50,17 @@ class DistributedDomainWriter extends PersistentActor with ActorLogging {
       persist(BeginTransaction(change.id, change.results.size)) { ev ⇒
         updateState(ev)
         if (!change.results.isEmpty) {
-          log.info("Schedule write Changeset №{} in sharded domain", change.id)
+          log.info("Schedule write change-set №{} in sharded domain", change.id)
           Domains(context.system).distributedWrite(change.id, change.results, ts)
         } else self ! change.id
       }
 
     case seqNum: Long ⇒
-      log.info("Changeset №{} has been written with atLeastOnce semantic", seqNum)
+      log.info("change-set №{} has been written atLeastOnce", seqNum)
       requestor.foreach(_ ! seqNum)
       requestor = None
     //we can say Commit !!!!
 
-    case GetLastChangeSetNumber ⇒ sender() ! currentSequenceNr
+    case GetLastChangeSetNumber ⇒ sender() ! sequenceNum
   }
 }

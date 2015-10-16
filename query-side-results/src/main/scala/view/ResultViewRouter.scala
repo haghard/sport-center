@@ -1,48 +1,57 @@
 package view
 
-import scala.collection._
-import scalaz.concurrent.Task
-import scalaz.concurrent._
+import akka.actor.{ Props, Actor, ActorLogging }
+import akka.serialization.SerializationExtension
+import akka.stream.{ Supervision, ActorMaterializerSettings, ActorMaterializer }
+import domain.update.CassandraQueriesSupport
+import microservice.crawler.{ Location, NbaResult }
 import microservice.domain.State
-import domain.TeamAggregate.ResultAdded
-import scala.collection.mutable.ArrayBuffer
-import akka.actor.{ Props, ActorLogging, Actor }
-import microservice.crawler.{ NbaResult, Location }
 import microservice.http.RestService.ResponseBody
 import microservice.settings.CustomSettings
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
 
-object ResultsViewRouter {
-
-  implicit val strategy = Strategy.Executor(microservice.executor("results-view-executor", 2))
-
+object ResultViewRouter {
   implicit object Ord extends Ordering[NbaResult] {
     override def compare(x: NbaResult, y: NbaResult): Int =
       x.dt.compareTo(y.dt)
   }
 
-  case class ResultsByDateBody(count: Int = 0, results: ArrayBuffer[NbaResult]) extends ResponseBody with State
   case class ResultsByTeamBody(count: Int = 0, results: List[NbaResult]) extends ResponseBody with State
+  case class ResultsByDateBody(count: Int = 0, results: ArrayBuffer[NbaResult]) extends ResponseBody with State
 
-  //def props(settings: CustomSettings) = Props(new ResultsViewRouter(settings))
+  def props(settings: CustomSettings) = Props(classOf[ResultViewRouter], settings)
 }
-/*
-class ResultsViewRouter private (settings: CustomSettings) extends Actor with ActorLogging {
-  import ResultsViewRouter._
 
+class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
+    with CassandraQueriesSupport {
+  import ResultViewRouter._
+
+  val decider: Supervision.Decider = {
+    case ex ⇒
+      log.error(ex, "Results fetch error")
+      Supervision.stop
+  }
+
+  implicit val Mat = ActorMaterializer(ActorMaterializerSettings(context.system)
+    .withDispatcher("stream-dispatcher")
+    .withSupervisionStrategy(decider)
+    .withInputBuffer(32, 64))(context.system)
+
+  val serialization = SerializationExtension(context.system)
   private val formatter = microservice.crawler.searchFormatter()
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResult]]()
   private val viewByTeam = mutable.HashMap[String, mutable.SortedSet[NbaResult]]()
 
-  private def subscriber(domainActorName: String): scalaz.stream.Process[Task, NbaResult] =
-    streamz.akka.persistence.replay(domainActorName)(context.system).map(_.data.asInstanceOf[ResultAdded].r)
+  import scala.concurrent.duration._
 
-  private val sink: scalaz.stream.Sink[Task, NbaResult] =
-    scalaz.stream.sink.lift[Task, NbaResult](result ⇒ Task.delay(self ! result))
+  var seqNumber = 0l
+  val client = newClient
+  val refreshEvery = 30 seconds
 
-  override def preStart =
-    (scalaz.stream.merge.mergeN(scalaz.stream.Process.emitAll(settings.teams) |> scalaz.stream.process1.lift(subscriber))
-      .to(sink)).run.runAsync(_ => ())
+  override def preStart() =
+    resultsStream(seqNumber, refreshEvery, client, self, 0)
 
   override def receive: Receive = {
     case r: NbaResult =>
@@ -50,9 +59,14 @@ class ResultsViewRouter private (settings: CustomSettings) extends Actor with Ac
       viewByDate.get(date).fold { viewByDate += (date -> ArrayBuffer[NbaResult](r)); () } { res => res += r }
       viewByTeam.get(r.homeTeam).fold { viewByTeam += (r.homeTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
       viewByTeam.get(r.awayTeam).fold { viewByTeam += (r.awayTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
+      seqNumber += 1
+
+    case seqNum: Long =>
+      log.info("ResultView sequence number №{}", seqNumber)
+      sender() ! seqNumber
 
     case GetResultsByDate(uri, date) =>
-      sender() ! viewByDate.get(date).fold(ResultsByDateBody(0, new ArrayBuffer[NbaResult]())) { list => ResultsByDateBody(list.size, list) }
+      sender() ! viewByDate.get(date).fold(ResultsByDateBody(0, ArrayBuffer[NbaResult]())) { list => ResultsByDateBody(list.size, list) }
 
     case GetResultsByTeam(uri, team, size, location) =>
       location match {
@@ -77,4 +91,4 @@ class ResultsViewRouter private (settings: CustomSettings) extends Actor with Ac
           }
       }
   }
-}*/
+}

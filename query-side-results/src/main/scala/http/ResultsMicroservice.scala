@@ -10,11 +10,10 @@ import microservice.crawler.{ Location, NbaResult }
 import microservice.http.RestWithDiscovery.DateFormatToJson
 import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
-import query.PersistentQuery
 import spray.json._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
-import view.ResultsViewRouter
-import view.ResultsViewRouter.{ ResultsByTeamBody, ResultsByDateBody }
+import view.ResultViewRouter
+import view.ResultViewRouter.{ ResultsByTeamBody, ResultsByDateBody }
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
@@ -23,12 +22,10 @@ import microservice.crawler.searchFormatter
 import akka.http.scaladsl.server.{ Directives, Route }
 
 object ResultsMicroservice {
-
   case class GetResultsByDate(url: String, dt: String) extends BasicHttpRequest
   case class GetResultsByTeam(url: String, name: String, size: Int, location: Location.Value) extends BasicHttpRequest
-
-  case class ResultsResponse(url: String, view: Option[String] = None,
-    body: Option[ResponseBody] = None, error: Option[String] = None) extends BasicHttpResponse
+  case class ResultsResponse(url: String, view: Option[String] = None, body: Option[ResponseBody] = None,
+    error: Option[String] = None) extends BasicHttpResponse
 
   case class ResultsParams(size: Option[Int] = None, loc: Option[String] = None)
 
@@ -96,9 +93,7 @@ trait ResultsMicroservice extends RestWithDiscovery
   //import query.DomainFinder
   //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
 
-  //private val view = system.actorOf(ResultsViewRouter.props(settings), "results-view")
-  private val view: akka.actor.ActorRef = null
-  //system.actorOf(PersistentQuery.props(settings), "results-query")
+  private val view = system.actorOf(ResultViewRouter.props(settings), "results-query")
 
   abstract override def configureApi() =
     super.configureApi() ~

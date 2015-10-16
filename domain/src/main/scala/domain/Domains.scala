@@ -34,13 +34,9 @@ object Domains extends ExtensionKey[Domains] {
       } else super.validate(cmd)
     }
   }
-
-  //val BatchWriteComplete = "Done"
 }
 
 class Domains(protected val system: ExtendedActorSystem) extends Extension with Sharding {
-  import Domains._
-
   /**
    *
    * @param command
