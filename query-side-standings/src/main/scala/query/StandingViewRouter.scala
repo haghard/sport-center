@@ -31,7 +31,7 @@ object StandingViewRouter {
 }
 
 class StandingViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
-    with CassandraQueriesSupport {
+    with StandingStream with CassandraQueriesSupport {
   import scala.concurrent.duration._
   import query.StandingViewRouter._
 
@@ -98,7 +98,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
     }
 
   private def pull() = {
-    viewStream(0l, default, newClient, self, 0, { result =>
+    viewStream(0l, default, quorumClient, self, 0, { result =>
       seqNumber += 1l
       getChildView(new DateTime(result.dt))
     })

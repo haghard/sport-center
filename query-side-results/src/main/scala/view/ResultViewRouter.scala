@@ -8,9 +8,11 @@ import microservice.crawler.{ Location, NbaResult }
 import microservice.domain.State
 import microservice.http.RestService.ResponseBody
 import microservice.settings.CustomSettings
+import query.ResultStream
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
+import scala.concurrent.duration._
 
 object ResultViewRouter {
   implicit object Ord extends Ordering[NbaResult] {
@@ -24,8 +26,7 @@ object ResultViewRouter {
   def props(settings: CustomSettings) = Props(classOf[ResultViewRouter], settings)
 }
 
-class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
-    with CassandraQueriesSupport {
+class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging with ResultStream with CassandraQueriesSupport {
   import ResultViewRouter._
 
   val decider: Supervision.Decider = {
@@ -44,10 +45,8 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResult]]()
   private val viewByTeam = mutable.HashMap[String, mutable.SortedSet[NbaResult]]()
 
-  import scala.concurrent.duration._
-
   var seqNumber = 0l
-  val client = newClient
+  val client = newQuorumClient
   val refreshEvery = 30 seconds
 
   override def preStart() =

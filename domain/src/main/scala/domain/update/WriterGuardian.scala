@@ -17,7 +17,7 @@ object WriterGuardian {
     .withDispatcher("scheduler-dispatcher")
 }
 
-class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging with CassandraQueriesSupport {
+class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging with ChangesStream with CassandraQueriesSupport {
   val interval = 60 seconds
   val serialization = SerializationExtension(context.system)
   val writeProcessor = context.system.actorOf(DistributedDomainWriter.props, "distributed-writer")
@@ -38,6 +38,6 @@ class WriterGuardian private (val settings: CustomSettings) extends Actor with A
   override def receive: Receive = {
     case seqNum: Long ⇒
       log.info("Receive last applied ChangeUpdate №{}", seqNum)
-      changesStream(seqNum, interval, newClient, writeProcessor)
+      changesStream(seqNum, interval, quorumClient, writeProcessor)
   }
 }

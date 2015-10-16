@@ -52,8 +52,8 @@ object Dependencies {
   val logback      = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
 
   val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
-  val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.0"    %   "test"
-  val scalacheck       = "org.scalacheck"         %% "scalacheck"            % "1.11.6"   %   "test" exclude("org.scala-lang", "*")
+  val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.5"    %   "test"
+  val scalacheck       = "org.scalacheck"         %% "scalacheck"            % "1.12.4"   %   "test" exclude("org.scala-lang", "*")
 
   val embedMongo       = "de.flapdoodle.embed"    %  "de.flapdoodle.embed.mongo"  % "1.43"    % "test"
 
@@ -73,5 +73,5 @@ object Dependencies {
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
 
-  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.0.4"
+  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1"
 }

@@ -61,11 +61,11 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
-      .withFallback(ConfigFactory.parseString("akka.contrib.data-replication.gossip-interval = 1 s"))
+      .withFallback(ConfigFactory.parseString("akka.data-replication.gossip-interval = 1 s"))
       //$CrawlerRole.min-nr-of-members = 1
       .withFallback(ConfigFactory.parseString(s"""
         akka.cluster.role {
-          $GatewayRole.min-nr-of-members = 2
+          $GatewayRole.min-nr-of-members = 3
         }
        """))
       .withFallback(ConfigFactory.parseString(s"cassandra-journal.contact-points=[$cassandraContactPoints]"))
