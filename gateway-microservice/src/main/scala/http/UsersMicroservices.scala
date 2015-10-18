@@ -30,7 +30,7 @@ trait UsersMicroservices extends BootableRestService with SystemSettings
       pathPrefix(pathPref) {
         (get & path("login")) {
           parameters('user.as[String], 'email.as[String]).as(RawUser) { rawUser ⇒
-            val u = s"${rawUser.login} ${microservice.http.User.encryptPassword(rawUser.email, sail)}"
+            val u = s"${rawUser.login}:${microservice.http.User.encryptPassword(rawUser.email, sail)}"
             setPersistentSession(Session(u)) { ctx => ctx.complete(s"${rawUser.login} has been logged in") }
           }
         } /* ~ (get & path("logout")) {
