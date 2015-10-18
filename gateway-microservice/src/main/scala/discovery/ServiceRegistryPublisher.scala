@@ -7,7 +7,6 @@ import akka.stream.actor.{ ActorPublisher, ActorPublisherMessage }
 import discovery.ServiceDiscovery.DiscoveryLine
 
 object ServiceRegistryPublisher {
-
   def props(dispatcher: String): Props =
     Props(new ServiceRegistryPublisher).withDispatcher(dispatcher)
 }

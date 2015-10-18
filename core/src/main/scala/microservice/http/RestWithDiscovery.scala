@@ -3,7 +3,7 @@ package microservice.http
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.model.{ MediaTypes, HttpResponse }
-import akka.http.scaladsl.server.{ Directives, Directive1 }
+import akka.http.scaladsl.server.Directive1
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
@@ -15,7 +15,6 @@ import spray.json._
 import akka.http.scaladsl.model.Uri.{ Host => HostHeader }
 
 object RestWithDiscovery {
-
   implicit object DateFormatToJson extends JsonFormat[java.util.Date] with DefaultJsonProtocol {
     import spray.json._
     val formatter = microservice.crawler.estFormatter()
@@ -24,46 +23,19 @@ object RestWithDiscovery {
   }
 }
 
-trait RestWithDiscovery extends BootableRestService with Directives {
+trait RestWithDiscovery extends BootableRestService {
   self: MicroserviceKernel =>
 
-  /**
-   *
-   */
   implicit def timeout: akka.util.Timeout
 
-  /**
-   *
-   *
-   */
-  protected lazy val key = s"akka.tcp://${ActorSystemName}@${localAddress}:${akkaSystemPort}"
-
-  /**
-   *
-   * @return
-   */
-  def withUri: Directive1[String] = extract(_.request.uri.toString())
-
-  /**
-   *
-   * @return
-   */
   def endpoints: List[String]
 
-  /**
-   *
-   *
-   * @return
-   */
   def servicePathPostfix: String
 
-  /**
-   *
-   * @param resp
-   * @param writer
-   * @tparam T
-   * @return
-   */
+  lazy val key = s"akka.tcp://$ActorSystemName@$localAddress:$akkaSystemPort"
+
+  def withUri: Directive1[String] = extract(_.request.uri.toString())
+
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
@@ -72,23 +44,9 @@ trait RestWithDiscovery extends BootableRestService with Directives {
           List(Host(HostHeader(localAddress), httpPort)),
           Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
-  /**
-   *
-   * @param error
-   * @return
-   */
   protected def fail(error: String) =
-    HttpResponse(
-      akka.http.scaladsl.model.StatusCodes.InternalServerError,
-      List(Host(HostHeader(localAddress), httpPort)), error)
+    HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError, List(Host(HostHeader(localAddress), httpPort)), error)
 
-  /**
-   *
-   * @param resp
-   * @param writer
-   * @tparam T
-   * @return
-   */
   protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
     HttpResponse(
       akka.http.scaladsl.model.StatusCodes.OK,

@@ -74,4 +74,6 @@ object Dependencies {
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
 
   val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1"
+
+  val http_session     = "com.softwaremill"       %% "akka-http-session"       % "0.1.4"
 }

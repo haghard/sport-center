@@ -18,7 +18,7 @@ object WriterGuardian {
 }
 
 class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging with ChangesStream with CassandraQueriesSupport {
-  val interval = 60 seconds
+  val interval = 30 seconds
   val serialization = SerializationExtension(context.system)
   val writeProcessor = context.system.actorOf(DistributedDomainWriter.props, "distributed-writer")
 

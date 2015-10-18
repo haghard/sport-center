@@ -19,7 +19,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
 import microservice.crawler.searchFormatter
-import akka.http.scaladsl.server.{ Directives, Route }
+import akka.http.scaladsl.server._
+import com.softwaremill.session.SessionDirectives._
 
 object ResultsMicroservice {
   case class GetResultsByDate(url: String, dt: String) extends BasicHttpRequest
@@ -70,8 +71,8 @@ object ResultsMicroservice {
   private val lastResultsLatency = DynamicPropertyFactory.getInstance().getLongProperty(lastResultsProps, 0)
 }
 
-trait ResultsMicroservice extends RestWithDiscovery
-    with Directives with ResultsProtocols
+trait ResultsMicroservice extends RestWithDiscovery with Directives
+    with ResultsProtocols
     with SystemSettings
     with AskManagment {
   mixin: MicroserviceKernel with DiscoveryClientSupport with DomainSupport ⇒
@@ -87,8 +88,8 @@ trait ResultsMicroservice extends RestWithDiscovery
 
   override lazy val endpoints =
     List(
-      s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{dt}",
-      s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{team}/last")
+      s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{dt}",
+      s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{team}/last")
 
   //import query.DomainFinder
   //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
@@ -102,49 +103,55 @@ trait ResultsMicroservice extends RestWithDiscovery
         Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was stopped on $httpPrefixAddress ★ ★ ★ ★ ★ ★")))
 
   private def resultsRoute(implicit ec: ExecutionContext): Route = {
-    pathPrefix(pathPrefix) {
-      (get & path(servicePathPostfix / Segment)) { date ⇒
-        withUri { uri ⇒
-          complete {
-            system.log.info(s"[$name] - incoming request $uri")
-            Thread.sleep(resultsByDateLatency.get) // for testing por
-            //fail("fake error")
-            Try {
-              formatter parse date
-            } match {
-              case Success(dt)    ⇒ competeWithDate(uri, date)
-              case Failure(error) ⇒ fail(ResultsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
-            }
-          }
-        }
-      } ~
-        (get & path(servicePathPostfix / Segment / "last")) { team ⇒
-          parameters('size.as[Int] ?, 'loc ?).as(ResultsParams) { params ⇒
+    randomTokenCsrfProtection() {
+      pathPrefix(pathPref) {
+        (get & path(servicePathPostfix / Segment)) { date ⇒
+          requiredPersistentSession() { session =>
             withUri { uri ⇒
               complete {
-                import scalaz.Scalaz._
-                import scalaz._
-
-                system.log.info(s"[$name] - incoming request $uri")
-                Thread.sleep(lastResultsLatency.get)
-                val complete = completeWithTeam(uri, team)
-                val loc = (for { l ← params.loc \/> (validationMessage) } yield l)
-                  .flatMap(x ⇒ Location.values.find(_.toString == x) \/> (s"Wrong location $x"))
-                  .fold(failbackWithDefaultLocation, { l ⇒ \/-(l) })
-
-                val size = (for { s ← params.size \/> (validationMessage) } yield s)
-                  .flatMap { s ⇒ if (s >= 0) \/-(s) else -\/(s"Size $s should be positive") }
-                  .fold(failbackWithDefaultSize, { l ⇒ \/-(l) })
-
-                (for { l ← loc; s ← size } yield (l, s))
-                  .fold(error ⇒
-                    fail(ResultsResponse(uri, view = Option(teamViewName), error = Option(error))).apply(error),
-                    complete(_)
-                  )
+                system.log.info(s"[$name]:[$session] - incoming request $uri")
+                Thread.sleep(resultsByDateLatency.get) // for testing por
+                //fail("fake error")
+                Try {
+                  formatter parse date
+                } match {
+                  case Success(dt)    ⇒ competeWithDate(uri, date)
+                  case Failure(error) ⇒ fail(ResultsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
+                }
               }
             }
           }
-        }
+        } ~
+          (get & path(servicePathPostfix / Segment / "last")) { team ⇒
+            parameters('size.as[Int] ?, 'loc ?).as(ResultsParams) { params ⇒
+              requiredPersistentSession() { session =>
+                withUri { uri ⇒
+                  complete {
+                    import scalaz.Scalaz._
+                    import scalaz._
+
+                    system.log.info(s"[$name]:[$session] - incoming request $uri")
+                    Thread.sleep(lastResultsLatency.get)
+                    val complete = completeWithTeam(uri, team)
+                    val loc = (for { l ← params.loc \/> (validationMessage) } yield l)
+                      .flatMap(x ⇒ Location.values.find(_.toString == x) \/> (s"Wrong location $x"))
+                      .fold(failbackWithDefaultLocation, { l ⇒ \/-(l) })
+
+                    val size = (for { s ← params.size \/> (validationMessage) } yield s)
+                      .flatMap { s ⇒ if (s >= 0) \/-(s) else -\/(s"Size $s should be positive") }
+                      .fold(failbackWithDefaultSize, { l ⇒ \/-(l) })
+
+                    (for { l ← loc; s ← size } yield (l, s))
+                      .fold(error ⇒
+                        fail(ResultsResponse(uri, view = Option(teamViewName), error = Option(error))).apply(error),
+                        complete(_)
+                      )
+                  }
+                }
+              }
+            }
+          }
+      }
     }
   }
 

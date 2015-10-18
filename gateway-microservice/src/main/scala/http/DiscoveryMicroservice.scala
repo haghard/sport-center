@@ -8,6 +8,7 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import discovery.ServiceDiscovery
 import discovery.ServiceDiscovery._
+import microservice.SystemSettings
 import microservice.api.{ ClusterNetworkSupport, BootableMicroservice }
 import microservice.http.{ RestApiJunction, BootableRestService }
 import discovery.ServiceRegistryPublisher
@@ -28,7 +29,7 @@ object DiscoveryMicroservice {
   val streamResponse = "stream"
   val servicePrefix = "discovery"
 
-  trait Protocols extends DefaultJsonProtocol {
+  trait DiscoveryProtocols extends DefaultJsonProtocol {
     implicit val kvFormat = jsonFormat2(KVRequest.apply)
     implicit def unmarshaller(implicit ec: ExecutionContext) = new FromRequestUnmarshaller[KVRequest]() {
       override def apply(req: HttpRequest)(implicit ec: ExecutionContext): Future[KVRequest] =
@@ -38,14 +39,14 @@ object DiscoveryMicroservice {
   }
 }
 
-trait DiscoveryMicroservice extends BootableRestService
+trait DiscoveryMicroservice extends UsersMicroservices /*BootableRestService*/
     with Directives
-    with DiscoveryMicroservice.Protocols
+    with DiscoveryMicroservice.DiscoveryProtocols
     with SSEventsMarshalling
-    with DefaultJsonProtocol {
+    with DefaultJsonProtocol
+    with SystemSettings {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
   import DiscoveryMicroservice._
-  implicit val ec = system.dispatchers.lookup(httpDispatcher)
 
   abstract override def configureApi() =
     super.configureApi() ~ RestApiJunction(route = Option({ ec: ExecutionContext ⇒ discoveryRoute(ec) }))

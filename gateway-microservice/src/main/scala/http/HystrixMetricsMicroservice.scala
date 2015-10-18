@@ -3,6 +3,7 @@ package http
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import hystrix.HystrixMetricsPublisher
+import microservice.SystemSettings
 import microservice.http.RestApiJunction
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
@@ -15,13 +16,12 @@ object HystrixMetricsMicroservice {
   private val stream = "stream"
 
   val hystrixStream = s"/$prefix/$stream"
-
-  private val dispatcher = "hystrix-stream-dispatcher"
+  val dispatcher = "hystrix-stream-dispatcher"
 }
 
-trait HystrixMetricsMicroservice extends DiscoveryMicroservice with SSEventsMarshalling {
+trait HystrixMetricsMicroservice extends DiscoveryMicroservice
+    with SSEventsMarshalling {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
-
   import http.HystrixMetricsMicroservice._
 
   abstract override def configureApi() =

@@ -84,17 +84,11 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def subscribe(subscriber: ActorRef): Unit = {
     replicator ! Subscribe(LWWMapKey[DiscoveryLine](DataKey), subscriber)
   }
-  //SetKey op error timeout Ask timed out on [Actor[akka://SportCenter/system/ddataReplicator#1221204174]] after [3000 ms].
-  //Sender[null] sent message of type "akka.cluster.ddata.Replicator$Update".
+
   def setKey(op: SetKey)(implicit ec: ExecutionContext): Future[String \/ Update] =
     replicator.ask(update(map ⇒ ++(map, op.key)))(writeTimeout).mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
       .map {
-        case r @ Replicator.UpdateSuccess(_, _) ⇒
-          sys.log.debug("****************************1")
-          \/-(Update(r))
-        case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒
-          sys.log.debug("****************************2")
-          \/-(Update(r))
+        case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ \/-(Update(r))
         case response ⇒ -\/(s"SetKey op unexpected response $response")
       } recoverWith {
         case ex: ClassCastException ⇒

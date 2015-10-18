@@ -10,20 +10,22 @@ import akka.http.scaladsl.model.{ MediaTypes, HttpResponse }
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers._
 
+import scala.collection.immutable
+
 package object hystrix {
 
-  def command(prefix: String, replyTo: ActorRef, uri: String) =
-    mapper(prefix)(replyTo, uri)
+  def command(prefix: String, replyTo: ActorRef, uri: String, cookie: immutable.Seq[HttpCookiePair]) =
+    mapper(prefix)(replyTo, uri, cookie)
 
-  private val mapper: (String) => (ActorRef, String) => HystrixCommand[Unit] =
+  private val mapper: (String) => (ActorRef, String, immutable.Seq[HttpCookiePair]) => HystrixCommand[Unit] =
     prefix =>
-      { (replyTo: ActorRef, uri: String) =>
+      { (replyTo: ActorRef, uri: String, cookie: immutable.Seq[HttpCookiePair]) =>
         prefix match {
-          case "/api/results/(.*)"      => GetResultsByDateCommand(replyTo, uri)
-          case "/api/results/(.*)/last" => GetResultsLastCommand(replyTo, uri)
-          case "/api/standings/(.*)"    => GetStandingsCommand(replyTo, uri)
-          case "/api/crawler"           => GetSomeColdResultsCommand(replyTo, uri)
-          case other                    => GetSomeColdResultsCommand(replyTo, uri) //default
+          case "/api/results/(.*)"      => GetResultsByDateCommand(replyTo, uri, cookie)
+          case "/api/results/(.*)/last" => GetResultsLastCommand(replyTo, uri, cookie)
+          case "/api/standings/(.*)"    => GetStandingsCommand(replyTo, uri, cookie)
+          case "/api/crawler"           => GetSomeColdResultsCommand(replyTo, uri, cookie)
+          case other                    => GetSomeColdResultsCommand(replyTo, uri, cookie) //default
         }
       }
 
@@ -31,6 +33,7 @@ package object hystrix {
     mixin: HystrixCommand[Unit] {
       def replyTo: ActorRef
       def uri: String
+      def cookie: immutable.Seq[HttpCookiePair]
     } =>
 
     import java.net.{ HttpURLConnection, URL }
@@ -39,6 +42,8 @@ package object hystrix {
     private val TimedOut = "ResponseTimedOut"
     private val FailedEx = "FailedExecution"
     private val ShortCircuited = "ShortCircuited"
+
+    val errorCode = "Server returned HTTP response code: (.\\d+) for URL:(.+)".r
 
     protected def cause() = {
       if (this.isResponseTimedOut) TimedOut
@@ -57,12 +62,20 @@ package object hystrix {
         connection = (new URL(uri)).openConnection.asInstanceOf[HttpURLConnection]
         connection.setRequestMethod(method)
         connection.setDoInput(true)
+        connection.setDoOutput(true)
+        cookie.foreach { c =>
+          connection.addRequestProperty("Cookie", s"${c.name}=${c.value}")
+        }
         inputStream = connection.getInputStream
         replyTo ! HttpResponse(OK, entity = Strict(MediaTypes.`application/json`,
           ByteString(scala.io.Source.fromInputStream(inputStream).mkString)))
       } catch {
         case e: Exception =>
-          //TODO extract error message
+          e.getMessage match {
+            case errorCode(code, url) if (code.trim.toInt == 403) =>
+              replyTo ! HttpResponse(Forbidden, entity = Strict(MediaTypes.`application/json`, ByteString(s"{ forbidden-url: $uri }")))
+          }
+
           //notify hystrix on failure
           throw e
       } finally {
@@ -101,7 +114,7 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
 
-    def apply(replyTo: ActorRef, uri: String) = new GetStandingsCommand(replyTo, uri)
+    def apply(replyTo: ActorRef, uri: String, cookie: immutable.Seq[HttpCookiePair]) = new GetStandingsCommand(replyTo, uri, cookie)
   }
 
   object GetResultsLastCommand {
@@ -124,7 +137,7 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
 
-    def apply(replyTo: ActorRef, uri: String) = new GetResultsLastCommand(replyTo, uri)
+    def apply(replyTo: ActorRef, uri: String, cookie: immutable.Seq[HttpCookiePair]) = new GetResultsLastCommand(replyTo, uri, cookie)
   }
 
   object GetResultsByDateCommand {
@@ -147,7 +160,8 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
 
-    def apply(replyTo: ActorRef, uri: String) = new GetResultsByDateCommand(replyTo, uri)
+    def apply(replyTo: ActorRef, uri: String, cookie: immutable.Seq[HttpCookiePair]) =
+      new GetResultsByDateCommand(replyTo, uri, cookie)
   }
 
   object GetSomeColdResultsCommand {
@@ -169,22 +183,22 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
 
-    def apply(replyTo: ActorRef, uri: String) = new GetSomeColdResultsCommand(replyTo, uri)
+    def apply(replyTo: ActorRef, uri: String, cookie: immutable.Seq[HttpCookiePair]) = new GetSomeColdResultsCommand(replyTo, uri, cookie: immutable.Seq[HttpCookiePair])
   }
 
-  private[hystrix] class GetResultsByDateCommand(val replyTo: ActorRef, val uri: String)
+  private[hystrix] class GetResultsByDateCommand(val replyTo: ActorRef, val uri: String, val cookie: immutable.Seq[HttpCookiePair])
     extends HystrixCommand[Unit](GetResultsByDateCommand.key)
     with BlockingCall
 
-  private[hystrix] class GetStandingsCommand(val replyTo: ActorRef, val uri: String)
+  private[hystrix] class GetStandingsCommand(val replyTo: ActorRef, val uri: String, val cookie: immutable.Seq[HttpCookiePair])
     extends HystrixCommand[Unit](GetStandingsCommand.key)
     with BlockingCall
 
-  private[hystrix] class GetResultsLastCommand(val replyTo: ActorRef, val uri: String)
+  private[hystrix] class GetResultsLastCommand(val replyTo: ActorRef, val uri: String, val cookie: immutable.Seq[HttpCookiePair])
     extends HystrixCommand[Unit](GetResultsLastCommand.key)
     with BlockingCall
 
-  private[hystrix] class GetSomeColdResultsCommand(val replyTo: ActorRef, val uri: String)
+  private[hystrix] class GetSomeColdResultsCommand(val replyTo: ActorRef, val uri: String, val cookie: immutable.Seq[HttpCookiePair])
     extends HystrixCommand[Unit](GetSomeColdResultsCommand.key)
     with BlockingCall
 }

@@ -2,6 +2,7 @@ package http
 
 import discovery.ServiceDiscovery
 import gateway.ApiGateway
+import microservice.SystemSettings
 import microservice.http.RestApiJunction
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
 import akka.http.scaladsl.model.headers.Host
@@ -9,7 +10,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.Uri.{ Host => HostHeader }
 import akka.pattern.ask
 import spray.json._
-import DefaultJsonProtocol._
 import scala.concurrent.duration._
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
@@ -25,7 +25,8 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
 
   private val gateway = system.actorOf(ApiGateway.props(localAddress, httpPort), "gateway")
 
-  private def curl(method: String, resourcePath: String) = s"curl -i -X $method http://$localAddress:$httpPort/$resourcePath"
+  private def curl(method: String, resourcePath: String) =
+    s"curl -i -X $method http://$localAddress:$httpPort/$resourcePath"
 
   /*
    * If this actor fails we will lost all routes
@@ -43,7 +44,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
 
   //TODO: try to avoid timeout
   private def gatewayRoute(implicit ec: ExecutionContext): Route =
-    pathPrefix(pathPrefix) {
+    pathPrefix(pathPref) {
       path(Segments) { path ⇒
         ctx ⇒
           ctx.complete {
@@ -62,7 +63,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
         ctx.complete {
           List(
             curl("GET", s"$hystrixStream"),
-            curl("GET", s"$pathPrefix/crawler"),
+            curl("GET", s"$pathPref/crawler"),
             curl("GET", s"$servicePrefix/$scalarResponce"),
             curl("GET", s"$servicePrefix/$streamResponse"),
             curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),

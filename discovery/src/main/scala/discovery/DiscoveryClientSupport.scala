@@ -29,11 +29,11 @@ trait DiscoveryClientSupport extends BootableMicroservice {
     clusterMonitor
       .ask(GetNodes)(discoveryTimeout)
       .mapTo[Vector[Address]]
-      .map(\/-(_))
+      .map(\/-(_))(discoveryDispatcher)
       .recoverWith {
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses timeout ${ex.getMessage}"))
         case ex: Exception           ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses error ${ex.getMessage}"))
-      }
+      }(discoveryDispatcher)
 
   private def registerSequence(endpoints: List[String])(op: (String, String) ⇒ Future[StatusCode]): Unit = {
     endpoints match {
@@ -45,7 +45,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
             registerSequence(tail)(op)
           case Failure(ex) ⇒
             system.log.info(s"Service [$key - $endpoint] installation error: ${ex.getMessage}")
-        }
+        }(discoveryDispatcher)
     }
   }
 

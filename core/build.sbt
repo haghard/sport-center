@@ -21,4 +21,5 @@ libraryDependencies ++= Seq(
   scalaz,
   nscala_time,
   guava,
-  protobuf)
+  protobuf,
+  http_session)

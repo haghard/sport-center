@@ -24,7 +24,6 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     with ClusterNetworkSupport
     with SeedNodesSupport
     with BootableRestService {
-
   import BootableClusterNode._
   import microservice.api.MicroserviceKernel._
 

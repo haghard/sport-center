@@ -30,6 +30,7 @@ object settings {
   case class ItemPaths(proxyName: String, singletonName: String, name: String) extends SingletonPaths
   case class TwitterAuth(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)
   case class Cassandra(keyspace: String, table: String, address: InetSocketAddress)
+  case class SessionGfg(secret: String, sail: String, ttl: Long)
 
   object CustomSettings extends ExtensionKey[CustomSettings]
 
@@ -107,6 +108,12 @@ object settings {
       val config = system.settings.config
       TwitterAuth(config.getString("API-Key"), config.getString("API-Secret"),
         config.getString("Access-Token"), config.getString("Access-Token-Secret"))
+    }
+
+    lazy val session = {
+      SessionGfg(system.settings.config.getString("http.session"),
+        system.settings.config.getString("http.salt"),
+        system.settings.config.getLong("http.ttl"))
     }
 
     //lazy val cloudToken = system.settings.config.getString("digital_ocean_api_token")

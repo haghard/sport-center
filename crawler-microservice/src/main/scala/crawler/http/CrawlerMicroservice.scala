@@ -1,14 +1,16 @@
 package crawler.http
 
 import akka.http.scaladsl.server.Route
+import com.softwaremill.session.{ InMemoryRememberMeStorage, SessionManager, SessionConfig }
+import microservice.settings.CustomSettings
 import spray.json.JsonWriter
 import crawler.{ NbaCampaignView, CrawlerGuardianSupport }
 import NbaCampaignView.LastUpdateDate
 import discovery.DiscoveryClientSupport
-import microservice.AskManagment
+import microservice.{ SystemSettings, AskManagment }
 import microservice.api.MicroserviceKernel
 import microservice.http.RestWithDiscovery.DateFormatToJson
-import microservice.http.{ RestApiJunction, RestWithDiscovery }
+import microservice.http.{ Session, RestApiJunction, RestWithDiscovery }
 
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 
@@ -55,10 +57,9 @@ object CrawlerMicroservice {
   private val viewName = "last-crawl-date"
 }
 
-trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
-  mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport ⇒
-
-  import crawler.http.CrawlerMicroservice._
+trait CrawlerMicroservice extends RestWithDiscovery with AskManagment /*with SystemSettings*/ {
+  mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport =>
+  import _root_.crawler.http.CrawlerMicroservice._
 
   override val name = "CrawlerMicroservice"
 
@@ -66,14 +67,10 @@ trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
 
   implicit override val timeout = akka.util.Timeout(2 seconds)
 
-  override lazy val endpoints = List(s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix")
+  override lazy val endpoints = List(s"$httpPrefixAddress/$pathPref/$servicePathPostfix")
 
   private val view = system.actorOf(NbaCampaignView.props(httpDispatcher), name = "campaign-view")
 
-  /**
-   *
-   * @return
-   */
   abstract override def configureApi() =
     super.configureApi() ~
       RestApiJunction(route = Option { ec: ExecutionContext ⇒ crawlerRoute(ec) },
@@ -81,7 +78,7 @@ trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
         postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def crawlerRoute(implicit ec: ExecutionContext): Route = {
-    pathPrefix(pathPrefix) {
+    pathPrefix(pathPref) {
       (get & path(servicePathPostfix)) {
         withUri { uri ⇒
           system.log.info(s"[$name] - incoming request $uri")

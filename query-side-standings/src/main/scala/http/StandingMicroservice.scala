@@ -21,6 +21,7 @@ import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
 import scala.concurrent.duration._
 import microservice.crawler.searchFormatter
+import com.softwaremill.session.SessionDirectives._
 
 object StandingMicroservice {
 
@@ -65,7 +66,7 @@ trait StandingMicroservice extends RestWithDiscovery
 
   override implicit val timeout = akka.util.Timeout(3 seconds)
 
-  override lazy val endpoints = List(s"$httpPrefixAddress/$pathPrefix/$servicePathPostfix/{dt}")
+  override lazy val endpoints = List(s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{dt}")
 
   private lazy val standingView = system.actorOf(StandingViewRouter.props(settings), "standing-top-view")
 
@@ -76,18 +77,22 @@ trait StandingMicroservice extends RestWithDiscovery
         postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def standingRoute(implicit ec: ExecutionContext): Route = {
-    pathPrefix(pathPrefix) {
-      (get & path(servicePathPostfix / Segment)) { date ⇒
-        withUri { uri ⇒
-          complete {
-            system.log.info(s"[$name] - incoming request $uri")
-            //for latency injection
-            Thread.sleep(standingsLatency.get())
-            Try {
-              new DateTime(formatter parse date)
-            } match {
-              case Success(dt)    ⇒ compete(uri, dt)
-              case Failure(error) ⇒ fail(StandingsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
+    randomTokenCsrfProtection() {
+      pathPrefix(pathPref) {
+        (get & path(servicePathPostfix / Segment)) { date ⇒
+          requiredPersistentSession() { session =>
+            withUri { uri ⇒
+              complete {
+                system.log.info(s"[$name][$session] - incoming request $uri")
+                //for latency injection
+                Thread.sleep(standingsLatency.get())
+                Try {
+                  new DateTime(formatter parse date)
+                } match {
+                  case Success(dt)    ⇒ compete(uri, dt)
+                  case Failure(error) ⇒ fail(StandingsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
+                }
+              }
             }
           }
         }

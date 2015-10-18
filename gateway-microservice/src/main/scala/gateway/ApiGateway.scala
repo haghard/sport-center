@@ -4,10 +4,13 @@ import akka.actor._
 import java.util.concurrent.ThreadLocalRandom
 import akka.cluster.ddata.{ LWWMapKey, LWWMap }
 import akka.cluster.ddata.Replicator.Changed
+import akka.http.scaladsl.model.headers.HttpCookiePair
 import discovery.ServiceDiscovery.DiscoveryLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
 import akka.http.scaladsl.model.StatusCodes._
+
+import scala.collection.immutable
 
 object ApiGateway {
   //TODO: add microservice version in url 
@@ -30,7 +33,7 @@ object ApiGateway {
       }.groupBy(_.pathRegex)
   }
 
-  def headers(headers: Seq[HttpHeader]) = headers.foldLeft(Map[String, String]()) { (acc, c) =>
+  def headers(headers: Seq[HttpHeader]) = headers./:(Map[String, String]()) { (acc, c) =>
     acc + (c.name() -> c.value())
   }
 
@@ -58,7 +61,7 @@ class ApiGateway private (localAddress: String, httpPort: Int) extends Actor wit
       } { route: Route ⇒
         val reqUri = r.uri
         val newUri = reqUri.withHost(route.host).withPort(route.port)
-        services.hystrix.command(route.pathRegex, replyTo, newUri.toString()).queue()
+        services.hystrix.command(route.pathRegex, replyTo, newUri.toString(), r.cookies).queue()
       }
   }
 

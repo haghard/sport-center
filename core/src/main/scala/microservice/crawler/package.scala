@@ -17,17 +17,18 @@ package object crawler {
   case class CrawlerJob(endDt: DateTime, urls: List[String])
 
   val SCENTER_TIME_ZONE = DateTimeZone.forID("EST")
-  val TIME_ZONE = TimeZone.getTimeZone("EST")
+  val EST_TIME_ZONE = TimeZone.getTimeZone("EST")
+  val JODA_EST = org.joda.time.DateTimeZone.forID("EST")
 
   def searchFormatter() = {
     val local = new SimpleDateFormat("yyyy-MM-dd")
-    local.setTimeZone(TIME_ZONE)
+    local.setTimeZone(EST_TIME_ZONE)
     local
   }
 
   def estFormatter() = {
     val local = new SimpleDateFormat("dd MMM yyyy hh:mm a z")
-    local.setTimeZone(TIME_ZONE)
+    local.setTimeZone(EST_TIME_ZONE)
     local
   }
 

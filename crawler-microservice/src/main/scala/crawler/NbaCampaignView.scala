@@ -9,7 +9,6 @@ import crawler.http.CrawlerMicroservice.GetLastCrawlDate
 import scala.concurrent.duration._
 
 object NbaCampaignView {
-
   private val path = "nba"
 
   case class LastUpdateDate(lastIterationDate: Option[Date] = None) extends State

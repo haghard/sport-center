@@ -14,7 +14,7 @@ fork in IntegrationTest := false
 
 parallelExecution in Test := false
 
-promptTheme := Scalapenos
+promptTheme := ScalapenosTheme
 
 scalariformSettings
 

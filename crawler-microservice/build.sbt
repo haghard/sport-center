@@ -15,5 +15,6 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 libraryDependencies ++= Seq(
   jsoup,
   akka.testkit,
-  scalatest
+  scalatest,
+  http_session
 )
