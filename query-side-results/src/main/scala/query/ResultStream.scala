@@ -1,5 +1,7 @@
 package query
 
+import join.Join
+import dsl.cassandra._
 import akka.actor.{ Actor, ActorRef }
 import akka.persistence.PersistentRepr
 import akka.serialization.Serialization
@@ -9,8 +11,6 @@ import com.datastax.driver.core.{ ConsistencyLevel, Row }
 import com.datastax.driver.core.utils.Bytes
 import domain.TeamAggregate.ResultAdded
 import domain.update.CassandraQueriesSupport
-import dsl.cassandra._
-import join.Join
 import join.cassandra.CassandraSource
 import microservice.crawler.NbaResult
 import microservice.settings.CustomSettings
@@ -45,16 +45,16 @@ trait ResultStream {
       domainEvent.r
     }
 
-  private def fetchResult(seqNum: Long)(implicit client: CassandraSource#Client) =
-    (Join[CassandraSource] left (qTeams, teamsTable, qResults(seqNum), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
+  private def fetchResult(offset: Long)(implicit client: CassandraSource#Client) =
+    (Join[CassandraSource] left (qTeams, teamsTable, qResults(offset), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
       .source
 
-  def resultsStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long)(implicit Mat: ActorMaterializer): Unit = {
-    (if (acc == 0) fetchResult(seqNum)(client) else fetchResult(seqNum)(client) via readEvery(interval))
+  def resultsStream(offset: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long)(implicit Mat: ActorMaterializer): Unit = {
+    (if (acc == 0) fetchResult(offset)(client) else fetchResult(offset)(client) via readEvery(interval))
       .map { res => des ! res }
       //.mapAsync(1) { res => (des.ask(res.size.toLong)(interval)).mapTo[Long] } //sort of back pressure
       .to(Sink.onComplete { _ =>
-        (des.ask(seqNum)(interval)).mapTo[Long].map { n =>
+        (des.ask(offset)(interval)).mapTo[Long].map { n =>
           context.system.scheduler.scheduleOnce(interval, new Runnable {
             override def run() = resultsStream(n, interval, client, des, acc + 1l)
           })

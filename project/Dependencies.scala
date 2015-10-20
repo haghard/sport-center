@@ -46,10 +46,10 @@ object Dependencies {
 
   val joda_time = "joda-time"           %     "joda-time"       % "2.5"
 
-  val nscala_time = "com.github.nscala-time" %% "nscala-time"   % "1.6.0"
+  val nscala_time  = "com.github.nscala-time" %% "nscala-time"   % "1.6.0"
 
-  val slf4j_api    = "org.slf4j"        %     "slf4j-api"       % Akka
-  val logback      = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
+  val slf4j_api        = "org.slf4j"        %     "slf4j-api"       % Akka
+  val logback          = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
 
   val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
   val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.5"    %   "test"

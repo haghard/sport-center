@@ -10,7 +10,7 @@ object DistributedDomainWriter {
   case class BatchPersisted(seqNumber: Long) extends DomainEvent
   case class BeginTransaction(sn: Long, size: Int) extends DomainEvent
 
-  object GetLastChangeSetNumber
+  object GetLastChangeSetOffset
 
   def props = Props(new DistributedDomainWriter)
     .withDispatcher("scheduler-dispatcher")
@@ -61,6 +61,6 @@ class DistributedDomainWriter extends PersistentActor with ActorLogging {
       requestor = None
     //we can say Commit !!!!
 
-    case GetLastChangeSetNumber ⇒ sender() ! sequenceNum
+    case GetLastChangeSetOffset ⇒ sender() ! sequenceNum
   }
 }

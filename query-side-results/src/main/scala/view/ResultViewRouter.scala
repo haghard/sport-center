@@ -26,7 +26,8 @@ object ResultViewRouter {
   def props(settings: CustomSettings) = Props(classOf[ResultViewRouter], settings)
 }
 
-class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging with ResultStream with CassandraQueriesSupport {
+class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
+    with ResultStream with CassandraQueriesSupport {
   import ResultViewRouter._
 
   val decider: Supervision.Decider = {
@@ -45,12 +46,12 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResult]]()
   private val viewByTeam = mutable.HashMap[String, mutable.SortedSet[NbaResult]]()
 
-  var seqNumber = 0l
+  var offset = 0l
   val client = newQuorumClient
   val refreshEvery = 30 seconds
 
   override def preStart() =
-    resultsStream(seqNumber, refreshEvery, client, self, 0)
+    resultsStream(offset, refreshEvery, client, self, 0)
 
   override def receive: Receive = {
     case r: NbaResult =>
@@ -58,11 +59,11 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
       viewByDate.get(date).fold { viewByDate += (date -> ArrayBuffer[NbaResult](r)); () } { res => res += r }
       viewByTeam.get(r.homeTeam).fold { viewByTeam += (r.homeTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
       viewByTeam.get(r.awayTeam).fold { viewByTeam += (r.awayTeam -> mutable.SortedSet[NbaResult](r)); () } { res => res += r }
-      seqNumber += 1
+      offset += 1
 
     case seqNum: Long =>
-      log.info("ResultView sequence number №{}", seqNumber)
-      sender() ! seqNumber
+      log.info("ResultView offset №{}", offset)
+      sender() ! offset
 
     case GetResultsByDate(uri, date) =>
       sender() ! viewByDate.get(date).fold(ResultsByDateBody(0, ArrayBuffer[NbaResult]())) { list => ResultsByDateBody(list.size, list) }

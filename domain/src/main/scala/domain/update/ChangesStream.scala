@@ -9,7 +9,7 @@ import com.datastax.driver.core.{ ConsistencyLevel, Row }
 import com.datastax.driver.core.utils.Bytes
 import domain.CrawlerCampaign.CampaignPersistedEvent
 import domain.TeamAggregate.CreateResult
-import domain.update.DistributedDomainWriter.GetLastChangeSetNumber
+import domain.update.DistributedDomainWriter.GetLastChangeSetOffset
 import domain.update.WriterGuardian.PersistDataChange
 import dsl.cassandra._
 import join.Join
@@ -69,7 +69,7 @@ trait ChangesStream {
     ((fetchChanges(seqNum)(client)) via readEvery(interval))
       .mapAsync(1) { ch => (des.ask(ch)(interval)).mapTo[Long] } //sort of back pressure
       .to(Sink.onComplete { _ =>
-        (des.ask(GetLastChangeSetNumber)(interval)).mapTo[Long].map { n =>
+        (des.ask(GetLastChangeSetOffset)(interval)).mapTo[Long].map { n =>
           context.system.scheduler.scheduleOnce(interval, new Runnable {
             override def run() = changesStream(n, interval, client, des)
           })

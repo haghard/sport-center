@@ -35,7 +35,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
   import scala.concurrent.duration._
   import query.StandingViewRouter._
 
-  var seqNumber = 0l
+  var offset = 0l
   val default = 30 seconds
   val formatter = searchFormatter()
   val serialization = SerializationExtension(context.system)
@@ -70,7 +70,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
   override def receive: Receive = {
     case sn: Long =>
       log.info("StandingView sequence number №{}", sn)
-      sender() ! seqNumber
+      sender() ! offset
     case GetStandingByDate(uri, dateTime) ⇒
       getChildView(dateTime).fold {
         val error = s"Can't find view for requested date ${formatter.format(dateTime.toDate)}"
@@ -99,7 +99,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
 
   private def pull() = {
     viewStream(0l, default, quorumClient, self, 0, { result =>
-      seqNumber += 1l
+      offset += 1l
       getChildView(new DateTime(result.dt))
     })
   }

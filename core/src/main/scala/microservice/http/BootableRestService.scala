@@ -38,7 +38,7 @@ trait BootableRestService extends SystemSettings with Directives {
     .withRememberMeCookieMaxAge(Option(settings.session.ttl)))
 
   implicit val rememberMeStorage: RememberMeStorage[Session] = new InMemoryRememberMeStorage[Session] {
-    override def log(msg: String) = system.log.info("Remember-me {}", msg)
+    override def log(msg: String) = system.log.info("remember-me {}", msg)
   }
 
   def sail = settings.session.sail

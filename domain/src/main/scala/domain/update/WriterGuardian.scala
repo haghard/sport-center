@@ -1,14 +1,14 @@
 package domain.update
 
 import akka.actor._
-import akka.serialization.SerializationExtension
-import akka.stream.{ Supervision, ActorMaterializerSettings, ActorMaterializer }
-import domain.TeamAggregate.CreateResult
-import domain.update.DistributedDomainWriter.GetLastChangeSetNumber
-import microservice.domain.Command
-import microservice.settings.CustomSettings
-import scala.collection.immutable.SortedSet
 import scala.concurrent.duration._
+import microservice.domain.Command
+import domain.TeamAggregate.CreateResult
+import scala.collection.immutable.SortedSet
+import microservice.settings.CustomSettings
+import akka.serialization.SerializationExtension
+import domain.update.DistributedDomainWriter.GetLastChangeSetOffset
+import akka.stream.{ Supervision, ActorMaterializerSettings, ActorMaterializer }
 
 object WriterGuardian {
   case class PersistDataChange(id: Long, results: Map[String, SortedSet[CreateResult]]) extends Command
@@ -17,7 +17,8 @@ object WriterGuardian {
     .withDispatcher("scheduler-dispatcher")
 }
 
-class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging with ChangesStream with CassandraQueriesSupport {
+class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging
+    with ChangesStream with CassandraQueriesSupport {
   val interval = 30 seconds
   val serialization = SerializationExtension(context.system)
   val writeProcessor = context.system.actorOf(DistributedDomainWriter.props, "distributed-writer")
@@ -33,11 +34,11 @@ class WriterGuardian private (val settings: CustomSettings) extends Actor with A
     .withSupervisionStrategy(decider)
     .withInputBuffer(1, 1))(context.system)
 
-  override def preStart() = writeProcessor ! GetLastChangeSetNumber
+  override def preStart() = writeProcessor ! GetLastChangeSetOffset
 
   override def receive: Receive = {
-    case seqNum: Long ⇒
-      log.info("Receive last applied ChangeUpdate №{}", seqNum)
-      changesStream(seqNum, interval, quorumClient, writeProcessor)
+    case offset: Long ⇒
+      log.info("Receive last applied ChangeUpdate №{}", offset)
+      changesStream(offset, interval, quorumClient, writeProcessor)
   }
 }
