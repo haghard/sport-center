@@ -116,6 +116,13 @@ object settings {
         system.settings.config.getLong("http.ttl"))
     }
 
+    case class Timeouts(results: java.time.Duration, standings: java.time.Duration)
+    lazy val timeouts = {
+      Timeouts(
+        system.settings.config.getDuration("timeouts.results"),
+        system.settings.config.getDuration("timeouts.standings")
+      )
+    }
     //lazy val cloudToken = system.settings.config.getString("digital_ocean_api_token")
   }
 }

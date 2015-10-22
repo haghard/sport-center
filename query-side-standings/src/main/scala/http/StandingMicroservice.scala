@@ -1,5 +1,7 @@
 package http
 
+import java.util.concurrent.TimeUnit
+
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server.Route
 import com.netflix.config.DynamicPropertyFactory
@@ -19,7 +21,6 @@ import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonMetrics, 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
-import scala.concurrent.duration._
 import microservice.crawler.searchFormatter
 import com.softwaremill.session.SessionDirectives._
 
@@ -64,9 +65,9 @@ trait StandingMicroservice extends RestWithDiscovery
 
   override lazy val servicePathPostfix = "standings"
 
-  override implicit val timeout = akka.util.Timeout(3 seconds)
+  implicit override val timeout = akka.util.Timeout(settings.timeouts.standings.getSeconds, TimeUnit.SECONDS)
 
-  override lazy val endpoints = List(s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{dt}")
+  override lazy val endpoints = s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{dt}" :: Nil
 
   private lazy val standingView = system.actorOf(StandingViewRouter.props(settings), "standing-top-view")
 

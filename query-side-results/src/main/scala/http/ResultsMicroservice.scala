@@ -1,5 +1,7 @@
 package http
 
+import java.util.concurrent.TimeUnit
+
 import akka.http.scaladsl.model.HttpResponse
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
@@ -14,7 +16,6 @@ import spray.json._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import view.ResultViewRouter
 import view.ResultViewRouter.{ ResultsByTeamBody, ResultsByDateBody }
-import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
@@ -84,15 +85,11 @@ trait ResultsMicroservice extends RestWithDiscovery with Directives
 
   override val servicePathPostfix = "results"
 
-  implicit override val timeout = akka.util.Timeout(2 seconds)
+  implicit override val timeout = akka.util.Timeout(settings.timeouts.results.getSeconds, TimeUnit.SECONDS)
 
   override lazy val endpoints =
-    List(
-      s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{dt}",
-      s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{team}/last")
-
-  //import query.DomainFinder
-  //val finder = system.actorOf(DomainFinder.props(settings), "domain-finder")
+    s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{dt}" ::
+      s"$httpPrefixAddress/$pathPref/$servicePathPostfix/{team}/last" :: Nil
 
   private val view = system.actorOf(ResultViewRouter.props(settings), "results-query")
 
