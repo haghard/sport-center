@@ -92,7 +92,7 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
     case cmd @ CreateResult(team, result) ⇒
       state.lastDate.fold(persistAndAck(team, result)) { lastDate ⇒
         //Idempotent receiver
-        //Relay on time ordered event stream
+        //Relay on wall clock in events
         if (result.dt after lastDate) {
           persist(ResultAdded(team, result))(updateState)
         }
@@ -111,8 +111,14 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
     case RecoveryCompleted                                      ⇒ log.info("RecoveryCompleted for {} up to {}", persistenceId, state.lastDate)
   }
 
+  override def onPersistFailure(cause: Throwable, event: Any, seqNr: Long) = {
+    log.info(s"Persistence error on: $seqNr {}", cause.getMessage)
+    updateState(RecoveryError(cause))
+    super.onPersistFailure(cause, event, seqNr)
+  }
+
   override def onRecoveryFailure(cause: Throwable, ev: Option[Any]) = {
-    log.info("RecoveryFailure {}", cause.getMessage)
+    log.error(cause, "")
     updateState(RecoveryError(cause))
     super.onRecoveryFailure(cause, ev)
   }

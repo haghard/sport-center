@@ -74,6 +74,7 @@ trait DiscoveryHttpClient extends DiscoveryClient
     askForDiscoveryNodeAddresses()
       .flatMap {
         case \/-(nodes) ⇒
+          system.log.info("★ ★ ★ {} have been discovered:[{}] ★ ★ ★ ", microservice.api.MicroserviceKernel.GatewayRole, nodes.mkString(";"))
           val size = nodes.size
           val address = nodes(ThreadLocalRandom.current().nextInt(size) % size)
           (for {

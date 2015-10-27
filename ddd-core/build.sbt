@@ -25,5 +25,4 @@ libraryDependencies ++= Seq(
   //akka.streams.streamz_akka_persistence,
   //TEST
   akka.testkit % "test",
-  scalatest,
-  embedMongo)
+  scalatest)

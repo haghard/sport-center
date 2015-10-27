@@ -10,7 +10,7 @@ import discovery.ServiceDiscovery
 import discovery.ServiceDiscovery._
 import microservice.SystemSettings
 import microservice.api.{ ClusterNetworkSupport, BootableMicroservice }
-import microservice.http.{ RestApiJunction, BootableRestService }
+import microservice.http.RestApiJunction
 import discovery.ServiceRegistryPublisher
 import spray.json.DefaultJsonProtocol
 import akka.http.scaladsl.model.{ HttpResponse, HttpRequest }
@@ -39,7 +39,7 @@ object DiscoveryMicroservice {
   }
 }
 
-trait DiscoveryMicroservice extends UsersMicroservices /*BootableRestService*/
+trait DiscoveryMicroservice extends UsersMicroservices
     with Directives
     with DiscoveryMicroservice.DiscoveryProtocols
     with SSEventsMarshalling

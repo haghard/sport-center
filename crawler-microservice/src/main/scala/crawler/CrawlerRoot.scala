@@ -9,16 +9,15 @@ import microservice.crawler._
 import microservice.settings.CustomSettings
 import org.joda.time.DateTime
 
-object CrawlerMaster {
-
+object CrawlerRoot {
   /**
    * .withFallback(ConfigFactory.load("crawler.conf"))
    * @param settings
    * @return
    */
-  def props(settings: CustomSettings) = Props(new CrawlerMaster(settings.teams) with FromConfigCreator)
+  def props(settings: CustomSettings) = Props(new CrawlerRoot(settings.teams) with FromConfigCreator)
 
-  def props2(settings: CustomSettings) = Props(new CrawlerMaster(settings.teams) with ProgrammaticallyCreator)
+  def props2(settings: CustomSettings) = Props(new CrawlerRoot(settings.teams) with ProgrammaticallyCreator)
 
 }
 
@@ -33,8 +32,7 @@ object CrawlerMaster {
  * that coordinate jobs and delegates the actual work to routees running
  * on other nodes in the cluster.
  */
-abstract class CrawlerMaster(val teams: Seq[String]) extends Actor with ActorLogging with WebRouterCreator {
-
+abstract class CrawlerRoot(val teams: Seq[String]) extends Actor with ActorLogging with WebRouterCreator {
   private var nrOfRetries = 5
   private var collectedResults = List.empty[NbaResult]
 
@@ -47,8 +45,8 @@ abstract class CrawlerMaster(val teams: Seq[String]) extends Actor with ActorLog
   override def routerNodeRole = MicroserviceKernel.CrawlerRole
 
   private val decider: PartialFunction[Throwable, Directive] = {
-    case CrawlerException(_, _, url) ⇒
-      log.info("WebGetter error, retry later {}  ", url)
+    case CrawlerException(_, cause, url) ⇒
+      log.debug("WebGetter error {}, retry later {} ", cause.getMessage, url)
       Resume
   }
 
@@ -61,29 +59,29 @@ abstract class CrawlerMaster(val teams: Seq[String]) extends Actor with ActorLog
       nrOfRetries -= 1
       if (nrOfRetries == 0) {
         webAggregator foreach (context.stop(_))
-        crawlerClient foreach (_ ! JobFailed("There are unavailable urls. Size:" + urls.size))
+        crawlerClient foreach (_ ! JobFailed(s"Several urls have not been achieved: ${urls.mkString(";")}"))
         crawlerClient = None
         nrOfRetries = 5
         collectedResults = Nil
         log.info("Mark job as failed after {} retry", nrOfRetries)
         context become idle
       } else {
-        log.info("Retry number: {}", nrOfRetries)
+        log.info("Retry countdown: {}", nrOfRetries)
         urls foreach { url ⇒ webRouter.tell(url, webAggregator.get) }
       }
 
     case r: SuccessCollected ⇒
       crawlerClient foreach (_ ! CrawlerResponse(dt, collectedResults ::: r.list))
       crawlerClient = None
-      context.become(idle)
+      (context become idle)
 
   }
 
-  private def idle(): Receive = {
+  def idle(): Receive = {
     case CrawlerJob(dt, urls) ⇒
-      log.info("CrawlerMaster receive job {}", formatter format dt.toDate)
-      crawlerClient = Some(sender())
-      webAggregator = Some(context.actorOf(Aggregator.props(urls), name = "aggregator"))
+      log.info("CrawlerRoot receive job {}", formatter format dt.toDate)
+      crawlerClient = Option(sender())
+      webAggregator = Option(context.actorOf(Collector.props(urls), "collector"))
       urls foreach (url ⇒ webRouter.tell(url, webAggregator.get))
       context become active(dt)
   }

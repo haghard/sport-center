@@ -182,13 +182,13 @@ package object ddd {
   }
 
   object ShardResolution {
-
-    type ShardResolutionStrategy = EntityIdResolver => ExtractShardId //ShardResolver
+    type ShardResolutionStrategy = EntityIdResolver => ExtractShardId
 
     private val defaultShardResolutionStrategy: ShardResolutionStrategy = {
       entityIdResolver =>
         {
-          case msg => Integer.toHexString(entityIdResolver(msg).hashCode).charAt(0).toString
+          case msg =>
+            Integer.toHexString(entityIdResolver(msg).hashCode).charAt(0).toString
         }
     }
   }

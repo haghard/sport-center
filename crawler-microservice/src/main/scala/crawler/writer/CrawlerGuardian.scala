@@ -2,10 +2,9 @@ package crawler.writer
 
 import akka.actor._
 import akka.pattern.ask
-import crawler.CrawlerMaster
+import crawler.CrawlerRoot
 import microservice.crawler._
 import domain.CrawlerCampaign
-
 import microservice.settings.CustomSettings
 import ddd.amod.{ EffectlessAck, Acknowledge }
 import ddd.{ PassivationConfig, AggregateRootActorFactory, CustomShardResolution }
@@ -20,7 +19,7 @@ object CrawlerGuardian {
 
   implicit object ShardResolution extends CustomShardResolution[CrawlerCampaign]
   implicit object agFactory extends AggregateRootActorFactory[CrawlerCampaign] {
-    override def inactivityTimeout: Duration = 10.minute
+    override def inactivityTimeout = 10 minute
     override def props(pc: PassivationConfig) = Props(new CrawlerCampaign(pc))
   }
 
@@ -42,7 +41,7 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
 
   private val formatter = searchFormatter()
 
-  private val crawler = context.actorOf(CrawlerMaster.props(settings), "crawler")
+  private val crawler = context.actorOf(CrawlerRoot.props(settings), "crawler-root")
 
   private val campaign = shardOf[CrawlerCampaign]
 
@@ -51,11 +50,12 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
 
   override def preStart = {
     val start = startPoint.fold(throw new Exception("app-settings.stages prop must be defined")) { _._1.getStart.withZone(SCENTER_TIME_ZONE).withTime(23, 59, 59, 0).toDate }
+    log.info("CrawlerGuardian")
     campaign ! InitCampaign(start)
   }
 
   private def scheduleCampaign = {
-    context.system.scheduler.scheduleOnce(10 seconds)(campaign ! RequestCampaign(daysInBatch))
+    context.system.scheduler.scheduleOnce(2 seconds)(campaign ! RequestCampaign(daysInBatch))
     context become receive
   }
 
@@ -86,10 +86,11 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
         .mapTo[ddd.amod.Acknowledge]
         .onComplete {
           case Success(c) ⇒
-            log.info("ChangeSet was persisted")
-            scheduleCampaign
+            campaign ! RequestCampaign(daysInBatch)
+            context become receive
+          //scheduleCampaign
           case Failure(error) ⇒
-            log.info("ChangeSet save error {}", error.getMessage)
+            log.info("Change-set save error {}", error.getMessage)
             context become receive
             context.system.scheduler.scheduleOnce(iterationPeriod)(campaign ! RequestCampaign(daysInBatch))
         }

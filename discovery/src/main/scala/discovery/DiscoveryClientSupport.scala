@@ -16,7 +16,7 @@ import scalaz.{ -\/, \/, \/- }
 trait DiscoveryClientSupport extends BootableMicroservice {
   self: RestWithDiscovery with DiscoveryClient ⇒
 
-  private val duration = 3 seconds
+  private val duration = 5 seconds
   private val cluster = akka.cluster.Cluster(system)
   val discoveryDispatcherName = "scheduler-dispatcher"
   private implicit val discoveryTimeout = akka.util.Timeout(duration)

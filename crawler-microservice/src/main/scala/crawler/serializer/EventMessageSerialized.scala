@@ -3,7 +3,7 @@ package crawler.serializer
 import akka.actor.ExtendedActorSystem
 import akka.serialization.Serializer
 import ddd.EventMessage
-import domain.CrawlerCampaign.{ CampaignBeingInited, CampaignPersistedEvent }
+import domain.CrawlerCampaign.{ CampaignInitialized, CampaignPersistedEvent }
 import domain.formats.EventMessageFormats._
 import microservice.crawler._
 import org.joda.time.DateTime
@@ -47,7 +47,7 @@ class EventMessageSerialized(system: ExtendedActorSystem) extends Serializer {
     b.setTime(e.timestamp.toDate.getTime).setUuid(e.id)
     var pb = domain.formats.EventMessageFormats.PersistedEventFormat.newBuilder()
     e.event match {
-      case e: CampaignBeingInited =>
+      case e: CampaignInitialized =>
         pb.setOwner(e.aggregateRootId).setTime(e.dt.getTime)
       case e: CampaignPersistedEvent =>
         pb.setOwner(e.aggregateRootId).setTime(e.dt.getTime)

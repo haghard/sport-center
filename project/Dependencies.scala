@@ -42,7 +42,7 @@ object Dependencies {
 
   val spray_json = "io.spray"           %%    "spray-json"      % "1.2.6" withSources()
 
-  val jsoup = "org.jsoup"               %     "jsoup"           % "1.7.3"
+  val jsoup = "org.jsoup"               %     "jsoup"           % "1.8.2"
 
   val joda_time = "joda-time"           %     "joda-time"       % "2.5"
 
@@ -55,7 +55,7 @@ object Dependencies {
   val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.5"    %   "test"
   val scalacheck       = "org.scalacheck"         %% "scalacheck"            % "1.12.4"   %   "test" exclude("org.scala-lang", "*")
 
-  val embedMongo       = "de.flapdoodle.embed"    %  "de.flapdoodle.embed.mongo"  % "1.43"    % "test"
+  //val embedMongo       = "de.flapdoodle.embed"    %  "de.flapdoodle.embed.mongo"  % "1.43"    % "test"
 
   val typesafe_config  = "com.typesafe"           %  "config"                % "1.2.1"
 

@@ -57,7 +57,7 @@ object CrawlerMicroservice {
   private val viewName = "last-crawl-date"
 }
 
-trait CrawlerMicroservice extends RestWithDiscovery with AskManagment /*with SystemSettings*/ {
+trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
   mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport =>
   import _root_.crawler.http.CrawlerMicroservice._
 

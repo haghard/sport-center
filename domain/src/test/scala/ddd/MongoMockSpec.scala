@@ -1,3 +1,5 @@
+/*
+
 package domain
 
 import akka.actor.ActorSystem
@@ -85,4 +87,4 @@ abstract class MongoMockSpec(config: Config) extends TestKit(ActorSystem("Domain
   lazy val mongodStarter = MongodStarter.getInstance(runtimeConfig)
   lazy val mongod = mongodStarter.prepare(mongodConfig)
   lazy val mongodExe = mongod.start()
-}
+}*/

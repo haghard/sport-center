@@ -30,23 +30,22 @@ object CrawlerCampaign {
   case class CampaignInitializationError(message: String)
 
   sealed trait CampaignEvent extends DomainEvent {
-    val aggregateRootId: String
+    def aggregateRootId: String
   }
 
   case class CampaignPersistedEvent(aggregateRootId: String, dt: Date, results: immutable.List[NbaResult]) extends CampaignEvent
-  case class CampaignBeingInited(aggregateRootId: String, dt: Date) extends CampaignEvent
+  case class CampaignInitialized(aggregateRootId: String, dt: Date) extends CampaignEvent
 
   case class InitCampaign(date: Date, aggregateId: String = "nba") extends DomainCommand
   case class RequestCampaign(size: Int, aggregateId: String = "nba") extends DomainCommand
 
   case class PersistCampaign(dt: DateTime, results: immutable.List[NbaResult], aggregateId: String = "nba") extends DomainCommand
 
-  case class CampaignState(name: Option[String] = None,
-      progressDate: Option[Date] = None) extends AggregateState {
+  case class CampaignState(name: Option[String] = None, progressDate: Option[Date] = None) extends AggregateState {
     override def apply = {
-      case CampaignBeingInited(id, dt)      => copy(Option(id), Option(dt))
-      case CampaignPersistedEvent(_, dt, _) => copy(progressDate = Option(dt))
-      case r: RequestCampaign               => this
+      case CampaignInitialized(id, dt) => copy(Option(id), Option(dt))
+      case e: CampaignPersistedEvent   => copy(progressDate = Option(e.dt))
+      case r: RequestCampaign          => this
     }
   }
 }
@@ -56,8 +55,8 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
 
   private val formatter = estFormatter()
 
-  override def factory: ARStateFactory = {
-    case CampaignBeingInited(id, dt) =>
+  override def factory: StateFactory = {
+    case CampaignInitialized(id, dt) =>
       CampaignState(Option(id), Option(dt))
   }
 
@@ -65,7 +64,7 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
     case InitCampaign(dt, id) =>
       if (initialized) {
         replyTo ! ddd.amod.EffectlessAck(Success("OK"))
-      } else raise(CampaignBeingInited(id, dt))
+      } else raise(CampaignInitialized(id, dt))
 
     case RequestCampaign(size, _) =>
       if (initialized) {
@@ -76,7 +75,7 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
 
     case PersistCampaign(dt, results, id) =>
       if (initialized) {
-        if (dt.toDate.after(state.progressDate.get)) {
+        if (dt.toDate after state.progressDate.get) {
           raise(CampaignPersistedEvent(id, dt.toDate, results))
         } else {
           log.info("[Current campaign {}] - [Received dt {}]]. Do effectless ack", state, dt)
@@ -91,11 +90,9 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
     val localBatchSize = batchSize
     val lastCrawlDate = new DateTime(state.progressDate.get).withZone(SCENTER_TIME_ZONE)
     val crawlLimitDate = new DateTime().withZone(SCENTER_TIME_ZONE) - timeOffset
+    log.info("Crawl before: {}. Last crawler date: {}", (formatter format crawlLimitDate.toDate), (formatter format lastCrawlDate.toDate))
 
-    log.info("Crawl before: {}. Last crawler date: {}", formatter.format(crawlLimitDate.toDate), formatter.format(lastCrawlDate.toDate))
-
-    @tailrec
-    def loop(acc: List[String], fromDate: DateTime, toDate: DateTime, batchSize: Int): (DateTime, List[String]) = {
+    @tailrec def loop(acc: List[String], fromDate: DateTime, toDate: DateTime, batchSize: Int): (DateTime, List[String]) = {
       if (fromDate.isBefore(toDate) && batchSize > 0) {
         val nextDate = fromDate + Period.days(1)
         val path = s"""${nextDate.year().get()}${alignProp(nextDate.monthOfYear())}${alignProp(nextDate.dayOfMonth())}/"""

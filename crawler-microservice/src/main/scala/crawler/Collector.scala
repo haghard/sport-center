@@ -6,14 +6,15 @@ import microservice.domain._
 
 import scala.concurrent.duration._
 
-object Aggregator {
-  def props(urls: List[String]) = Props(new Aggregator(urls))
+object Collector {
+  def props(urls: List[String]) = Props(new Collector(urls))
+    .withDispatcher("crawler-dispatcher")
 }
 
-class Aggregator(urls: List[String]) extends Actor with ActorLogging {
-  private var batch = List.empty[NbaResult]
+class Collector(urls: List[String]) extends Actor with ActorLogging {
+  context.setReceiveTimeout(15 seconds)
 
-  context.setReceiveTimeout(10 seconds)
+  var batch = List.empty[NbaResult]
 
   override def receive = running(urls)
 
@@ -24,11 +25,11 @@ class Aggregator(urls: List[String]) extends Actor with ActorLogging {
 
   def dequeue(results: (String, List[NbaResult]), batchUrls: List[String]): Receive = {
     batch :::= results._2
-    val restUrls = batchUrls.copyWithout(results._1)
+    val restUrls = (batchUrls copyWithout results._1)
     if (restUrls.isEmpty) {
       context.parent ! SuccessCollected(batch)
       log.info("Aggregator complete batch")
-      context.stop(self)
+      context stop self
     }
     running(restUrls)
   }

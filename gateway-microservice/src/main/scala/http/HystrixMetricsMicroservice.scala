@@ -3,7 +3,6 @@ package http
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import hystrix.HystrixMetricsPublisher
-import microservice.SystemSettings
 import microservice.http.RestApiJunction
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }

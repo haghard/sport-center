@@ -32,9 +32,12 @@ object ClusteredShard {
         val sr = implicitly[ShardResolution[T]]
 
         ClusterSharding(system)
-          .start(entityClass.getSimpleName, EntityProps,
-            ClusterShardingSettings(system).withRememberEntities(true),
-            sr.idExtractor, sr.shardResolver)
+          .start(
+            typeName = entityClass.getSimpleName,
+            entityProps = EntityProps,
+            settings = ClusterShardingSettings(system).withRememberEntities(true),
+            sr.idExtractor,
+            sr.shardResolver)
       }
     }
   }

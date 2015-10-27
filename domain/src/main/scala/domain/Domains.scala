@@ -29,7 +29,7 @@ object Domains extends ExtensionKey[Domains] {
 
     abstract override def validate(cmd: Command): String \/ (Long, T) = {
       if (!shouldSkip(failureRate)) {
-        log.info(s"Skip {}", cmd)
+        log.info("Skip {}", cmd)
         left("Skip message")
       } else super.validate(cmd)
     }
@@ -37,40 +37,24 @@ object Domains extends ExtensionKey[Domains] {
 }
 
 class Domains(protected val system: ExtendedActorSystem) extends Extension with Sharding {
-  /**
-   *
-   * @param command
-   * @param sender
-   * @tparam T
-   * @return
-   */
+
   def tellQuery[T <: QueryCommand](command: T)(implicit sender: ActorRef) =
     tellEntry(command)
 
-  /**
-   *
-   * @param command
-   * @param timeout
-   * @param sender
-   * @param ec
-   * @tparam T
-   * @return
-   */
   def askQuery[T <: State](command: QueryCommand)(implicit timeout: Timeout, sender: ActorRef, ec: ExecutionContext): Future[T] =
     askEntry(command)
 
-  def distributedWrite[T <: State](seqNumber: Long,
-    results: Map[String, SortedSet[CreateResult]],
+  def distributedWrite[T <: State](seqNumber: Long, results: Map[String, SortedSet[CreateResult]],
     timeout: FiniteDuration)(implicit sender: ActorRef, factory: ActorRefFactory, ec: ExecutionContext) = {
 
     def atLeastOnceWriter(replyTo: ActorRef, seqNumber: Long, results: Map[String, SortedSet[CreateResult]])(implicit factory: ActorRefFactory, ec: ExecutionContext) =
       actor(new Act {
         val size = results.size
         var respNumber = 0
-        context.setReceiveTimeout(timeout)
+        (context setReceiveTimeout timeout)
         become {
           case ReceiveTimeout ⇒
-            system.log.info("Redeliver changeset № {}. Cause expected {} actual {}", seqNumber, size, respNumber)
+            system.log.info("Redelivery for changeset №{}. Cause expected {} actual {}", seqNumber, size, respNumber)
             respNumber = 0
             for { (k, orderedTeamResults) ← results } yield {
               orderedTeamResults.foreach(r ⇒ writeEntry(r)(self))
@@ -90,31 +74,12 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension with 
     }
   }
 
-  /**
-   *
-   * @param command
-   * @param sender
-   * @tparam T
-   * @return
-   */
   def tellWrite[T <: Command](command: T)(implicit sender: ActorRef) =
     writeEntry(command)
 
-  /**
-   *
-   * @return
-   */
   override protected def props: Props = TeamAggregate.props
 
-  /**
-   *
-   * @return
-   */
   override protected def shardCount: Int = 6
 
-  /**
-   *
-   * @return
-   */
-  override protected def name: String = "teams"
+  override protected val name = "teams"
 }

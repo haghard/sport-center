@@ -1,10 +1,10 @@
 package crawler
 
 import akka.actor._
-import microservice.SystemSettings
 import crawler.writer.CrawlerGuardian
-import akka.cluster.singleton.{ ClusterSingletonManagerSettings, ClusterSingletonManager }
+import microservice.SystemSettings
 import microservice.api.{ MicroserviceKernel, BootableMicroservice }
+import akka.cluster.singleton.{ ClusterSingletonManagerSettings, ClusterSingletonManager }
 
 trait CrawlerGuardianSupport extends BootableMicroservice with SystemSettings {
 

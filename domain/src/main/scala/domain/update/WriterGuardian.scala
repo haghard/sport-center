@@ -19,8 +19,9 @@ object WriterGuardian {
 
 class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging
     with ChangesStream with CassandraQueriesSupport {
-  val interval = 30 seconds
+  val interval = 15 seconds
   val serialization = SerializationExtension(context.system)
+
   val writeProcessor = context.system.actorOf(DistributedDomainWriter.props, "distributed-writer")
 
   val decider: Supervision.Decider = {
@@ -34,11 +35,13 @@ class WriterGuardian private (val settings: CustomSettings) extends Actor with A
     .withSupervisionStrategy(decider)
     .withInputBuffer(1, 1))(context.system)
 
-  override def preStart() = writeProcessor ! GetLastChangeSetOffset
+  override def preStart() = {
+    writeProcessor ! GetLastChangeSetOffset
+  }
 
   override def receive: Receive = {
     case offset: Long ⇒
-      log.info("Receive last applied ChangeUpdate №{}", offset)
+      log.info("Last applied change-set №{}", offset)
       changesStream(offset, interval, quorumClient, writeProcessor)
   }
 }

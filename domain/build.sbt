@@ -18,7 +18,6 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 //domain/dependency-Tree
 
-
 libraryDependencies ++= Seq(
   protobuf,
   akka.actor,
@@ -26,10 +25,7 @@ libraryDependencies ++= Seq(
   //
   akka.persistence_cassandra,
   akka.slf4j,
-  //akka.streams.streamz_akka_persistence,
-  //scalaz_stream,
   nosql_join,
   //TEST
   akka.testkit % "test",
-  scalatest,
-  embedMongo)
+  scalatest)

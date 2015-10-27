@@ -49,11 +49,11 @@ object LocalShard {
 
     override def getChild(name: String): Option[ActorRef] = context.child(name)
 
-    override def removeChild(name: String) = {}
+    override def removeChild(name: String) = ???
 
     override def createChild(props: Props, name: String): ActorRef = {
       val actor = context.actorOf(props, name)
-      log.info(s"Child-actor created $actor, with name $name")
+      log.info("Child actor has been created {} with name {}", actor, name)
       actor
     }
   }

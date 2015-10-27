@@ -1,10 +1,10 @@
 package query
 
+import akka.persistence.PersistentRepr
+import akka.serialization.Serialization
 import join.Join
 import dsl.cassandra._
 import akka.actor.{ Actor, ActorRef }
-import akka.persistence.PersistentRepr
-import akka.serialization.Serialization
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import com.datastax.driver.core.{ ConsistencyLevel, Row }
@@ -12,7 +12,7 @@ import com.datastax.driver.core.utils.Bytes
 import domain.TeamAggregate.ResultAdded
 import domain.update.CassandraQueriesSupport
 import join.cassandra.CassandraSource
-import microservice.crawler.NbaResult
+import microservice.crawler.NbaResultView
 import microservice.settings.CustomSettings
 import scala.concurrent.duration.FiniteDuration
 import akka.pattern.ask
@@ -28,26 +28,31 @@ object ResultStream {
   } yield q
 }
 
+//ResultAddedEventSerializer
 trait ResultStream {
   mixin: CassandraQueriesSupport with Actor {
     def settings: CustomSettings
     def serialization: Serialization
   } =>
-
   import ResultStream._
 
-  def newQuorumClient = newClient(ConsistencyLevel.QUORUM)
-
-  def deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ NbaResult =
+  val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ Any =
     (outer, inner) ⇒ {
-      val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("message")), classOf[PersistentRepr]).get
-      val domainEvent = rep.payload.asInstanceOf[ResultAdded]
-      domainEvent.r
+      //context.system.log.info("fetch-result:{} - {}", inner.getString("persistence_id"), inner.getLong("sequence_nr"))
+      serialization.deserialize(Bytes.getArray(inner.getBytes("message")),
+        classOf[PersistentRepr]).get.payload
     }
 
   private def fetchResult(offset: Long)(implicit client: CassandraSource#Client) =
     (Join[CassandraSource] left (qTeams, teamsTable, qResults(offset), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
       .source
+      .filter(_.isInstanceOf[ResultAdded])
+      .map { res =>
+        val r = res.asInstanceOf[ResultAdded].r
+        NbaResultView(r.homeTeam, r.homeScore, r.awayTeam, r.awayScore, r.dt, r.homeScoreBox, r.awayScoreBox)
+      }
+
+  def newQuorumClient = newClient(ConsistencyLevel.QUORUM)
 
   def resultsStream(offset: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long)(implicit Mat: ActorMaterializer): Unit = {
     (if (acc == 0) fetchResult(offset)(client) else fetchResult(offset)(client) via readEvery(interval))

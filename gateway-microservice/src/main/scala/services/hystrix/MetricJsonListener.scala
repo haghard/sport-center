@@ -1,17 +1,15 @@
 package hystrix
 
+import scala.annotation.tailrec
 import java.util.concurrent.atomic.AtomicReference
-
 import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsPoller
 
-import scala.annotation.tailrec
-
-private class MetricJsonListener(capacity: Int) extends HystrixMetricsPoller.MetricsAsJsonPollerListener {
+private[hystrix] class MetricJsonListener(capacity: Int) extends HystrixMetricsPoller.MetricsAsJsonPollerListener {
 
   private final val metrics = new AtomicReference[Vector[String]](Vector())
 
   @tailrec
-  private final def set(oldValue: Vector[String], newValue: Vector[String]): Boolean = {
+  final def set(oldValue: Vector[String], newValue: Vector[String]): Boolean = {
     metrics.compareAndSet(oldValue, newValue) || set(oldValue, newValue)
   }
 
@@ -21,9 +19,10 @@ private class MetricJsonListener(capacity: Int) extends HystrixMetricsPoller.Met
     oldValue
   }
 
-  def handleJsonMetric(json: String): Unit = {
+  override def handleJsonMetric(json: String): Unit = {
     val oldMetrics = metrics.get()
-    if (oldMetrics.size >= capacity) throw new IllegalStateException("Queue full")
+    if (oldMetrics.size >= capacity)
+      throw new IllegalStateException("Metrics size has been exceeded")
 
     val newMetrics = oldMetrics :+ json
     set(oldMetrics, newMetrics)

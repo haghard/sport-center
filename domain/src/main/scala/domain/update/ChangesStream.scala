@@ -36,11 +36,10 @@ trait ChangesStream {
   } =>
   import ChangesStream._
 
-  def deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ (ddd.EventMessage, Long) =
+  val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ (Any, Long) =
     (outer, inner) ⇒ {
       val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("message")), classOf[PersistentRepr]).get
-      val domainEvent = rep.payload.asInstanceOf[ddd.EventMessage]
-      (domainEvent, rep.sequenceNr)
+      (rep.payload, inner.getLong("sequence_nr"))
     }
 
   val qCampaign = for { q ← select("SELECT campaign_id FROM {0}") } yield q
@@ -53,9 +52,10 @@ trait ChangesStream {
   private def fetchChanges(seqNum: Long)(implicit client: CassandraSource#Client) =
     (Join[CassandraSource] left (qCampaign, campaignTable, qChanges(seqNum), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
       .source
-      .filter(_._1.event.isInstanceOf[CampaignPersistedEvent])
+      .filter(_._1.isInstanceOf[CampaignPersistedEvent])
       .map { kv =>
-        val c = kv._1.event.asInstanceOf[CampaignPersistedEvent]
+        //context.system.log.info(s"CampaignPersistedEvent has been fetched: $seqNum")
+        val c = kv._1.asInstanceOf[CampaignPersistedEvent]
         PersistDataChange(kv._2, (c.results./:(Map[String, SortedSet[CreateResult]]()) { (map, res) ⇒
           val set = map.getOrElse(res.homeTeam, SortedSet[CreateResult]())
           val updated = set + CreateResult(res.homeTeam, res)

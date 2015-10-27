@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Route
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
 import microservice.api.MicroserviceKernel
-import microservice.crawler.NbaResult
+import microservice.crawler._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import microservice.http.RestWithDiscovery._
 import microservice.http.{ RestApiJunction, RestWithDiscovery }
@@ -21,7 +21,6 @@ import query.StandingMaterializedView.{ PlayOffStandingResponse, SeasonMetrics, 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
-import microservice.crawler.searchFormatter
 import com.softwaremill.session.SessionDirectives._
 
 object StandingMicroservice {
@@ -33,8 +32,7 @@ object StandingMicroservice {
 
   implicit object StandingResponseWriter extends JsonWriter[StandingsResponse] with DefaultJsonProtocol {
     import spray.json._
-
-    implicit val jsonFormatResults = jsonFormat5(NbaResult)
+    implicit val viewFormat = jsonFormat7(NbaResultView)
     implicit val jsonFormatMetrics = jsonFormat7(SeasonMetrics)
     implicit val jsonFormatLine = jsonFormat2(StandingLine)
 

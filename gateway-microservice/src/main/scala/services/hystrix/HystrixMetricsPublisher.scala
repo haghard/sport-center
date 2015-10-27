@@ -7,7 +7,7 @@ import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsPoller
 import scala.annotation.tailrec
 
 object HystrixMetricsPublisher {
-  def props() = Props(new HystrixMetricsPublisher)
+  def props = Props(new HystrixMetricsPublisher)
 }
 
 class HystrixMetricsPublisher extends ActorPublisher[Vector[String]] with ActorLogging {
@@ -36,8 +36,7 @@ class HystrixMetricsPublisher extends ActorPublisher[Vector[String]] with ActorL
       context.stop(self)
   }
 
-  @tailrec
-  private def loop(poller: HystrixMetricsPoller, listener: MetricJsonListener, n: Long): Unit = {
+  @tailrec final def loop(poller: HystrixMetricsPoller, listener: MetricJsonListener, n: Long): Unit = {
     Thread.sleep(delay)
     if (n > 0 && poller.isRunning) {
       listener.getJsonMetrics match {

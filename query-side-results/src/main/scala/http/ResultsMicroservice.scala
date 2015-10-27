@@ -1,14 +1,13 @@
 package http
 
 import java.util.concurrent.TimeUnit
-
 import akka.http.scaladsl.model.HttpResponse
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
 import domain.DomainSupport
 import http.ResultsMicroservice._
 import microservice.api.MicroserviceKernel
-import microservice.crawler.{ Location, NbaResult }
+import microservice.crawler._
 import microservice.http.RestWithDiscovery.DateFormatToJson
 import microservice.http.{ RestApiJunction, RestWithDiscovery }
 import microservice.{ AskManagment, SystemSettings }
@@ -19,22 +18,23 @@ import view.ResultViewRouter.{ ResultsByTeamBody, ResultsByDateBody }
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success, Try }
 import scalaz.{ -\/, \/- }
-import microservice.crawler.searchFormatter
 import akka.http.scaladsl.server._
 import com.softwaremill.session.SessionDirectives._
 
 object ResultsMicroservice {
   case class GetResultsByDate(url: String, dt: String) extends BasicHttpRequest
   case class GetResultsByTeam(url: String, name: String, size: Int, location: Location.Value) extends BasicHttpRequest
+
   case class ResultsResponse(url: String, view: Option[String] = None, body: Option[ResponseBody] = None,
     error: Option[String] = None) extends BasicHttpResponse
 
   case class ResultsParams(size: Option[Int] = None, loc: Option[String] = None)
 
   trait ResultsProtocols extends DefaultJsonProtocol {
-    implicit val resultFormat = jsonFormat5(NbaResult.apply)
+    import spray.json._
+    implicit val viewFormat = jsonFormat7(NbaResultView)
+
     implicit object ResultsResponseWriter extends JsonWriter[ResultsResponse] {
-      import spray.json._
       override def write(obj: ResultsResponse): spray.json.JsValue = {
         val url = JsString(obj.url.toString)
         val v = obj.view.fold(JsString("none")) { view ⇒ JsString(view) }

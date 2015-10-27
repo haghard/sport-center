@@ -35,7 +35,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
   import scala.concurrent.duration._
   import query.StandingViewRouter._
 
-  var offset = 0l
+  var offset = 1l
   val default = 30 seconds
   val formatter = searchFormatter()
   val serialization = SerializationExtension(context.system)

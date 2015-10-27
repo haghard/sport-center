@@ -5,9 +5,8 @@ import akka.actor.{ ActorContext, ActorRef, Props }
 import akka.cluster.routing.{ ClusterRouterPool, ClusterRouterPoolSettings }
 
 trait WebRouterCreator {
-
-  protected val dispatcher = "crawler-dispatcher"
-  protected val routerName = "webRouter"
+  val routerName = "webRouter"
+  val dispatcher = "crawler-dispatcher"
 
   def routerNodeRole: String
 
@@ -28,8 +27,7 @@ trait ProgrammaticallyCreator extends WebRouterCreator {
       useRole = Some(routerNodeRole))
   ).props(Props(new WebGetter(teams))).withDispatcher(dispatcher)
 
-  override lazy val createRouter: ActorRef =
-    context.actorOf(routerProps, name = routerName)
+  override lazy val createRouter = context.actorOf(routerProps, routerName)
 }
 
 trait FromConfigCreator extends WebRouterCreator {
@@ -37,7 +35,6 @@ trait FromConfigCreator extends WebRouterCreator {
 
   def teams: Seq[String]
 
-  override lazy val createRouter: ActorRef =
-    context.actorOf(FromConfig.props(WebGetter.props(teams).withDispatcher(dispatcher)),
-      name = routerName)
+  override lazy val createRouter =
+    context.actorOf(FromConfig.props(WebGetter.props(teams).withDispatcher(dispatcher)), routerName)
 }

@@ -1,11 +1,12 @@
 package crawler
 
-import akka.actor.{ Props, ActorRef, Actor, ActorSystem }
+import akka.actor.{ Props, Actor, ActorSystem }
 import akka.cluster.routing.{ ClusterRouterPoolSettings, ClusterRouterPool }
 import akka.routing.RoundRobinPool
 import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
 import crawler.writer.CrawlerGuardian.CrawlerResponse
+import microservice.api.MicroserviceKernel
 import microservice.crawler.CrawlerJob
 import org.joda.time.DateTime
 import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpecLike }
@@ -13,19 +14,15 @@ import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpecLike }
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 
-class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", ConfigFactory.parseString("""
- |  akka {
- |    loglevel = "INFO"
- |    actor {
- |      provider = akka.cluster.ClusterActorRefProvider
- |    }
- |  }
-""".stripMargin).withFallback(ConfigFactory.parseString("""
- | crawler-dispatcher {
- |   type = PinnedDispatcher
- |   executor = thread-pool-executor
- | }
-""".stripMargin)).withFallback(ConfigFactory.load("app-setting"))))
+object CrawlerMasterSpec {
+
+  val clusterConfig = ConfigFactory.parseString(s"{  akka.cluster.roles = [${MicroserviceKernel.CrawlerRole}] } ")
+    .withFallback(ConfigFactory.load("app-setting.conf"))
+    .withFallback(ConfigFactory.load("application.conf"))
+}
+
+//crawlerMicroservices/test:test-only *.CrawlerMasterSpec
+class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", CrawlerMasterSpec.clusterConfig))
     with WordSpecLike
     with MustMatchers
     with BeforeAndAfterAll {
@@ -41,23 +38,23 @@ class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", ConfigFactory.par
   trait ClusterRoundRobinPoolCreator extends WebRouterCreator {
     self: Actor ⇒
 
-    private val routerProps = ClusterRouterPool(
+    lazy val routerProps = ClusterRouterPool(
       RoundRobinPool(nrOfInstances = 10),
       ClusterRouterPoolSettings(
         totalInstances = 10,
         maxInstancesPerNode = 5,
         allowLocalRoutees = true,
-        useRole = Some(routerNodeRole))
+        useRole = Option(routerNodeRole))
     ).props(WebGetter.props(teams)).withDispatcher(dispatcher)
 
-    lazy val createRouter: ActorRef =
-      context.actorOf(routerProps, name = routerName)
+    lazy val createRouter = context.actorOf(routerProps, routerName)
   }
 
   override def afterAll = system.shutdown
 
   "CrawlerMaster with one node cluster" should {
     "eventually collect result with retry" in {
+      val jobMaxDuration = 60 second
       val probe = TestProbe()
       val dt = new DateTime().withZone(microservice.crawler.SCENTER_TIME_ZONE)
         .withDate(2013, 11, 29)
@@ -74,9 +71,9 @@ class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", ConfigFactory.par
         "http://www.nba.com/gameline/20131128/",
         "http://www.nba.com/gameline/20131129/")
 
-      val crawlerMaster = system.actorOf(Props(new CrawlerMaster(teams) with ClusterRoundRobinPoolCreator))
+      val crawlerMaster = system.actorOf(Props(new CrawlerRoot(teams) with ClusterRoundRobinPoolCreator))
       crawlerMaster.tell(CrawlerJob(dt, urls), probe.ref)
-      probe.expectMsgClass(30 second, classOf[CrawlerResponse])
+      probe.expectMsgClass(jobMaxDuration, classOf[CrawlerResponse])
     }
   }
 }

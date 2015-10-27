@@ -16,23 +16,21 @@ object AggregateRoot {
 }
 
 trait AggregateState {
-  type StateMachine = PartialFunction[Event, AggregateState]
-  def apply: StateMachine
+  type AggState = PartialFunction[Event, AggregateState]
+  def apply: AggState
 }
 
 abstract class AggregateRootActorFactory[A <: AggregateRoot[_]] extends BusinessEntityActorFactory[A] {
-
   def props(pc: PassivationConfig): Props
-
-  def inactivityTimeout: Duration = 1.minute
+  def inactivityTimeout: Duration = 5.minute
 }
 
-trait AggregateRoot[T <: AggregateState] extends BusinessEntity
-    with ActorPassivation with PersistentActor with ActorLogging {
+trait AggregateRoot[T <: AggregateState] extends BusinessEntity with ActorPassivation
+    with PersistentActor with ActorLogging {
 
-  protected type ARStateFactory = PartialFunction[DomainEvent, T]
+  protected type StateFactory = PartialFunction[DomainEvent, T]
 
-  protected def factory: ARStateFactory
+  protected def factory: StateFactory
 
   protected var replyTo: ActorRef = null
   protected var internalState: Option[T] = None
@@ -51,18 +49,17 @@ trait AggregateRoot[T <: AggregateState] extends BusinessEntity
   }
 
   override def receiveRecover: Receive = {
-    case em: EventMessage  => updateState(em)
-    case RecoveryCompleted => log.info("RecoveryCompleted {}", internalState)
+    case em: DomainEvent =>
+      updateState(new EventMessage(em))
+    case RecoveryCompleted =>
+      log.info("Recovered with state {}", internalState)
   }
 
   override def onRecoveryFailure(cause: Throwable, ev: Option[Any]) = {
-    log.info("RecoveryFailure {}", cause.getMessage)
+    log.info("Recovery has been failed {}, with message class: {}", cause.getMessage, ev.get.getClass.getSimpleName)
     super.onRecoveryFailure(cause, ev)
   }
 
-  /**
-   * Command message being processed. Not available during recovery
-   */
   def commandMessage = lastCommandMessage.get
 
   def handleCommand: Receive
@@ -75,17 +72,19 @@ trait AggregateRoot[T <: AggregateState] extends BusinessEntity
   }
 
   protected def init(event: DomainEvent) {
-    persist(new EventMessage(event).withMetaData(commandMessage.metadataExceptDeliveryAttributes)) { message =>
-      log.info("Event persisted: {}", event.getClass.getSimpleName)
-      updateState(message)
+    persist(event) { message =>
+      val m = new EventMessage(event)
+      log.info("Initial event {} has been persisted", event.getClass.getSimpleName)
+      updateState(m)
     }
   }
 
   protected def raise(event: DomainEvent) {
-    persist(new EventMessage(event).withMetaData(commandMessage.metadataExceptDeliveryAttributes)) { message =>
-      log.info("Event persisted: {}", event.getClass.getSimpleName)
-      updateState(message)
-      handle(toDomainEventMessage(message))
+    persist(event) { message =>
+      log.info("Domain-event {} has been persisted", event.getClass.getSimpleName)
+      val m = new EventMessage(event)
+      updateState(m)
+      handle(toDomainEventMessage(m))
     }
   }
 

@@ -3,6 +3,8 @@ package crawler
 import akka.actor.ActorSystem
 import akka.testkit.{ TestProbe, TestKit }
 import com.typesafe.config.ConfigFactory
+import domain.TeamAggregate.ResultAdded
+import domain.serializer.ResultAddedEventSerializer
 import microservice.crawler.NbaResult
 import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpecLike }
 import scala.collection.JavaConversions._
@@ -10,7 +12,7 @@ import scala.concurrent.duration._
 
 object WebGetterSpec {
 
-  def clusterConfig = ConfigFactory.parseString("""
+  val clusterConfig = ConfigFactory.parseString("""
 | akka {
 |    loglevel = "INFO"
 |
@@ -23,12 +25,13 @@ object WebGetterSpec {
 
 }
 
+//crawlerMicroservices/test:test-only *.WebGetterSpec
 class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.clusterConfig))
     with WordSpecLike
     with MustMatchers
     with BeforeAndAfterAll {
 
-  val waitTime = 10 seconds
+  val waitTime = 20 seconds
 
   val teams = asScalaBuffer(system.settings.config
     .getConfig("app-settings")
@@ -43,10 +46,16 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
   "WebGetter" should {
     "collect non empty results for specific page" in {
       val probe = TestProbe()
-      val url = "http://www.nba.com/gameline/20141104/"
-      val getter = system.actorOf(WebGetter.props(teams))
+      val url = "http://www.nba.com/gameline/20140705/"
+      //"http://www.nba.com/gameline/20140222/"
+      //"http://www.nba.com/gameline/20121030/"
+      //"http://www.nba.com/gameline/20141104/"
+      //"http://www.nba.com/gameline/20121202/"
+      val getter = system.actorOf(WebGetter.props(teams).withDispatcher("akka.crawler-dispatcher"), "web-getter-20141104")
+
       getter.tell(url, probe.ref)
-      probe.expectMsgClass(waitTime, classOf[(String, List[NbaResult])])
+      val (_, list) = probe.expectMsgClass(waitTime, classOf[(String, List[NbaResult])])
+      println(list.mkString("\n"))
       system stop getter
     }
   }
@@ -55,7 +64,7 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
     "collect result from empty page" in {
       val probe = TestProbe()
       val url = "http://www.nba.com/gameline/20140628/"
-      val getter = system.actorOf(WebGetter.props(teams))
+      val getter = system.actorOf(WebGetter.props(teams).withDispatcher("akka.crawler-dispatcher"), "web-getter-20140628")
       getter.tell(url, probe.ref)
       probe.expectMsg(waitTime, (url, List()))
       system stop getter

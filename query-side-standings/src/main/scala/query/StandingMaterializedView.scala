@@ -2,7 +2,7 @@ package query
 
 import java.util.Date
 import java.math.MathContext
-import microservice.crawler.NbaResult
+import microservice.crawler.NbaResultView
 import com.github.nscala_time.time.Imports._
 import microservice.settings.CustomSettings
 import query.StandingViewRouter.QueryStandingByDate
@@ -24,16 +24,16 @@ object StandingMaterializedView {
 
   case class SeasonStandingResponse(west: Seq[StandingLine] = Seq.empty, east: Seq[StandingLine] = Seq.empty, count: Int = 0) extends ResponseBody
 
-  case class PlayOffStandingResponse(stages: mutable.Map[String, List[NbaResult]], count: Int = 0) extends ResponseBody
+  case class PlayOffStandingResponse(stages: mutable.Map[String, List[NbaResultView]], count: Int = 0) extends ResponseBody
 
   private[StandingMaterializedView] trait ViewBuilder {
-    def add: NbaResult ⇒ Unit
+    def add: NbaResultView ⇒ Unit
     def query(replyTo: ActorRef, vName: Option[String]): Unit
   }
 
   private[StandingMaterializedView] final class PlayoffViewBuilder extends ViewBuilder {
     private val stageHashes = mutable.HashMap[Set[String], Date]()
-    private val playOffResults = mutable.HashMap[Set[String], List[NbaResult]]()
+    private val playOffResults = mutable.HashMap[Set[String], List[NbaResultView]]()
     private val first = List.range(1, 9).map(_ + ". FIRST ROUND")
     private val second = List.range(1, 5).map(_ + ". CONFERENCE SEMIS")
     private val semifinal = List.range(1, 3).map(_ + ". CONFERENCE FINALS")
@@ -45,7 +45,7 @@ object StandingMaterializedView {
       r ⇒ {
         val set = hash(r.homeTeam, r.awayTeam)
         stageHashes += (set -> r.dt)
-        val rs = playOffResults.getOrElse(set, List[NbaResult]())
+        val rs = playOffResults.getOrElse(set, List[NbaResultView]())
         val updated = rs :+ r
         playOffResults += (set -> updated)
       }
@@ -58,7 +58,7 @@ object StandingMaterializedView {
             case _  ⇒ false
           }
         }
-        val local = temp.foldLeft((mutable.Map[String, List[NbaResult]](), stageNames.toBuffer)) { (map, c) ⇒
+        val local = temp.foldLeft((mutable.Map[String, List[NbaResultView]](), stageNames.toBuffer)) { (map, c) ⇒
           map._1 += (map._2.head -> playOffResults(c._1))
           map._1 -> map._2.tail
         }
@@ -115,7 +115,7 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
   override def receive = initial
 
   private val initial: Receive = {
-    case r: NbaResult ⇒ {
+    case r: NbaResultView ⇒ {
       viewName = (for {
         (k, v) ← settings.intervals
         if k.contains(new DateTime(r.dt))
@@ -132,13 +132,13 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
     case QueryStandingByDate(dt) ⇒ sender() ! "View does not ready yet. Please try later"
   }
 
-  private def activate(r: NbaResult) = {
+  private def activate(r: NbaResultView) = {
     view foreach (_.add(r))
     active
   }
 
   private def active: Actor.Receive = {
-    case r: NbaResult ⇒ view foreach (_.add(r))
+    case r: NbaResultView ⇒ view foreach (_.add(r))
     case QueryStandingByDate(dt) ⇒
       val replyTo = sender()
       view.foreach(_.query(replyTo, viewName))

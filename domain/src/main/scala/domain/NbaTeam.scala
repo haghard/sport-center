@@ -21,7 +21,7 @@ object NbaTeam {
 
 class NbaTeam(override val pc: PassivationConfig) extends AggregateRoot[TeamAggregateState] with IdempotentReceiver {
 
-  override val factory: ARStateFactory = {
+  override val factory: StateFactory = {
     case ResultCreated(team, result) ⇒
       TeamAggregateState(Some(team), Option(result.dt))
   }

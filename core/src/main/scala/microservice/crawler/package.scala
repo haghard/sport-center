@@ -47,9 +47,31 @@ package object crawler {
   case class TimeOut(urls: List[String], results: List[NbaResult])
   case class StatsResult(meanWordLength: Double)
   case class SuccessCollected(list: List[NbaResult])
-  case class NbaResult(homeTeam: String, homeScore: Int, awayTeam: String, awayScore: Int, dt: Date)
+
+  case class NbaResult(homeTeam: String, homeScore: Int, awayTeam: String, awayScore: Int, dt: Date,
+    homeScoreBox: String = "", awayScoreBox: String = "",
+    homeTotal: Total = Total(), awayTotal: Total = Total(),
+    homeBox: List[PlayerLine] = Nil, awayBox: List[PlayerLine] = Nil)
+
+  case class Total(min: Int = 0, fgmA: String = "", threePmA: String = "", ftmA: String = "", minusSlashPlus: String = "",
+    offReb: Int = 0, defReb: Int = 0, totalReb: Int = 0, ast: Int = 0, pf: Int = 0,
+    steels: Int = 0, to: Int = 0, bs: Int = 0, ba: Int = 0, pts: Int = 0)
+
+  case class PlayerLine(name: String = "", pos: String = "", min: String = "", fgmA: String = "",
+    threePmA: String = "", ftmA: String = "", minusSlashPlus: String = "",
+    offReb: Int = 0, defReb: Int = 0, totalReb: Int = 0, ast: Int = 0, pf: Int = 0, steels: Int = 0,
+    to: Int = 0, bs: Int = 0, ba: Int = 0, pts: Int = 0)
 
   case class CrawledNbaResult(opponent: String, homeScore: Int, awayScore: Int, dt: Date, lct: Location.Value)
+
+  case class NbaResultView(homeTeam: String, homeScore: Int,
+    awayTeam: String, awayScore: Int, dt: Date,
+    homeScoreBox: String, awayScoreBox: String)
+
+  implicit object Ord extends Ordering[NbaResultView] {
+    override def compare(x: NbaResultView, y: NbaResultView): Int =
+      x.dt.compareTo(y.dt)
+  }
 
   implicit object Sort extends Ordering[CrawledNbaResult] {
     override def compare(x: CrawledNbaResult, y: CrawledNbaResult): Int =

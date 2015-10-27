@@ -12,7 +12,7 @@ import domain.update.CassandraQueriesSupport
 import dsl.cassandra._
 import join.Join
 import join.cassandra.CassandraSource
-import microservice.crawler.NbaResult
+import microservice.crawler.NbaResultView
 import microservice.settings.CustomSettings
 
 import scala.concurrent.duration.FiniteDuration
@@ -37,18 +37,22 @@ trait StandingStream {
 
   def quorumClient = newClient(ConsistencyLevel.QUORUM)
 
-  def deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ NbaResult =
+  def deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ Any =
     (outer, inner) ⇒ {
       val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("message")), classOf[PersistentRepr]).get
-      val domainEvent = rep.payload.asInstanceOf[ResultAdded]
-      domainEvent.r
+      rep.payload
     }
 
   private def fetchResult(seqNum: Long)(implicit client: CassandraSource#Client) =
     (Join[CassandraSource] left (qTeams, teamsTable, qResults(seqNum), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
       .source
+      .filter(_.isInstanceOf[ResultAdded])
+      .map { res =>
+        val r = res.asInstanceOf[ResultAdded].r
+        NbaResultView(r.homeTeam, r.homeScore, r.awayTeam, r.awayScore, r.dt, r.homeScoreBox, r.awayScoreBox)
+      }
 
-  def viewStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long, f: NbaResult => Option[ActorRef])(implicit Mat: ActorMaterializer): Unit =
+  def viewStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long, f: NbaResultView => Option[ActorRef])(implicit Mat: ActorMaterializer): Unit =
     (if (acc == 0) fetchResult(seqNum)(client) else fetchResult(seqNum)(client) via readEvery(interval))
       .grouped(Mat.settings.maxInputBufferSize)
       .map { batch =>
