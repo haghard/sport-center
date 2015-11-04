@@ -1,16 +1,14 @@
 package crawler.http
 
 import akka.http.scaladsl.server.Route
-import com.softwaremill.session.{ InMemoryRememberMeStorage, SessionManager, SessionConfig }
-import microservice.settings.CustomSettings
 import spray.json.JsonWriter
 import crawler.{ NbaCampaignView, CrawlerGuardianSupport }
 import NbaCampaignView.LastUpdateDate
 import discovery.DiscoveryClientSupport
-import microservice.{ SystemSettings, AskManagment }
+import microservice.AskSupport
 import microservice.api.MicroserviceKernel
-import microservice.http.RestWithDiscovery.DateFormatToJson
-import microservice.http.{ Session, RestApiJunction, RestWithDiscovery }
+import microservice.http.ShardedDomainReadService.DateFormatToJson
+import microservice.http.{ Session, RestApiJunction, ShardedDomainReadService }
 
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 
@@ -57,7 +55,7 @@ object CrawlerMicroservice {
   private val viewName = "last-crawl-date"
 }
 
-trait CrawlerMicroservice extends RestWithDiscovery with AskManagment {
+trait CrawlerMicroservice extends ShardedDomainReadService with AskSupport {
   mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport =>
   import _root_.crawler.http.CrawlerMicroservice._
 

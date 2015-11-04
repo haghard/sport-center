@@ -181,7 +181,7 @@ object Microservices extends Microservices {
 
   /**
    *
-   * This signature means that method ``microservice`` is parameterized by a T,
+   * This signature means that method ``microservice`` is parametrized by a T,
    * which is required to be a subtype of NodeIdentity.
    * Also an instances of MicroserviceFactory[T] and ClassTag[T] must be implicitly available.
    *

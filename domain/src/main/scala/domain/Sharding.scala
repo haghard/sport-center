@@ -1,5 +1,6 @@
 package domain
 
+import akka.cluster.sharding.ShardRegion.CurrentRegions
 import akka.util.Timeout
 import domain.TeamAggregate.TeamMessage
 import akka.pattern.{ AskTimeoutException, ask }
@@ -43,6 +44,9 @@ trait Sharding {
         case ex: ClassCastException  ⇒ Future.failed[T](new Exception(ex))
       }
 
+  protected def showLocalRegions(implicit timeout: Timeout): Future[CurrentRegions] =
+    (shardRegion ? ShardRegion.GetCurrentRegions).mapTo[CurrentRegions]
+
   private def idExtractor: ShardRegion.ExtractEntityId = {
     case m: TeamMessage ⇒ (m.aggregateRootId, m)
   }
@@ -51,6 +55,6 @@ trait Sharding {
     case (m: TeamMessage) ⇒ (m.aggregateRootId.hashCode % shardCount).toString
   }
 
-  private lazy val shardRegion = ClusterSharding(system)
-    .shardRegion(name)
+  protected lazy val shardRegion =
+    ClusterSharding(system).shardRegion(name)
 }

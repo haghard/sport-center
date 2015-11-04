@@ -1,16 +1,17 @@
 package http
 
 import java.util.concurrent.TimeUnit
+import akka.cluster.sharding.ShardRegion.CurrentRegions
 import akka.http.scaladsl.model.HttpResponse
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
-import domain.DomainSupport
+import domain.{ ShardedDomain, DomainSupport }
 import http.ResultsMicroservice._
 import microservice.api.MicroserviceKernel
 import microservice.crawler._
-import microservice.http.RestWithDiscovery.DateFormatToJson
-import microservice.http.{ RestApiJunction, RestWithDiscovery }
-import microservice.{ AskManagment, SystemSettings }
+import microservice.http.ShardedDomainReadService.DateFormatToJson
+import microservice.http.{ ShardedDomainReadService, RestApiJunction, ShardedDomainReadService$ }
+import microservice.{ AskSupport, SystemSettings }
 import spray.json._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 import view.ResultViewRouter
@@ -30,6 +31,8 @@ object ResultsMicroservice {
 
   case class ResultsParams(size: Option[Int] = None, loc: Option[String] = None)
 
+  case class ShardBody(count: Int = 0, results: List[String]) extends ResponseBody
+
   trait ResultsProtocols extends DefaultJsonProtocol {
     import spray.json._
     implicit val viewFormat = jsonFormat7(NbaResultView)
@@ -46,6 +49,9 @@ object ResultsMicroservice {
           case Some(ResultsByTeamBody(c, list)) =>
             JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
               "results" -> JsArray(list.map(r ⇒ r.toJson))), "error" -> e)
+          case Some(ShardBody(c, addresses)) =>
+            JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
+              "results" -> JsArray(addresses.toJson)), "error" -> e)
           case None => JsObject("url" -> url, "view" -> v, "error" -> e)
         }
       }
@@ -72,10 +78,10 @@ object ResultsMicroservice {
   private val lastResultsLatency = DynamicPropertyFactory.getInstance().getLongProperty(lastResultsProps, 0)
 }
 
-trait ResultsMicroservice extends RestWithDiscovery with Directives
+trait ResultsMicroservice extends ShardedDomainReadService with Directives
     with ResultsProtocols
     with SystemSettings
-    with AskManagment {
+    with AskSupport {
   mixin: MicroserviceKernel with DiscoveryClientSupport with DomainSupport ⇒
   import ResultsMicroservice._
 
@@ -96,7 +102,10 @@ trait ResultsMicroservice extends RestWithDiscovery with Directives
   abstract override def configureApi() =
     super.configureApi() ~
       RestApiJunction(Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
-        Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was started on $httpPrefixAddress ★ ★ ★ ★ ★ ★")),
+        Option { () ⇒
+          ShardedDomain(system).start()
+          system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was started on $httpPrefixAddress ★ ★ ★ ★ ★ ★")
+        },
         Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was stopped on $httpPrefixAddress ★ ★ ★ ★ ★ ★")))
 
   private def resultsRoute(implicit ec: ExecutionContext): Route = {
@@ -149,7 +158,22 @@ trait ResultsMicroservice extends RestWithDiscovery with Directives
             }
           }
       }
-    }
+    } ~
+      (get & path("showShardRegions")) {
+        withUri(uri ⇒ complete(completeShowRegions(uri)))
+      }
+  }
+
+  private def completeShowRegions(uri: String)(implicit ex: ExecutionContext): Future[HttpResponse] = {
+    domain.ShardedDomain(system).showRegions
+      .map { adds: CurrentRegions =>
+        success(ResultsResponse(uri, view = Option("shard-regions"),
+          body = Option(ShardBody(adds.regions.size, adds.regions.map(_.toString).toList))))
+      }
+      .recoverWith {
+        case e: Throwable =>
+          fail(ResultsResponse(uri, view = Option("shard-regions"), error = Option(e.getMessage))).apply(e.getMessage)
+      }
   }
 
   private def completeWithTeam(uri: String, team: String)(implicit ex: ExecutionContext): ((Location.Value, Int)) ⇒ Future[HttpResponse] =

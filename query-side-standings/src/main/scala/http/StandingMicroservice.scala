@@ -2,16 +2,18 @@ package http
 
 import java.util.concurrent.TimeUnit
 
+import akka.cluster.sharding.ShardRegion.CurrentRegions
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server.Route
 import com.netflix.config.DynamicPropertyFactory
 import discovery.DiscoveryClientSupport
+import domain.ShardedDomain
 import microservice.api.MicroserviceKernel
 import microservice.crawler._
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
-import microservice.http.RestWithDiscovery._
-import microservice.http.{ RestApiJunction, RestWithDiscovery }
-import microservice.{ AskManagment, SystemSettings }
+import microservice.http.ShardedDomainReadService._
+import microservice.http.{ ShardedDomainReadService, RestApiJunction }
+import microservice.{ AskSupport, SystemSettings }
 import org.joda.time.DateTime
 import query.StandingViewRouter
 import query.StandingViewRouter.StandingBody
@@ -30,6 +32,8 @@ object StandingMicroservice {
   case class StandingsResponse(val url: String, val view: Option[String] = None, val error: Option[String] = None,
     val body: Option[ResponseBody] = None) extends BasicHttpResponse
 
+  case class Shards(count: Int = 0, results: List[String]) extends ResponseBody
+
   implicit object StandingResponseWriter extends JsonWriter[StandingsResponse] with DefaultJsonProtocol {
     import spray.json._
     implicit val viewFormat = jsonFormat7(NbaResultView)
@@ -41,6 +45,7 @@ object StandingMicroservice {
         case Some(response) ⇒ response match {
           case r: SeasonStandingResponse  ⇒ JsObject("west-conf" -> r.west.toJson, "east-conf" -> r.east.toJson, "count" -> JsNumber(r.west.size))
           case r: PlayOffStandingResponse ⇒ JsObject("stages" -> r.stages.toMap.toJson, "count" -> JsNumber(r.stages.keySet.size))
+          case r: Shards                  => JsObject("results" -> JsArray(r.results.toJson), "count" -> JsNumber(r.results.size))
         }
         case None ⇒ JsString(obj.error.get)
       }
@@ -51,9 +56,9 @@ object StandingMicroservice {
   private val standingsLatency = DynamicPropertyFactory.getInstance().getLongProperty(standingsProps, 0)
 }
 
-trait StandingMicroservice extends RestWithDiscovery
+trait StandingMicroservice extends ShardedDomainReadService
     with SystemSettings
-    with AskManagment {
+    with AskSupport {
   mixin: MicroserviceKernel with DiscoveryClientSupport ⇒
   import StandingMicroservice._
 
@@ -72,7 +77,10 @@ trait StandingMicroservice extends RestWithDiscovery
   abstract override def configureApi() =
     super.configureApi() ~
       RestApiJunction(route = Option { ec: ExecutionContext ⇒ standingRoute(ec) },
-        preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")),
+        preAction = Option { () ⇒
+          ShardedDomain(system).start()
+          system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")
+        },
         postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
 
   private def standingRoute(implicit ec: ExecutionContext): Route = {
@@ -96,7 +104,10 @@ trait StandingMicroservice extends RestWithDiscovery
           }
         }
       }
-    }
+    } ~
+      (get & path("showShardRegions")) {
+        withUri(uri ⇒ complete(readRegions(uri)))
+      }
   }
 
   private def compete(uri: String, dt: DateTime)(implicit ex: ExecutionContext): Future[HttpResponse] =
@@ -110,4 +121,14 @@ trait StandingMicroservice extends RestWithDiscovery
         } { error ⇒ fail(error) }
       case -\/(error) ⇒ fail(error)
     }
+
+  private def readRegions(uri: String)(implicit ex: ExecutionContext): Future[HttpResponse] = {
+    domain.ShardedDomain(system).showRegions.map { adds: CurrentRegions =>
+      success(StandingsResponse(uri, view = Option("shard-regions"),
+        body = Option(Shards(adds.regions.size, adds.regions.map(_.toString).toList))))
+    }.recoverWith {
+      case e: Throwable =>
+        fail(StandingsResponse(uri, view = Option("shard-regions"), error = Option(e.getMessage))).apply(e.getMessage)
+    }
+  }
 }

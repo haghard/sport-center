@@ -52,7 +52,7 @@ trait ResultStream {
         NbaResultView(r.homeTeam, r.homeScore, r.awayTeam, r.awayScore, r.dt, r.homeScoreBox, r.awayScoreBox)
       }
 
-  def newQuorumClient = newClient(ConsistencyLevel.QUORUM)
+  def newQuorumClient = cassandraClient(ConsistencyLevel.QUORUM)
 
   def resultsStream(offset: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long)(implicit Mat: ActorMaterializer): Unit = {
     (if (acc == 0) fetchResult(offset)(client) else fetchResult(offset)(client) via readEvery(interval))

@@ -44,7 +44,7 @@ object Dependencies {
 
   val jsoup = "org.jsoup"               %     "jsoup"           % "1.8.2"
 
-  val joda_time = "joda-time"           %     "joda-time"       % "2.5"
+  val joda_time = "joda-time"           %     "joda-time"       % "2.9"
 
   val nscala_time  = "com.github.nscala-time" %% "nscala-time"   % "1.6.0"
 

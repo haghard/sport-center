@@ -6,7 +6,7 @@ import microservice.SystemSettings
 import microservice.http.RestApiJunction
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
 import akka.http.scaladsl.model.headers.Host
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.model.Uri.{ Host => HostHeader }
 import akka.pattern.ask
 import spray.json._
@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ Future, ExecutionContext }
 
 trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒

@@ -12,7 +12,7 @@ object Collector {
 }
 
 class Collector(urls: List[String]) extends Actor with ActorLogging {
-  context.setReceiveTimeout(15 seconds)
+  context.setReceiveTimeout(20 seconds)
 
   var batch = List.empty[NbaResult]
 
@@ -28,7 +28,7 @@ class Collector(urls: List[String]) extends Actor with ActorLogging {
     val restUrls = (batchUrls copyWithout results._1)
     if (restUrls.isEmpty) {
       context.parent ! SuccessCollected(batch)
-      log.info("Aggregator complete batch")
+      log.info("WebCollector complete batch")
       context stop self
     }
     running(restUrls)

@@ -16,7 +16,7 @@ trait ServiceRegistryCleanerSupport extends BootableMicroservice {
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new ServiceDiscoveryGuardian(config.getDuration("ops-timeout", SECONDS).second,
-          Some(MicroserviceKernel.DomainRole), DistributedData(system).replicator) with OnClusterLeaveKeysCleaner),
+          Option(MicroserviceKernel.DomainRole), DistributedData(system).replicator) with OnClusterLeaveKeysCleaner),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
           .withSingletonName("keys-guardian")

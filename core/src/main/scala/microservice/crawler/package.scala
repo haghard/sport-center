@@ -2,12 +2,10 @@ package microservice
 
 import java.text.SimpleDateFormat
 import java.util.{ TimeZone, Date }
-import akka.actor.ExtendedActorSystem
-import akka.serialization.Serializer
 import org.joda.time.{ DateTimeZone, DateTime }
 import spray.json.{ JsString, JsNumber, JsObject, JsValue }
-
 import scalaz.Monoid
+import scalaz._, Scalaz._
 
 package object crawler {
 
@@ -68,12 +66,26 @@ package object crawler {
     awayTeam: String, awayScore: Int, dt: Date,
     homeScoreBox: String, awayScoreBox: String)
 
-  implicit object Ord extends Ordering[NbaResultView] {
+  class HOMap[K[_] <: AnyRef, V[_] <: AnyRef](delegate: Map[AnyRef, AnyRef]) {
+    def apply[A](key: K[A]): V[A] = delegate(key).asInstanceOf[V[A]]
+    def get[A](key: K[A]): Option[V[A]] = delegate.get(key).asInstanceOf[Option[V[A]]]
+    def +[A](pair: (K[A], V[A])): HOMap[K, V] = new HOMap[K, V](delegate + pair.asInstanceOf[(AnyRef, AnyRef)])
+    def contains[A](key: K[A]): Boolean = delegate contains key
+  }
+
+  object HOMap {
+    def apply[K[_] <: AnyRef, V[_] <: AnyRef](pairs: ((K[A], V[A]) forSome { type A })*): HOMap[K, V] =
+      new HOMap[K, V](Map(pairs.map { _.asInstanceOf[(AnyRef, AnyRef)] }: _*))
+  }
+
+  def Lens[State] = HOMap[Option, ({ type λ[α] = (State) => α => State })#λ]()
+
+  implicit object Ord extends scala.Ordering[NbaResultView] {
     override def compare(x: NbaResultView, y: NbaResultView): Int =
       x.dt.compareTo(y.dt)
   }
 
-  implicit object Sort extends Ordering[CrawledNbaResult] {
+  implicit object Sort extends scala.Ordering[CrawledNbaResult] {
     override def compare(x: CrawledNbaResult, y: CrawledNbaResult): Int =
       x.dt.compareTo(y.dt)
   }

@@ -18,7 +18,7 @@ trait CassandraQueriesSupport {
 
   implicit val ex = context.system.dispatchers.lookup("stream-dispatcher")
 
-  case class Tick()
+  private case class Tick()
 
   def readEvery[T](interval: FiniteDuration)(implicit ex: ExecutionContext) = {
     Flow() { implicit b =>
@@ -29,7 +29,7 @@ trait CassandraQueriesSupport {
     }
   }
 
-  def newClient(cl: ConsistencyLevel): CassandraSource#Client = {
+  def cassandraClient(cl: ConsistencyLevel): CassandraSource#Client = {
     val qs = new QueryOptions()
       .setConsistencyLevel(cl)
       .setFetchSize(500)

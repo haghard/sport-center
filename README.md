@@ -152,16 +152,18 @@ For testing we can use this:
 ### Command line HTTP client ###
   [Httpie](http://httpie.org/)
 
-  `http GET 192.168.0.62:2561/api/login?"user=haghard&email=haghard84@gmail.com"`
+  `http GET 192.168.0.62:2561/api/login?"user=lector&email=lector@gmail.com"`
   
-  `http GET 192.168.0.62:2561/routes`,
+  `http GET 192.168.0.62:2561/routes`
+  
+  `http GET http://192.168.0.62:2560/api/showShardRegions`
   
   `http GET 192.168.0.62:2561/api/results/2014-01-29 'Cookie:_sessiondata=...'`
   
-  `http GET 192.168.0.62:2561/api/results/2014-01-29 'Cookie:_sessiondata=...'`,
+  `http GET 192.168.0.62:2561/api/results/2014-01-29 'Cookie:_sessiondata=...'`
   
-  `http GET 192.168.0.62:2565/api/results/okc/last 'Cookie:_sessiondata=...'`,
+  `http GET 192.168.0.62:2565/api/results/okc/last 'Cookie:_sessiondata=...'`
   
   `http GET 192.168.0.62:2565/api/standings/2013-01-28 'Cookie:_sessiondata=...'`
   
-  `http GET 192.168.0.62:2561/api/logout 'Cookie:_sessiondata=...'`
+ 

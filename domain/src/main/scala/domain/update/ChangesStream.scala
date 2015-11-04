@@ -9,8 +9,8 @@ import com.datastax.driver.core.{ ConsistencyLevel, Row }
 import com.datastax.driver.core.utils.Bytes
 import domain.CrawlerCampaign.CampaignPersistedEvent
 import domain.TeamAggregate.CreateResult
-import domain.update.DistributedDomainWriter.GetLastChangeSetOffset
-import domain.update.WriterGuardian.PersistDataChange
+import domain.update.DomainWriter.GetLastChangeSetOffset
+import domain.update.DomainWriterSupervisor.PersistDataChange
 import dsl.cassandra._
 import join.Join
 import join.cassandra.CassandraSource
@@ -39,7 +39,9 @@ trait ChangesStream {
   val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ (Any, Long) =
     (outer, inner) ⇒ {
       val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("message")), classOf[PersistentRepr]).get
-      (rep.payload, inner.getLong("sequence_nr"))
+      rep.payload
+      val seqN = inner.getLong("sequence_nr")
+      (rep.payload, seqN)
     }
 
   val qCampaign = for { q ← select("SELECT campaign_id FROM {0}") } yield q
@@ -63,7 +65,7 @@ trait ChangesStream {
         }))
       }
 
-  def quorumClient = newClient(ConsistencyLevel.QUORUM)
+  def quorumClient = cassandraClient(ConsistencyLevel.QUORUM)
 
   def changesStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef)(implicit Mat: ActorMaterializer): Unit =
     ((fetchChanges(seqNum)(client)) via readEvery(interval))
@@ -71,7 +73,7 @@ trait ChangesStream {
       .to(Sink.onComplete { _ =>
         (des.ask(GetLastChangeSetOffset)(interval)).mapTo[Long].map { n =>
           context.system.scheduler.scheduleOnce(interval, new Runnable {
-            override def run() = changesStream(n, interval, client, des)
+            override def run = changesStream(n, interval, client, des)
           })
         }
       }).run()(Mat)

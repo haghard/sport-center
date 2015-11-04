@@ -1,8 +1,8 @@
 package crawler
 
-import akka.actor.SupervisorStrategy.{ Directive, Resume }
 import akka.actor._
-import crawler.WebGetter.CrawlerException
+import akka.actor.SupervisorStrategy.{ Directive, Resume }
+import crawler.writer.Crawler.CrawlerException
 import crawler.writer.CrawlerGuardian.CrawlerResponse
 import microservice.api.MicroserviceKernel
 import microservice.crawler._
@@ -45,7 +45,7 @@ abstract class CrawlerRoot(val teams: Seq[String]) extends Actor with ActorLoggi
   override def routerNodeRole = MicroserviceKernel.CrawlerRole
 
   private val decider: PartialFunction[Throwable, Directive] = {
-    case CrawlerException(_, cause, url) ⇒
+    case CrawlerException(cause, url) ⇒
       log.debug("WebGetter error {}, retry later {} ", cause.getMessage, url)
       Resume
   }
@@ -79,7 +79,7 @@ abstract class CrawlerRoot(val teams: Seq[String]) extends Actor with ActorLoggi
 
   def idle(): Receive = {
     case CrawlerJob(dt, urls) ⇒
-      log.info("CrawlerRoot receive job {}", formatter format dt.toDate)
+      log.info("CrawlerRoot has receive job {}", formatter format dt.toDate)
       crawlerClient = Option(sender())
       webAggregator = Option(context.actorOf(Collector.props(urls), "collector"))
       urls foreach (url ⇒ webRouter.tell(url, webAggregator.get))

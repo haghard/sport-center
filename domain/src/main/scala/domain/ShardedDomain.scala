@@ -1,8 +1,8 @@
 package domain
 
 import akka.actor.ActorDSL._
-import akka.actor.Extension
 import akka.actor._
+import akka.cluster.sharding.ShardRegion
 import akka.persistence.PersistentActor
 import akka.util.Timeout
 import domain.TeamAggregate.{ CreateResult, WriteAck }
@@ -10,12 +10,12 @@ import microservice.domain._
 
 import scala.collection.immutable.SortedSet
 import scala.concurrent.forkjoin.ThreadLocalRandom
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ Promise, ExecutionContext, Future }
 import scalaz.\/
 import scalaz.\/._
 import scala.concurrent.duration._
 
-object Domains extends ExtensionKey[Domains] {
+object ShardedDomain extends ExtensionKey[ShardedDomain] {
 
   trait SkippedCommandValidator[T] extends CommandValidator[T] {
     self: PersistentActor with ActorLogging ⇒
@@ -36,7 +36,9 @@ object Domains extends ExtensionKey[Domains] {
   }
 }
 
-class Domains(protected val system: ExtendedActorSystem) extends Extension with Sharding {
+class ShardedDomain(protected val system: ExtendedActorSystem) extends Extension with Sharding {
+
+  def showRegions(implicit timeout: Timeout) = showLocalRegions
 
   def tellQuery[T <: QueryCommand](command: T)(implicit sender: ActorRef) =
     tellEntry(command)
@@ -77,9 +79,23 @@ class Domains(protected val system: ExtendedActorSystem) extends Extension with 
   def tellWrite[T <: Command](command: T)(implicit sender: ActorRef) =
     writeEntry(command)
 
+  def gracefulShutdown(implicit timeout: FiniteDuration, factory: ActorRefFactory, ec: ExecutionContext): Future[Unit] = {
+    val p = Promise[Unit]()
+    actor(new Act {
+      context watch shardRegion
+      context setReceiveTimeout timeout
+      shardRegion ! ShardRegion.GracefulShutdown
+      become {
+        case Terminated(`shardRegion`) => p.success(())
+        case ReceiveTimeout            => p.failure(new Exception("Timeout to stop local shard region"))
+      }
+    })
+    p.future
+  }
+
   override protected def props: Props = TeamAggregate.props
 
-  override protected def shardCount: Int = 6
+  override protected def shardCount = 10
 
   override protected val name = "teams"
 }

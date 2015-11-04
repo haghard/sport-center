@@ -78,6 +78,9 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     if (clusterRole == DomainRole)
       local.withFallback(ConfigFactory.parseString(s"akka.cluster.sharding.role=${clusterRole}"))
 
+    if (clusterRole == GatewayRole)
+      local.withFallback(ConfigFactory.parseString(s"""akka.extensions=["akka.cluster.ddata.DistributedData"]"""))
+
     local
   }
 

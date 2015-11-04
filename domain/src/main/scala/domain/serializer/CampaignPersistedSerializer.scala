@@ -32,7 +32,7 @@ final class CampaignPersistedSerializer(system: ActorSystem) extends Serializer 
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: CampaignPersistedEvent => eventBuilder(e).build().toByteArray
-    case _ => throw new IllegalArgumentException(s"Can't serialize object of type ${o.getClass}")
+    case _                         => throw new IllegalArgumentException(s"Can't serialize object of type ${o.getClass}")
   }
 
   private def buildScoreBox(lines: java.util.List[domain.formats.DomainEventFormats.PlayerLine]): List[PlayerLine] = {

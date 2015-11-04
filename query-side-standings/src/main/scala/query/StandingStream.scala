@@ -35,7 +35,7 @@ trait StandingStream {
   } =>
   import StandingStream._
 
-  def quorumClient = newClient(ConsistencyLevel.QUORUM)
+  def quorumClient = cassandraClient(ConsistencyLevel.QUORUM)
 
   def deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ Any =
     (outer, inner) ⇒ {

@@ -18,8 +18,7 @@ object HystrixMetricsMicroservice {
   val dispatcher = "hystrix-stream-dispatcher"
 }
 
-trait HystrixMetricsMicroservice extends DiscoveryMicroservice
-    with SSEventsMarshalling {
+trait HystrixMetricsMicroservice extends DiscoveryMicroservice with SSEventsMarshalling {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
   import http.HystrixMetricsMicroservice._
 

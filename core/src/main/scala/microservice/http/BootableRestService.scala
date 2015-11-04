@@ -20,13 +20,14 @@ trait BootableRestService extends SystemSettings with Directives {
 
   val httpDispatcher = microserviceDispatcher
 
+  def withUri: Directive1[String] = extract(_.request.uri.toString())
+
   def installApi(api: RestApiJunction)(implicit system: ActorSystem, interface: String, httpPort: Int) = {
     api.route.foreach { api =>
       val ec = system.dispatchers.lookup(httpDispatcher)
       val route = api(ec)
       system.actorOf(RestService.props(route, interface, httpPort)(ec), "rest-service")
     }
-
     api.preAction.foreach(action => action())
   }
 

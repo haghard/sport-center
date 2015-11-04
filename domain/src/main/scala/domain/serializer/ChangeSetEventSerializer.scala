@@ -3,7 +3,7 @@ package domain.serializer
 import akka.actor.ExtendedActorSystem
 import akka.serialization.Serializer
 import domain.formats.DomainEventFormats.ChangeSetFormat
-import domain.update.DistributedDomainWriter.BeginTransaction
+import domain.update.DomainWriter.BeginTransaction
 
 final class ChangeSetEventSerializer(system: ExtendedActorSystem) extends Serializer {
   private val EventClass = classOf[BeginTransaction]

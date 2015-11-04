@@ -6,7 +6,7 @@ import akka.pattern.{ AskTimeoutException, ask }
 import microservice.ClusterMonitor
 import microservice.ClusterMonitor.GetNodes
 import microservice.api.{ MicroserviceKernel, BootableMicroservice }
-import microservice.http.RestWithDiscovery
+import microservice.http.ShardedDomainReadService
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
@@ -14,7 +14,7 @@ import scala.util.{ Failure, Success }
 import scalaz.{ -\/, \/, \/- }
 
 trait DiscoveryClientSupport extends BootableMicroservice {
-  self: RestWithDiscovery with DiscoveryClient ⇒
+  self: ShardedDomainReadService with DiscoveryClient ⇒
 
   private val duration = 5 seconds
   private val cluster = akka.cluster.Cluster(system)
@@ -41,16 +41,26 @@ trait DiscoveryClientSupport extends BootableMicroservice {
       case endpoint :: tail ⇒
         op(key, endpoint).onComplete {
           case Success(_) ⇒
-            system.log.info(s"Service [$key - $endpoint] was successfully registered")
+            system.log.info(
+              new StringBuilder().append("\n")
+                .append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully registered")
+                .toString)
             registerSequence(tail)(op)
           case Failure(ex) ⇒
-            system.log.info(s"Service [$key - $endpoint] installation error: ${ex.getMessage}")
+            system.log.info(
+              new StringBuilder().append("\n")
+                .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error")
+                .toString
+            )
         }(discoveryDispatcher)
     }
   }
 
   abstract override def startup() = {
     cluster.registerOnMemberUp {
+      system.log.info(new StringBuilder().append("\n")
+        .append(s"★ ★ ★ Microservice endpoints [${endpoints.mkString("\t")}] ★ ★ ★")
+        .toString)
       registerSequence(endpoints)(set)
     }
     super.startup()
@@ -61,8 +71,15 @@ trait DiscoveryClientSupport extends BootableMicroservice {
     for { endpoint ← endpoints } {
       val resp = Await.result(delete(key, endpoint), duration)
       resp match {
-        case StatusCodes.OK ⇒ system.log.info(s"Service [$key - $endpoint] was successfully unregistered")
-        case other          ⇒ system.log.info(s"Service [$key - $endpoint] unregistered error $other")
+        case StatusCodes.OK ⇒ system.log.info(
+          new StringBuilder().append("\n")
+            .append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully unregistered ★ ★ ★")
+            .toString)
+
+        case statusCode ⇒ system.log.info(
+          new StringBuilder().append("\n")
+            .append(s"★ ★ ★ Microservice [$key - $endpoint] unregistered error $statusCode registered")
+            .toString)
       }
       statusCodes = statusCodes :+ resp
     }

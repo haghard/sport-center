@@ -20,12 +20,11 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
   override val includeManifest = true
 
   override def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]) = manifest match {
-    case None =>
-      (ResultAddedEvent parseFrom bytes)
+    case None => (ResultAddedEvent parseFrom bytes)
     case Some(c) => c match {
       case EventClass =>
         //system.log.info("ResultAdded fromBinary. Length:{}", bytes.length)
-        toDomainEvent(ResultAddedEvent.parseFrom(bytes))
+        toDomainEvent(ResultAddedEvent parseFrom bytes)
       case _ => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
     }
   }
@@ -56,7 +55,7 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
           PlayerLine(f.getName, f.getPos, f.getMin, f.getFgmA, f.getThreePmA, f.getFtmA, f.getMinusSlashPlus, f.getOffReb,
             f.getDefReb, f.getTotalReb, f.getAst, f.getPf, f.getSteels, f.getTo, f.getBs, f.getBa, f.getPts) :: acc
         },
-        r.getHomeScoreBoxList.asScala.foldRight(List.empty[PlayerLine]) { (f, acc) =>
+        r.getAwayScoreBoxList.asScala.foldRight(List.empty[PlayerLine]) { (f, acc) =>
           PlayerLine(f.getName, f.getPos, f.getMin, f.getFgmA, f.getThreePmA, f.getFtmA, f.getMinusSlashPlus, f.getOffReb,
             f.getDefReb, f.getTotalReb, f.getAst, f.getPf, f.getSteels, f.getTo, f.getBs, f.getBa, f.getPts) :: acc
         }

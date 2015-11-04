@@ -3,7 +3,6 @@ package microservice.http
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.model.headers.Host
 import akka.http.scaladsl.model.{ MediaTypes, HttpResponse }
-import akka.http.scaladsl.server.Directive1
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
@@ -14,7 +13,7 @@ import scala.concurrent.Future
 import spray.json._
 import akka.http.scaladsl.model.Uri.{ Host => HostHeader }
 
-object RestWithDiscovery {
+object ShardedDomainReadService {
   implicit object DateFormatToJson extends JsonFormat[java.util.Date] with DefaultJsonProtocol {
     import spray.json._
     val formatter = microservice.crawler.estFormatter()
@@ -23,7 +22,7 @@ object RestWithDiscovery {
   }
 }
 
-trait RestWithDiscovery extends BootableRestService {
+trait ShardedDomainReadService extends BootableRestService {
   self: MicroserviceKernel =>
 
   implicit def timeout: akka.util.Timeout
@@ -33,8 +32,6 @@ trait RestWithDiscovery extends BootableRestService {
   def servicePathPostfix: String
 
   lazy val key = s"akka.tcp://$ActorSystemName@$localAddress:$akkaSystemPort"
-
-  def withUri: Directive1[String] = extract(_.request.uri.toString())
 
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>

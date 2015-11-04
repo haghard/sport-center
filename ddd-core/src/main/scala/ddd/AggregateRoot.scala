@@ -56,7 +56,7 @@ trait AggregateRoot[T <: AggregateState] extends BusinessEntity with ActorPassiv
   }
 
   override def onRecoveryFailure(cause: Throwable, ev: Option[Any]) = {
-    log.info("Recovery has been failed {}, with message class: {}", cause.getMessage, ev.get.getClass.getSimpleName)
+    log.info("Recovery has been failed {}, with message class: {}", cause.getMessage, ev)
     super.onRecoveryFailure(cause, ev)
   }
 

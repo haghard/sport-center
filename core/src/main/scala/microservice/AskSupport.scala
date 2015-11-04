@@ -9,7 +9,7 @@ import microservice.http.RestService.BasicHttpRequest
 import scala.reflect.ClassTag
 import scalaz.{ -\/, \/, \/- }
 
-trait AskManagment {
+trait AskSupport {
 
   def fetch[T <: State](message: BasicHttpRequest, target: ActorRef)(implicit ec: ExecutionContext, fetchTimeout: akka.util.Timeout, tag: ClassTag[T]): Future[String \/ T] =
     target

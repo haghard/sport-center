@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.ByteString
 import discovery.DiscoveryHttpClient.Protocols
-import microservice.http.RestWithDiscovery
+import microservice.http.ShardedDomainReadService
 import spray.json.DefaultJsonProtocol
 import scalaz.{ -\/, \/- }
 import scala.concurrent.Future
@@ -31,7 +31,7 @@ object DiscoveryHttpClient {
 
 trait DiscoveryHttpClient extends DiscoveryClient
     with Protocols {
-  mixin: RestWithDiscovery with DiscoveryClientSupport ⇒
+  mixin: ShardedDomainReadService with DiscoveryClientSupport ⇒
 
   implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(system)
@@ -74,7 +74,7 @@ trait DiscoveryHttpClient extends DiscoveryClient
     askForDiscoveryNodeAddresses()
       .flatMap {
         case \/-(nodes) ⇒
-          system.log.info("★ ★ ★ {} have been discovered:[{}] ★ ★ ★ ", microservice.api.MicroserviceKernel.GatewayRole, nodes.mkString(";"))
+          system.log.info("★ ★ ★ {} has been discovered on [{}] ★ ★ ★ ", microservice.api.MicroserviceKernel.GatewayRole, nodes.mkString(";"))
           val size = nodes.size
           val address = nodes(ThreadLocalRandom.current().nextInt(size) % size)
           (for {

@@ -50,7 +50,7 @@ class CrawlerMasterSpec extends TestKit(ActorSystem("crawler", CrawlerMasterSpec
     lazy val createRouter = context.actorOf(routerProps, routerName)
   }
 
-  override def afterAll = system.shutdown
+  override def afterAll = system.terminate()
 
   "CrawlerMaster with one node cluster" should {
     "eventually collect result with retry" in {

@@ -8,9 +8,8 @@ message ChangeSetFormat {
 
 message ResultAddedEvent {
   required string teamName = 1;
-  optional ResultFormat result = 2;
+  required ResultFormat result = 2;
 }
-
 
 message TotalFormat {
   required int32 minutes = 1;

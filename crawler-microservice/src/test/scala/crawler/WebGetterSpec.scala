@@ -31,7 +31,7 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
     with MustMatchers
     with BeforeAndAfterAll {
 
-  val waitTime = 20 seconds
+  val waitTime = 15 seconds
 
   val teams = asScalaBuffer(system.settings.config
     .getConfig("app-settings")
@@ -41,25 +41,28 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
     item.getKey
   }
 
-  override def afterAll = system.shutdown
+  override def afterAll = system.terminate()
 
   "WebGetter" should {
     "collect non empty results for specific page" in {
       val probe = TestProbe()
-      val url = "http://www.nba.com/gameline/20140705/"
+      val url =
+        "http://www.nba.com/gameline/20121127/" //recap is absent
+      //"http://www.nba.com/gameline/20151027/"
+      //"http://www.nba.com/gameline/20140705/"
       //"http://www.nba.com/gameline/20140222/"
       //"http://www.nba.com/gameline/20121030/"
       //"http://www.nba.com/gameline/20141104/"
       //"http://www.nba.com/gameline/20121202/"
-      val getter = system.actorOf(WebGetter.props(teams).withDispatcher("akka.crawler-dispatcher"), "web-getter-20141104")
 
+      val getter = system.actorOf(WebGetter.props(teams).withDispatcher("akka.crawler-dispatcher"), "web-getter-20151027")
       getter.tell(url, probe.ref)
       val (_, list) = probe.expectMsgClass(waitTime, classOf[(String, List[NbaResult])])
       println(list.mkString("\n"))
       system stop getter
     }
   }
-
+  /*
   "WebGetter" should {
     "collect result from empty page" in {
       val probe = TestProbe()
@@ -69,5 +72,5 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
       probe.expectMsg(waitTime, (url, List()))
       system stop getter
     }
-  }
+  }*/
 }

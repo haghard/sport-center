@@ -1,28 +1,30 @@
 package domain.update
 
 import akka.actor._
+import akka.cluster.sharding.ShardRegion
 import scala.concurrent.duration._
 import microservice.domain.Command
 import domain.TeamAggregate.CreateResult
 import scala.collection.immutable.SortedSet
 import microservice.settings.CustomSettings
 import akka.serialization.SerializationExtension
-import domain.update.DistributedDomainWriter.GetLastChangeSetOffset
+import domain.update.DomainWriter.GetLastChangeSetOffset
 import akka.stream.{ Supervision, ActorMaterializerSettings, ActorMaterializer }
 
-object WriterGuardian {
+object DomainWriterSupervisor {
   case class PersistDataChange(id: Long, results: Map[String, SortedSet[CreateResult]]) extends Command
 
-  def props(settings: CustomSettings) = Props(classOf[WriterGuardian], settings)
+  def props(settings: CustomSettings) = Props(classOf[DomainWriterSupervisor], settings)
     .withDispatcher("scheduler-dispatcher")
 }
 
-class WriterGuardian private (val settings: CustomSettings) extends Actor with ActorLogging
+class DomainWriterSupervisor private (val settings: CustomSettings) extends Actor with ActorLogging
     with ChangesStream with CassandraQueriesSupport {
   val interval = 15 seconds
   val serialization = SerializationExtension(context.system)
 
-  val writeProcessor = context.system.actorOf(DistributedDomainWriter.props, "distributed-writer")
+  var requestor: Option[ActorRef] = None
+  val writer = context.system.actorOf(DomainWriter.props, "domain-writer")
 
   val decider: Supervision.Decider = {
     case ex ⇒
@@ -36,12 +38,13 @@ class WriterGuardian private (val settings: CustomSettings) extends Actor with A
     .withInputBuffer(1, 1))(context.system)
 
   override def preStart() = {
-    writeProcessor ! GetLastChangeSetOffset
+    context watch writer
+    writer ! GetLastChangeSetOffset
   }
 
   override def receive: Receive = {
     case offset: Long ⇒
       log.info("Last applied change-set №{}", offset)
-      changesStream(offset, interval, quorumClient, writeProcessor)
+      changesStream(offset, interval, quorumClient, writer)
   }
 }
