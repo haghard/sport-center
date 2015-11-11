@@ -31,13 +31,20 @@ object settings {
   case class TwitterAuth(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)
   case class Cassandra(keyspace: String, table: String, address: InetSocketAddress)
   case class SessionGfg(secret: String, sail: String, ttl: Long)
+  case class Intervals(resultsPeriod: FiniteDuration, standingsPeriod: FiniteDuration)
 
   object CustomSettings extends ExtensionKey[CustomSettings]
 
   final class CustomSettings(system: ExtendedActorSystem) extends Extension {
     import scala.collection.JavaConversions.asScalaBuffer
 
-    lazy val cassandra = {
+    val refreshIntervals = {
+      val cfg = system.settings.config.getConfig("app-settings")
+      Intervals(FiniteDuration(cfg.getDuration("refresh.results", TimeUnit.SECONDS), TimeUnit.SECONDS),
+        FiniteDuration(cfg.getDuration("refresh.standings", TimeUnit.SECONDS), TimeUnit.SECONDS))
+    }
+
+    val cassandra = {
       val dbCfg = ConfigFactory.load("internals").getConfig("db.cassandra")
       val casConf = system.settings.config.getConfig("cassandra-journal")
       Cassandra(casConf.getString("keyspace"), casConf.getString("table"), new InetSocketAddress(dbCfg.getString("seeds"), dbCfg.getInt("port")))

@@ -4,12 +4,13 @@ import akka.cluster.ddata.LWWMap
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.server.{ Route, Directives }
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
+import akka.stream.{ Materializer, ActorMaterializerSettings, ActorMaterializer }
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import discovery.ServiceDiscovery
 import discovery.ServiceDiscovery._
 import microservice.SystemSettings
-import microservice.api.{ ClusterNetworkSupport, BootableMicroservice }
+import microservice.api.{ MicroserviceKernel, ClusterNetworkSupport, BootableMicroservice }
 import microservice.http.RestApiJunction
 import discovery.ServiceRegistryPublisher
 import spray.json.DefaultJsonProtocol
@@ -30,9 +31,11 @@ object DiscoveryMicroservice {
   val servicePrefix = "discovery"
 
   trait DiscoveryProtocols extends DefaultJsonProtocol {
+    implicit def materializer: Materializer
+
     implicit val kvFormat = jsonFormat2(KVRequest.apply)
     implicit def unmarshaller(implicit ec: ExecutionContext) = new FromRequestUnmarshaller[KVRequest]() {
-      override def apply(req: HttpRequest)(implicit ec: ExecutionContext): Future[KVRequest] =
+      override def apply(req: HttpRequest)(implicit ec: ExecutionContext, mat: Materializer): Future[KVRequest] =
         Try(Future(req.entity.asInstanceOf[Strict].data.decodeString("UTF-8").parseJson.convertTo[KVRequest]))
           .getOrElse(Future.failed(new Exception("Can't parse KVRequest")))
     }
@@ -47,6 +50,10 @@ trait DiscoveryMicroservice extends UsersMicroservices
     with SystemSettings {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
   import DiscoveryMicroservice._
+
+  implicit val materializer = ActorMaterializer(
+    ActorMaterializerSettings(system)
+      .withDispatcher(MicroserviceKernel.microserviceDispatcher))(system)
 
   abstract override def configureApi() =
     super.configureApi() ~ RestApiJunction(route = Option({ ec: ExecutionContext ⇒ discoveryRoute(ec) }))

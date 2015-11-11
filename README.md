@@ -156,14 +156,14 @@ For testing we can use this:
   
   `http GET 192.168.0.62:2561/routes`
   
-  `http GET http://192.168.0.62:2560/api/showShardRegions`
+  `http GET http://192.168.0.62:2560/showShardRegions`
   
   `http GET 192.168.0.62:2561/api/results/2014-01-29 'Cookie:_sessiondata=...'`
   
   `http GET 192.168.0.62:2561/api/results/2014-01-29 'Cookie:_sessiondata=...'`
   
-  `http GET 192.168.0.62:2565/api/results/okc/last 'Cookie:_sessiondata=...'`
+  `http GET 192.168.0.62:2561/api/results/okc/last 'Cookie:_sessiondata=...'`
   
-  `http GET 192.168.0.62:2565/api/standings/2013-01-28 'Cookie:_sessiondata=...'`
+  `http GET 192.168.0.62:2561/api/standings/2013-01-28 'Cookie:_sessiondata=...'`
   
  

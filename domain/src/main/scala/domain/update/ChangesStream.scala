@@ -56,7 +56,6 @@ trait ChangesStream {
       .source
       .filter(_._1.isInstanceOf[CampaignPersistedEvent])
       .map { kv =>
-        //context.system.log.info(s"CampaignPersistedEvent has been fetched: $seqNum")
         val c = kv._1.asInstanceOf[CampaignPersistedEvent]
         PersistDataChange(kv._2, (c.results./:(Map[String, SortedSet[CreateResult]]()) { (map, res) ⇒
           val set = map.getOrElse(res.homeTeam, SortedSet[CreateResult]())

@@ -2,68 +2,41 @@ package query
 
 import akka.persistence.PersistentRepr
 import akka.serialization.Serialization
-import join.Join
-import dsl.cassandra._
-import akka.actor.{ Actor, ActorRef }
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Sink
-import com.datastax.driver.core.{ ConsistencyLevel, Row }
-import com.datastax.driver.core.utils.Bytes
+import akka.actor.Actor
+import akka.stream.{ Graph, ClosedShape, SourceShape }
+import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
+import com.datastax.driver.core.{ ConsistencyLevel }
 import domain.TeamAggregate.ResultAdded
 import domain.update.CassandraQueriesSupport
 import join.cassandra.CassandraSource
 import microservice.crawler.NbaResultView
-import microservice.settings.CustomSettings
-import scala.concurrent.duration.FiniteDuration
-import akka.pattern.ask
 
-object ResultStream {
-  val teamsTable = "teams"
-
-  val qTeams = for { q ← select("SELECT processor_id FROM {0}") } yield q
-
-  def qResults(seqNum: Long)(r: Row) = for {
-    _ ← select(s"select persistence_id, sequence_nr, message from {0} where persistence_id = ? and sequence_nr > $seqNum and partition_nr = 0")
-    q ← fk[java.lang.String]("persistence_id", r.getString("processor_id"))
-  } yield q
-}
-
-//ResultAddedEventSerializer
 trait ResultStream {
   mixin: CassandraQueriesSupport with Actor {
-    def settings: CustomSettings
     def serialization: Serialization
   } =>
-  import ResultStream._
+  import FlowGraph.Implicits._
 
-  val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ Any =
-    (outer, inner) ⇒ {
-      //context.system.log.info("fetch-result:{} - {}", inner.getString("persistence_id"), inner.getLong("sequence_nr"))
-      serialization.deserialize(Bytes.getArray(inner.getBytes("message")),
-        classOf[PersistentRepr]).get.payload
-    }
-
-  private def fetchResult(offset: Long)(implicit client: CassandraSource#Client) =
-    (Join[CassandraSource] left (qTeams, teamsTable, qResults(offset), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
-      .source
-      .filter(_.isInstanceOf[ResultAdded])
-      .map { res =>
-        val r = res.asInstanceOf[ResultAdded].r
-        NbaResultView(r.homeTeam, r.homeScore, r.awayTeam, r.awayScore, r.dt, r.homeScoreBox, r.awayScoreBox)
+  private def flow(teams: Map[String, Int], journal: String)(implicit session: CassandraSource#Session) = Source.fromGraph(
+    FlowGraph.create() { implicit b =>
+      val merge = b.add(Merge[NbaResultView](teams.size))
+      teams.foreach { kv =>
+        feed.Feed[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
+          .source.map(row => serialization.deserialize(row.getBytes("message").array(), classOf[PersistentRepr]).get.payload)
+          .collect {
+            case e: ResultAdded => NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)
+          } ~> merge
       }
+      SourceShape(merge.out)
+    }
+  )
+
+  def replayGraph(teams: Map[String, Int], journal: String)(implicit session: CassandraSource#Session): Graph[ClosedShape, Unit] = {
+    FlowGraph.create() { implicit b =>
+      flow(teams, journal) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
+      ClosedShape
+    }
+  }
 
   def newQuorumClient = cassandraClient(ConsistencyLevel.QUORUM)
-
-  def resultsStream(offset: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef, acc: Long)(implicit Mat: ActorMaterializer): Unit = {
-    (if (acc == 0) fetchResult(offset)(client) else fetchResult(offset)(client) via readEvery(interval))
-      .map { res => des ! res }
-      //.mapAsync(1) { res => (des.ask(res.size.toLong)(interval)).mapTo[Long] } //sort of back pressure
-      .to(Sink.onComplete { _ =>
-        (des.ask(offset)(interval)).mapTo[Long].map { n =>
-          context.system.scheduler.scheduleOnce(interval, new Runnable {
-            override def run() = resultsStream(n, interval, client, des, acc + 1l)
-          })
-        }
-      }).run()(Mat)
-  }
 }

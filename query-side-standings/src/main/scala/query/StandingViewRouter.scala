@@ -1,6 +1,7 @@
 package query
 
 import akka.serialization.SerializationExtension
+import akka.stream.javadsl.RunnableGraph
 import akka.stream.{ ActorMaterializerSettings, ActorMaterializer, Supervision }
 import domain.update.CassandraQueriesSupport
 import org.joda.time.DateTime
@@ -8,7 +9,7 @@ import akka.actor.ActorDSL._
 import scala.collection.immutable
 import scalaz.{ -\/, \/, \/- }
 import microservice.settings.CustomSettings
-import microservice.crawler.searchFormatter
+import microservice.crawler.{ NbaResultView, searchFormatter }
 import microservice.http.RestService.ResponseBody
 import http.StandingMicroservice.GetStandingByDate
 import microservice.domain.{ QueryCommand, State }
@@ -35,10 +36,11 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
   import scala.concurrent.duration._
   import query.StandingViewRouter._
 
-  var offset = 1l
-  val default = 30 seconds
+  var updateCnt = 0
+  val tryToRefreshEvery = settings.refreshIntervals.standingsPeriod
   val formatter = searchFormatter()
   val serialization = SerializationExtension(context.system)
+  var offsets = settings.teamConferences.keySet.foldLeft(Map.empty[String, Int])((map, c) => map + (c -> 0))
 
   val decider: Supervision.Decider = {
     case ex ⇒
@@ -46,6 +48,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
       Supervision.stop
   }
 
+  implicit var session = (quorumClient connect settings.cassandra.keyspace)
   implicit val Mat = ActorMaterializer(ActorMaterializerSettings(context.system)
     .withDispatcher("stream-dispatcher")
     .withSupervisionStrategy(decider)
@@ -65,29 +68,34 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
     }
   })
 
-  override def preStart() = pull()
+  override def preStart() =
+    RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat)
 
   override def receive: Receive = {
-    case sn: Long =>
-      log.info("StandingView sequence number №{}", sn)
-      sender() ! offset
+    case r: NbaResultView =>
+      updateCnt += 1
+      viewPartition(new DateTime(r.dt)).fold(log.debug("MaterializedView wasn't found for {}", r.dt))(_ ! r)
+      offsets = (offsets updated (r.homeTeam, offsets(r.homeTeam) + 1))
+
+    case 'RefreshCompleted =>
+      log.info("ResultView: {} changes have been discovered", updateCnt)
+      updateCnt = 0
+      context.system.scheduler.scheduleOnce(tryToRefreshEvery)(RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat))
+
     case GetStandingByDate(uri, dateTime) ⇒
-      getChildView(dateTime).fold {
+      viewPartition(dateTime).fold {
         val error = s"Can't find view for requested date ${formatter.format(dateTime.toDate)}"
         log.error(error)
         sender() ! StandingBody(error = Option(error))
       } { view ⇒ view.tell(QueryStandingByDate(dateTime), receiver(sender())) }
   }
 
-  private def getChildView(dt: DateTime): Option[ActorRef] = {
+  private def viewPartition(dt: DateTime): Option[ActorRef] =
     (for {
       (interval, intervalName) ← settings.intervals
       if interval.contains(dt)
     } yield intervalName).headOption
-      .flatMap { v ⇒
-        childViews.get(viewName(v))
-      }
-  }
+      .flatMap(v ⇒ childViews.get(viewName(v)))
 
   private val childViews: immutable.Map[String, ActorRef] =
     settings.stages.foldLeft(immutable.Map[String, ActorRef]()) { (map, c) ⇒
@@ -96,11 +104,4 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
       log.info("{} was created", vName)
       map + (vName -> view)
     }
-
-  private def pull() = {
-    viewStream(0l, default, quorumClient, self, 0, { result =>
-      offset += 1l
-      getChildView(new DateTime(result.dt))
-    })
-  }
 }

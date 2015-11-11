@@ -10,6 +10,7 @@ import microservice.settings.CustomSettings
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.collection.JavaConverters._
+import FlowGraph.Implicits._
 
 trait CassandraQueriesSupport {
   mixin: Actor {
@@ -21,11 +22,10 @@ trait CassandraQueriesSupport {
   private case class Tick()
 
   def readEvery[T](interval: FiniteDuration)(implicit ex: ExecutionContext) = {
-    Flow() { implicit b =>
-      import FlowGraph.Implicits._
-      val zip = b.add(ZipWith[T, Tick.type, T](Keep.left).withAttributes(Attributes.inputBuffer(1, 1)))
-      Source(Duration.Zero, interval, Tick) ~> zip.in1
-      (zip.in0, zip.out)
+    FlowGraph.create() { implicit b =>
+      val zip = b.add(ZipWith[T, Tick, T](Keep.left).withAttributes(Attributes.inputBuffer(1, 1)))
+      Source.tick(Duration.Zero, interval, Tick()) ~> zip.in1
+      FlowShape(zip.in0, zip.out)
     }
   }
 
@@ -38,4 +38,12 @@ trait CassandraQueriesSupport {
       .withQueryOptions(qs)
       .build
   }
+
+  def queryByKey(journal: String) = s"""
+   |SELECT * FROM ${journal} WHERE
+   |        persistence_id = ? AND
+   |        partition_nr = ? AND
+   |        sequence_nr >= ?
+ """.stripMargin
+
 }

@@ -6,7 +6,7 @@ object Dependencies {
   val crossScala = Seq(Scala, "2.10.5")
 
   val Akka = "2.4.0"
-  val AkkaStreamsVersion = "1.0"
+  val AkkaStreamsVersion = "2.0-M1"
   val Hystrix = "1.4.14"
 
   implicit class Exclude(module: ModuleID) {
@@ -28,7 +28,6 @@ object Dependencies {
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
     
     object streams {
-      val akka_streams             = "com.typesafe.akka"    %%    "akka-stream-experimental"      % AkkaStreamsVersion withSources()
       val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"        % AkkaStreamsVersion withSources()
       val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental"   % AkkaStreamsVersion withSources()
     }
@@ -73,7 +72,7 @@ object Dependencies {
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
 
-  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1"
+  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.3-SNAPSHOT"
 
   val http_session     = "com.softwaremill"       %% "akka-http-session"       % "0.1.4"
 }
