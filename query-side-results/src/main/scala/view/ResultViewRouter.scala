@@ -13,7 +13,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import akka.stream._
 import http.ResultsMicroservice.{ GetResultsByTeam, GetResultsByDate }
-import scala.concurrent.duration._
 
 object ResultViewRouter {
   case class ResultsByTeamBody(count: Int = 0, results: List[NbaResultView]) extends ResponseBody with State

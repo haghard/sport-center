@@ -43,7 +43,7 @@ trait CassandraQueriesSupport {
    |SELECT * FROM ${journal} WHERE
    |        persistence_id = ? AND
    |        partition_nr = ? AND
-   |        sequence_nr >= ?
+   |        sequence_nr > ?
  """.stripMargin
 
 }
