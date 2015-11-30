@@ -1,6 +1,6 @@
 package query
 
-import akka.actor.{ ActorRef, ActorLogging, Actor }
+import akka.actor.Actor
 import akka.persistence.PersistentRepr
 import akka.serialization.Serialization
 import com.datastax.driver.core.ConsistencyLevel
