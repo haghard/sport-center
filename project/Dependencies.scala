@@ -5,7 +5,7 @@ object Dependencies {
   val Scala = "2.11.7"
   val crossScala = Seq(Scala, "2.10.5")
 
-  val Akka = "2.4.0"
+  val Akka = "2.4.1"
   val AkkaStreamsVersion = "2.0-M1"
   val Hystrix = "1.4.14"
 

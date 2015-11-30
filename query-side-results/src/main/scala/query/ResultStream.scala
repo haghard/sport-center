@@ -1,11 +1,12 @@
 package query
 
+import akka.actor.{ ActorRef, ActorLogging, Actor }
 import akka.persistence.PersistentRepr
 import akka.serialization.Serialization
-import akka.actor.Actor
+import com.datastax.driver.core.ConsistencyLevel
 import akka.stream.{ Graph, ClosedShape, SourceShape }
 import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
-import com.datastax.driver.core.{ ConsistencyLevel }
+import com.datastax.driver.core.utils.Bytes
 import domain.TeamAggregate.ResultAdded
 import domain.update.CassandraQueriesSupport
 import join.cassandra.CassandraSource
@@ -22,8 +23,9 @@ trait ResultStream {
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
         feed.Feed[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
-          .source.map(row => serialization.deserialize(row.getBytes("message").array(), classOf[PersistentRepr]).get.payload)
-          .collect {
+          .source.map { row =>
+            serialization.deserialize(Bytes.getArray(row.getBytes("message")), classOf[PersistentRepr]).get.payload
+          }.collect {
             case e: ResultAdded => NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)
           } ~> merge
       }

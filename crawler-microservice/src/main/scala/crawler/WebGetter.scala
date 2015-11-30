@@ -35,7 +35,7 @@ class WebGetter(teams: Seq[String]) extends Actor with ActorLogging with RegexSu
     val dateTime = url match {
       case DATE_EXTRACTOR(y, m, d) ⇒ new DateTime().withZone(microservice.crawler.JODA_EST)
         .withDate(y.toInt, m.toInt, d.toInt).withTime(23, 59, 59, 0)
-      case other => throw new WebGetterException("Unparseable date in url", url)
+      case other => throw new WebGetterException("Parse error date in url", url)
     }
 
     val acc = if (dateTime isBefore sep) {

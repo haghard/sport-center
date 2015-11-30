@@ -38,7 +38,7 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
 
   val client = newQuorumClient
   val tryToRefreshEvery = settings.refreshIntervals.resultsPeriod
-  var offsets = settings.teamConferences.keySet.foldLeft(Map.empty[String, Int])((map, c) => map + (c -> 0))
+  var offsets = settings.teamConferences.keySet./:(Map.empty[String, Int])((map, c) => map + (c -> 0))
 
   implicit var session = (newQuorumClient connect settings.cassandra.keyspace)
 
@@ -47,8 +47,11 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
     .withSupervisionStrategy(decider)
     .withInputBuffer(32, 64))(context.system)
 
-  override def preStart() =
-    RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat)
+  override def preStart() = {
+    context.system.scheduler.scheduleOnce(tryToRefreshEvery)(
+      RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat)
+    )
+  }
 
   override def receive: Receive = {
     case r: NbaResultView =>

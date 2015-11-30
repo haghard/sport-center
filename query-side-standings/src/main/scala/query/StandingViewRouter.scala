@@ -33,7 +33,6 @@ object StandingViewRouter {
 
 class StandingViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
     with StandingStream with CassandraQueriesSupport {
-  import scala.concurrent.duration._
   import query.StandingViewRouter._
 
   var updateCnt = 0

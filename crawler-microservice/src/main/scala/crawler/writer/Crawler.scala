@@ -15,11 +15,11 @@ import scalaz._, Scalaz._
 object Crawler {
 
   trait CrawlPeriod {
-    def desciption: String
+    def description: String
   }
 
-  case class From2012(desciption: String) extends CrawlPeriod
-  case class From2015(desciption: String) extends CrawlPeriod
+  case class From2012(description: String) extends CrawlPeriod
+  case class From2015(description: String) extends CrawlPeriod
 
   implicit def from2012 = new Crawler[From2012] {
     val NAME = """<div(.)+>\s*(\w+)\s*</div>""".r
@@ -166,6 +166,7 @@ object Crawler {
     val extTags = "[<p>|</p>]"
     val Details = """<a\sclass="recapAnc"\shref="([^"]*)">""".r
     val Score = """<td class="score">(.+)</td>""".r
+    //val Time = """<p>Final(.+)<span>(.+)(\s)+et</span></p>""".r
     val Time = """<p>Final\s<span>(.+)\set</span></p>""".r
     val TimeParts = """(.+):(.+)\s(pm|am)""".r
     val Date = """http://www.nba.com/gameline/(\d{4})(\d{2})(\d{2})/""".r
@@ -184,6 +185,7 @@ object Crawler {
 
     private def extractDateTime(node: org.jsoup.nodes.Node, d: (Int, Int, Int)): ValidDate = {
       node.childNodes().get(0).toString match {
+        //case Time(_, time, _) =>
         case Time(time) =>
           val timeParts = time.trim match { case TimeParts(h, m, marker) => Array(h, m, marker) }
           val dt = new DateTime().withZone(microservice.crawler.JODA_EST).withDate(d._1, d._2, d._3)

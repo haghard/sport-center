@@ -23,7 +23,7 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
     case None => (ResultAddedEvent parseFrom bytes)
     case Some(c) => c match {
       case EventClass =>
-        //system.log.info("ResultAdded fromBinary. Length:{}", bytes.length)
+        //system.log.info("***************Load ResultAdded fromBinary")
         toDomainEvent(ResultAddedEvent parseFrom bytes)
       case _ => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
     }
@@ -32,7 +32,7 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: ResultAdded =>
       val bts = eventBuilder(e).build().toByteArray
-      //system.log.info("Persisted batch size: {}", bts.length)
+      //system.log.info("*****************Persist ResultAdded {}", e.team)
       bts
     case _ => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
   }
