@@ -166,8 +166,7 @@ object Crawler {
     val extTags = "[<p>|</p>]"
     val Details = """<a\sclass="recapAnc"\shref="([^"]*)">""".r
     val Score = """<td class="score">(.+)</td>""".r
-    //val Time = """<p>Final(.+)<span>(.+)(\s)+et</span></p>""".r
-    val Time = """<p>Final\s<span>(.+)\set</span></p>""".r
+    val Time = """<p>Final(.+)<span>(.+)(\s)+et</span></p>""".r
     val TimeParts = """(.+):(.+)\s(pm|am)""".r
     val Date = """http://www.nba.com/gameline/(\d{4})(\d{2})(\d{2})/""".r
 
@@ -185,8 +184,7 @@ object Crawler {
 
     private def extractDateTime(node: org.jsoup.nodes.Node, d: (Int, Int, Int)): ValidDate = {
       node.childNodes().get(0).toString match {
-        //case Time(_, time, _) =>
-        case Time(time) =>
+        case Time(_, time, _) =>
           val timeParts = time.trim match { case TimeParts(h, m, marker) => Array(h, m, marker) }
           val dt = new DateTime().withZone(microservice.crawler.JODA_EST).withDate(d._1, d._2, d._3)
           (if (timeParts(2) == "am") {
