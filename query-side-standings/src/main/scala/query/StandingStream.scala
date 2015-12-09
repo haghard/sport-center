@@ -6,7 +6,7 @@ import akka.serialization.Serialization
 import akka.stream.{ ClosedShape, Graph, SourceShape }
 import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
 import com.datastax.driver.core.utils.Bytes
-import com.datastax.driver.core.{ ConsistencyLevel }
+import com.datastax.driver.core.ConsistencyLevel
 import domain.TeamAggregate.ResultAdded
 import domain.update.CassandraQueriesSupport
 import join.cassandra.CassandraSource
@@ -38,7 +38,7 @@ trait StandingStream {
     FlowGraph.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
-        feed.Feed[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
+        eventlog.Log[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
           .source.map(row => serialization.deserialize(Bytes.getArray(row.getBytes("message")), classOf[PersistentRepr]).get.payload)
           .collect {
             case e: ResultAdded => NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)

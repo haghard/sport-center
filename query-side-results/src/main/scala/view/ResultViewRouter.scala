@@ -1,6 +1,6 @@
 package view
 
-import akka.stream.javadsl.RunnableGraph
+import akka.stream.scaladsl.RunnableGraph
 import query.ResultStream
 import akka.actor.{ Props, Actor, ActorLogging }
 import akka.serialization.SerializationExtension
@@ -49,7 +49,7 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
 
   override def preStart() = {
     context.system.scheduler.scheduleOnce(tryToRefreshEvery)(
-      RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat)
+      RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run()(Mat)
     )
   }
 
@@ -65,7 +65,7 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
     case 'RefreshCompleted =>
       log.info("ResultView:{} changes have been discovered", updateCnt)
       updateCnt = 0
-      context.system.scheduler.scheduleOnce(tryToRefreshEvery)(RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat))
+      context.system.scheduler.scheduleOnce(tryToRefreshEvery)(RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run()(Mat))
 
     case GetResultsByDate(uri, date) =>
       sender() ! viewByDate.get(date).fold(ResultsByDateBody(0, ArrayBuffer[NbaResultView]())) { list => ResultsByDateBody(list.size, list) }

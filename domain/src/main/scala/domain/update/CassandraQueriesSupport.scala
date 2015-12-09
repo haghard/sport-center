@@ -17,7 +17,7 @@ trait CassandraQueriesSupport {
     def settings: CustomSettings
   } =>
 
-  implicit val ex = context.system.dispatchers.lookup("stream-dispatcher")
+  implicit val ctx = context.system.dispatchers.lookup("stream-dispatcher")
 
   private case class Tick()
 

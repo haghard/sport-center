@@ -52,7 +52,7 @@ trait ChangesStream {
   } yield q
 
   private def fetchChanges(seqNum: Long)(implicit client: CassandraSource#Client) =
-    (Join[CassandraSource] left (qCampaign, campaignTable, qChanges(seqNum), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
+    (Join[CassandraSource] inner (qCampaign, campaignTable, qChanges(seqNum), settings.cassandra.table, settings.cassandra.keyspace))(deserializer)
       .source
       .filter(_._1.isInstanceOf[CampaignPersistedEvent])
       .map { kv =>

@@ -22,7 +22,7 @@ trait ResultStream {
     FlowGraph.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
-        feed.Feed[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
+        eventlog.Log[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
           .source.map { row =>
             serialization.deserialize(Bytes.getArray(row.getBytes("message")), classOf[PersistentRepr]).get.payload
           }.collect {
