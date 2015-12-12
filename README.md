@@ -27,7 +27,7 @@ Group of machines that links together two worlds using simple Load Balancer and 
 `Fault tolerant request routing layer` using [Hystrix]( http://hystrix.github.com). To deliver fault tolerance Hystrix has built in the following features:
 timeout for every request to an external system, limit of concurrent requests for external system, circuit breaker to avoid further requests, retry of a single request after circuit breaker has triggered, realtime aggregated dashboard for to retrieve runtime information on load 
 
-`Distributed CRDT based Service Registry` for domain using [akka-data-replication](https://github.com/patriknw/akka-data-replication). Every cluster node (exclude Gateways) before start register itself in Service Registry for being available for further requests
+`Distributed CRDT based Service Registry` for domain using [akka-distributed-data]. Every cluster node (exclude Gateways) before start register itself in Service Registry for being available for further requests
 
 `Gateway-turbine` aggregate data from Gateway nodes into a single stream of metrics, which in turn streams the aggregated data to the browser for display in the UI.
 
