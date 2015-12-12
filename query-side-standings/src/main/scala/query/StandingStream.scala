@@ -2,6 +2,8 @@ package query
 
 import akka.actor.{ ActorLogging, Actor }
 import akka.persistence.PersistentRepr
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.query.PersistenceQuery
 import akka.serialization.Serialization
 import akka.stream.{ ClosedShape, Graph, SourceShape }
 import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
@@ -13,30 +15,28 @@ import join.cassandra.CassandraSource
 import microservice.crawler.NbaResultView
 import microservice.settings.CustomSettings
 
-object StandingStream {
-  /*
-  val teamsTable = "teams"
-  val qTeams = for { q ← select("SELECT processor_id FROM {0}") } yield q
-
-  def qResults(seqNum: Long)(r: Row) = for {
-    _ ← select(s"select persistence_id, sequence_nr, message from {0} where persistence_id = ? and sequence_nr > $seqNum and partition_nr = 0")
-    q ← fk[java.lang.String]("persistence_id", r.getString("processor_id"))
-  } yield q*/
-}
-
 trait StandingStream {
-  mixin: CassandraQueriesSupport with Actor with ActorLogging {
-    def settings: CustomSettings
-    def serialization: Serialization
-  } =>
+  mixin: Actor =>
 
   import FlowGraph.Implicits._
 
-  def quorumClient = cassandraClient(ConsistencyLevel.QUORUM)
+  private def flow(teams: Map[String, Int], journal: String) = Source.fromGraph(
 
-  private def flow(teams: Map[String, Int], journal: String)(implicit session: CassandraSource#Session) = Source.fromGraph(
     FlowGraph.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
+      teams.foreach { kv =>
+        PersistenceQuery(context.system)
+          .readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
+          .eventsByPersistenceId(kv._1, kv._2, Long.MaxValue)
+          .collect {
+            case env if (env.event.isInstanceOf[ResultAdded]) =>
+              val e = env.event.asInstanceOf[ResultAdded]
+              NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)
+          } ~> merge
+      }
+      SourceShape(merge.out)
+
+      /*
       teams.foreach { kv =>
         eventlog.Log[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
           .source.map(row => serialization.deserialize(Bytes.getArray(row.getBytes("message")), classOf[PersistentRepr]).get.payload)
@@ -45,10 +45,11 @@ trait StandingStream {
           } ~> merge
       }
       SourceShape(merge.out)
+      */
     }
   )
 
-  def replayGraph(teams: Map[String, Int], journal: String)(implicit session: CassandraSource#Session): Graph[ClosedShape, Unit] = {
+  def replayGraph(teams: Map[String, Int], journal: String): Graph[ClosedShape, Unit] = {
     FlowGraph.create() { implicit b =>
       flow(teams, journal) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
       ClosedShape

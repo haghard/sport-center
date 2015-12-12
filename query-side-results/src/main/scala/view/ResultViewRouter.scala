@@ -1,10 +1,8 @@
 package view
 
 import akka.stream.scaladsl.RunnableGraph
-import query.ResultStream
+import query.ResultsJournal
 import akka.actor.{ Props, Actor, ActorLogging }
-import akka.serialization.SerializationExtension
-import domain.update.CassandraQueriesSupport
 import microservice.crawler.{ NbaResultView, Location }
 import microservice.domain.State
 import microservice.http.RestService.ResponseBody
@@ -21,8 +19,7 @@ object ResultViewRouter {
   def props(settings: CustomSettings) = Props(classOf[ResultViewRouter], settings)
 }
 
-class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
-    with ResultStream with CassandraQueriesSupport {
+class ResultViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging with ResultsJournal {
   import ResultViewRouter._
   var updateCnt = 0
   val decider: Supervision.Decider = {
@@ -31,27 +28,23 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
       Supervision.stop
   }
 
-  val serialization = SerializationExtension(context.system)
   private val formatter = microservice.crawler.searchFormatter()
   private val viewByDate = mutable.HashMap[String, ArrayBuffer[NbaResultView]]()
   private val viewByTeam = mutable.HashMap[String, mutable.SortedSet[NbaResultView]]()
 
-  val client = newQuorumClient
   val tryToRefreshEvery = settings.refreshIntervals.resultsPeriod
   var offsets = settings.teamConferences.keySet./:(Map.empty[String, Int])((map, c) => map + (c -> 0))
 
-  implicit var session = (newQuorumClient connect settings.cassandra.keyspace)
-
+  implicit val ctx = context.system.dispatchers.lookup("stream-dispatcher")
   implicit val Mat = ActorMaterializer(ActorMaterializerSettings(context.system)
     .withDispatcher("stream-dispatcher")
     .withSupervisionStrategy(decider)
     .withInputBuffer(32, 64))(context.system)
 
-  override def preStart() = {
+  override def preStart() =
     context.system.scheduler.scheduleOnce(tryToRefreshEvery)(
       RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run()(Mat)
     )
-  }
 
   override def receive: Receive = {
     case r: NbaResultView =>

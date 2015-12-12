@@ -1,9 +1,7 @@
 package query
 
-import akka.serialization.SerializationExtension
 import akka.stream.javadsl.RunnableGraph
-import akka.stream.{ ActorMaterializerSettings, ActorMaterializer, Supervision }
-import domain.update.CassandraQueriesSupport
+import akka.stream.{ ActorMaterializerSettings, Supervision, ActorMaterializer }
 import org.joda.time.DateTime
 import akka.actor.ActorDSL._
 import scala.collection.immutable
@@ -32,13 +30,12 @@ object StandingViewRouter {
 }
 
 class StandingViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
-    with StandingStream with CassandraQueriesSupport {
+    with StandingStream /*with CassandraQueriesSupport*/ {
   import query.StandingViewRouter._
 
   var updateCnt = 0
   val tryToRefreshEvery = settings.refreshIntervals.standingsPeriod
   val formatter = searchFormatter()
-  val serialization = SerializationExtension(context.system)
   var offsets = settings.teamConferences.keySet.foldLeft(Map.empty[String, Int])((map, c) => map + (c -> 0))
 
   val decider: Supervision.Decider = {
@@ -47,7 +44,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
       Supervision.stop
   }
 
-  implicit var session = (quorumClient connect settings.cassandra.keyspace)
+  implicit val ctx = context.system.dispatchers.lookup("stream-dispatcher")
   implicit val Mat = ActorMaterializer(ActorMaterializerSettings(context.system)
     .withDispatcher("stream-dispatcher")
     .withSupervisionStrategy(decider)

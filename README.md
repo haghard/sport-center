@@ -57,13 +57,13 @@ All docker's configuration can be found in `sportcenter/bootstrap/build.sbt`. Yo
 
 ##### Cassandra cluster #####
 
-Run [Cassandra](http://http://cassandra.apache.org) cluster with at least 3 nodes. Example for 192.168.0.134 192.168.0.182, 192.168.0.86, 192.168.0.171 
+Run [Cassandra](http://http://cassandra.apache.org) cluster with at least 3 nodes. Example for 192.168.0.134 192.168.0.82, 192.168.0.88 
 
-> docker run -it -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /home/haghard/Projects/cassandra_docker3:/var/lib/cassandra cassandra:2.2.0
+>  docker run -it -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.134 -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -p 7000:7000 -p 9042:9042 -p 9160:9160 -p 7199:7199 -v /media/haghard/data2/scenter-cassandra:/var/lib/cassandra cassandra:3.0.1
   
->  docker run -it -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.86 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /home/haghard/Projects/cassandra_docker3:/var/lib/cassandra cassandra:2.2.0
+>  docker run -it -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.82 -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /media/haghard/data2/scenter-cassandra:/var/lib/cassandra cassandra:3.0.1
   
->  docker run -it -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.171 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /home/haghard/Projects/cassandra_docker3:/var/lib/cassandra cassandra:2.2.0
+>  docker run -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.88 -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /media/haghard/data2/scenter-cassandra:/var/lib/cassandra cassandra:3.0.1 
   
 
 where /home/haghard/Projects/cassandra_docker has this subdirectories:
@@ -166,4 +166,3 @@ For testing we can use this:
   
   `http GET 192.168.0.62:2561/api/standings/2013-01-28 'Cookie:_sessiondata=...'`
   
- 

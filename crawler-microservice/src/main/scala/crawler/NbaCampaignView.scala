@@ -1,35 +1,48 @@
 package crawler
 
 import java.util.Date
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.query.PersistenceQuery
+import akka.stream.scaladsl.Sink
+import microservice.crawler._
 import microservice.domain.State
-import akka.actor.{ ActorLogging, Props }
+import akka.actor.{ Actor, ActorLogging, Props }
 import domain.CrawlerCampaign.CampaignPersistedEvent
 import crawler.http.CrawlerMicroservice.GetLastCrawlDate
 
-import scala.concurrent.duration._
-
 object NbaCampaignView {
-  private val path = "nba"
+  private val campaignName = "nba"
 
   case class LastUpdateDate(lastIterationDate: Option[Date] = None) extends State
 
   def props(dispatcher: String): Props =
-    Props(new NbaCampaignView).withDispatcher(dispatcher)
+    Props(new NbaCampaignView(dispatcher)).withDispatcher(dispatcher)
 }
 
-class NbaCampaignView extends akka.persistence.PersistentView with ActorLogging {
+class NbaCampaignView(dispatcher: String) extends Actor with ActorLogging {
   import NbaCampaignView._
 
   private var state = LastUpdateDate()
+  private val formatter = estFormatter()
 
-  override val autoUpdateInterval = 3 seconds
+  val settings = akka.stream.ActorMaterializerSettings(context.system).withDispatcher(dispatcher)
+  implicit val mat = akka.stream.ActorMaterializer(settings)(context.system)
 
-  override def viewId = "nba-campaign-view"
+  val journal = PersistenceQuery(context.system)
+    .readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
+    .eventsByPersistenceId(campaignName, 0l, Long.MaxValue)
 
-  override def persistenceId = path
+  journal
+    .filter(_.event.isInstanceOf[CampaignPersistedEvent])
+    .map { env =>
+      val event = env.event.asInstanceOf[CampaignPersistedEvent]
+      log.info(s"NbaCampaign crawler progress ***${(formatter format (event.dt))}***")
+      event
+    }.to(Sink.actorRef[CampaignPersistedEvent](self, 'NbaCampaignCompleted)).run()
 
   override def receive: Receive = {
     case q: GetLastCrawlDate              ⇒ sender() ! state
     case CampaignPersistedEvent(_, dt, _) ⇒ state = state.copy(Some(dt))
+    case 'NbaCampaignCompleted            => log.info("NbaCampaignCompleted")
   }
 }
