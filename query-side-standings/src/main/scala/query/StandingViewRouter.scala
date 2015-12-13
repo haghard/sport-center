@@ -30,7 +30,7 @@ object StandingViewRouter {
 }
 
 class StandingViewRouter private (val settings: CustomSettings) extends Actor with ActorLogging
-    with StandingStream /*with CassandraQueriesSupport*/ {
+    with StandingStream {
   import query.StandingViewRouter._
 
   var updateCnt = 0
@@ -65,7 +65,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
   })
 
   override def preStart() =
-    RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat)
+    RunnableGraph.fromGraph(replayGraph(offsets)).run(Mat)
 
   override def receive: Receive = {
     case r: NbaResultView =>
@@ -76,7 +76,7 @@ class StandingViewRouter private (val settings: CustomSettings) extends Actor wi
     case 'RefreshCompleted =>
       log.info("ResultView: {} changes have been discovered", updateCnt)
       updateCnt = 0
-      context.system.scheduler.scheduleOnce(tryToRefreshEvery)(RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run(Mat))
+      context.system.scheduler.scheduleOnce(tryToRefreshEvery)(RunnableGraph.fromGraph(replayGraph(offsets)).run(Mat))
 
     case GetStandingByDate(uri, dateTime) ⇒
       viewPartition(dateTime).fold {

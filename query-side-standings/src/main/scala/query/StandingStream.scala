@@ -20,7 +20,7 @@ trait StandingStream {
 
   import FlowGraph.Implicits._
 
-  private def flow(teams: Map[String, Int], journal: String) = Source.fromGraph(
+  private def flow(teams: Map[String, Int]) = Source.fromGraph(
 
     FlowGraph.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
@@ -49,9 +49,9 @@ trait StandingStream {
     }
   )
 
-  def replayGraph(teams: Map[String, Int], journal: String): Graph[ClosedShape, Unit] = {
+  def replayGraph(teams: Map[String, Int]): Graph[ClosedShape, Unit] = {
     FlowGraph.create() { implicit b =>
-      flow(teams, journal) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
+      flow(teams) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
       ClosedShape
     }
   }
