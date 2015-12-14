@@ -36,13 +36,13 @@ class NbaCampaignView(dispatcher: String) extends Actor with ActorLogging {
     .filter(_.event.isInstanceOf[CampaignPersistedEvent])
     .map { env =>
       val event = env.event.asInstanceOf[CampaignPersistedEvent]
-      log.info(s"NbaCampaign crawler progress ***${(formatter format (event.dt))}***")
+      log.info(s"Crawler PROGRESS: ${(formatter format (event.dt))}")
       event
-    }.to(Sink.actorRef[CampaignPersistedEvent](self, 'NbaCampaignCompleted)).run()
+    }.to(Sink.actorRef[CampaignPersistedEvent](self, 'Completed)).run()
 
   override def receive: Receive = {
     case q: GetLastCrawlDate              ⇒ sender() ! state
     case CampaignPersistedEvent(_, dt, _) ⇒ state = state.copy(Some(dt))
-    case 'NbaCampaignCompleted            => log.info("NbaCampaignCompleted")
+    case 'Completed            => log.info("Completed")
   }
 }

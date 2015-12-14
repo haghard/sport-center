@@ -1,7 +1,7 @@
 package crawler.writer
 
 import akka.actor._
-import akka.pattern.ask
+import akka.pattern.{ BackoffSupervisor, ask }
 import crawler.CrawlerRoot
 import microservice.crawler._
 import domain.CrawlerCampaign
@@ -20,7 +20,7 @@ object CrawlerGuardian {
   implicit object ShardResolution extends CustomShardResolution[CrawlerCampaign]
   implicit object agFactory extends AggregateRootActorFactory[CrawlerCampaign] {
     override def inactivityTimeout = 10 minute
-    override def props(pc: PassivationConfig) = Props(new CrawlerCampaign(pc))
+    override def props(pc: PassivationConfig) = CrawlerCampaign.props(pc)
   }
 
   def props(settings: CustomSettings) = Props(new CrawlerGuardian(settings))
@@ -51,7 +51,6 @@ class CrawlerGuardian private (settings: CustomSettings) extends Actor with Acto
     val start = startPoint.fold(throw new Exception("app-settings.stages prop must be defined")) {
       _._1.getStart.withZone(SCENTER_TIME_ZONE).withTime(23, 59, 59, 0).toDate
     }
-    log.info("CrawlerGuardian")
     campaign ! InitCampaign(start)
   }
 

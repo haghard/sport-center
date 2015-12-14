@@ -1,5 +1,6 @@
 package domain
 
+import akka.actor.Props
 import ddd._
 import java.util.Date
 import microservice.crawler._
@@ -48,6 +49,8 @@ object CrawlerCampaign {
       case r: RequestCampaign          => this
     }
   }
+
+  def props(pc: PassivationConfig) = Props(new CrawlerCampaign(pc))
 }
 
 class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[CampaignState] with IdempotentReceiver {
@@ -86,20 +89,20 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
       }
   }
 
+  @tailrec final def loop(acc: List[String], fromDate: DateTime, toDate: DateTime, batchSize: Int): (DateTime, List[String]) = {
+    if (fromDate.isBefore(toDate) && batchSize > 0) {
+      val nextDate = fromDate + Period.days(1)
+      val path = s"""${nextDate.year().get()}${alignProp(nextDate.monthOfYear())}${alignProp(nextDate.dayOfMonth())}/"""
+      log.info(s"URL $urlPrefix/$path has been formed")
+      loop(acc :+ s"$urlPrefix/$path", nextDate, toDate, batchSize - 1)
+    } else (fromDate, acc)
+  }
+
   private def collectBatch(batchSize: Int) = {
     val localBatchSize = batchSize
     val lastCrawlDate = new DateTime(state.progressDate.get).withZone(SCENTER_TIME_ZONE)
     val crawlLimitDate = new DateTime().withZone(SCENTER_TIME_ZONE) - timeOffset
     log.info("Crawl before: {}. Last crawler date: {}", (formatter format crawlLimitDate.toDate), (formatter format lastCrawlDate.toDate))
-
-    @tailrec def loop(acc: List[String], fromDate: DateTime, toDate: DateTime, batchSize: Int): (DateTime, List[String]) = {
-      if (fromDate.isBefore(toDate) && batchSize > 0) {
-        val nextDate = fromDate + Period.days(1)
-        val path = s"""${nextDate.year().get()}${alignProp(nextDate.monthOfYear())}${alignProp(nextDate.dayOfMonth())}/"""
-        log.info(s"URL $urlPrefix/$path has been formed")
-        loop(acc :+ s"$urlPrefix/$path", nextDate, toDate, batchSize - 1)
-      } else (fromDate, acc)
-    }
 
     loop(List.empty[String], lastCrawlDate, crawlLimitDate, localBatchSize) match {
       case (_, Nil)                     ⇒ replyTo ! CrawlerTask(None)

@@ -1,19 +1,12 @@
 package query
 
-import akka.actor.{ ActorLogging, Actor }
-import akka.persistence.PersistentRepr
+import akka.actor.Actor
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
-import akka.serialization.Serialization
 import akka.stream.{ ClosedShape, Graph, SourceShape }
 import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
-import com.datastax.driver.core.utils.Bytes
-import com.datastax.driver.core.ConsistencyLevel
 import domain.TeamAggregate.ResultAdded
-import domain.update.CassandraQueriesSupport
-import join.cassandra.CassandraSource
 import microservice.crawler.NbaResultView
-import microservice.settings.CustomSettings
 
 trait StandingStream {
   mixin: Actor =>
