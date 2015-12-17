@@ -16,7 +16,7 @@ object Dependencies {
   }
 
   object akka {
-    val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources()
+    val actor                 = "com.typesafe.akka"       %%    "akka-actor"                    % Akka withSources() //akkaExclude
     val cluster               = "com.typesafe.akka"       %%    "akka-cluster"                  % Akka withSources()
 
     val sharding              = "com.typesafe.akka"       %%    "akka-cluster-sharding"         %  Akka withSources()
@@ -47,9 +47,6 @@ object Dependencies {
 
   val nscala_time  = "com.github.nscala-time" %% "nscala-time"   % "1.6.0"
 
-  val slf4j_api        = "org.slf4j"        %     "slf4j-api"       % Akka
-  val logback          = "ch.qos.logback"   %     "logback-classic" % "1.1.2"
-
   val specs2           = "org.specs2"             %% "specs2"                % "3.0-M1"   %   "test"
   val scalatest        = "org.scalatest"          %% "scalatest"             % "2.2.5"    %   "test"
   val scalacheck       = "org.scalacheck"         %% "scalacheck"            % "1.12.4"   %   "test" exclude("org.scala-lang", "*")
@@ -72,5 +69,5 @@ object Dependencies {
 
   val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.5-SNAPSHOT"
 
-  val http_session     = "com.softwaremill"       %% "akka-http-session"       % "0.1.4"
+  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.2" //exclude("ch.qos.logback", "logback-classic")
 }

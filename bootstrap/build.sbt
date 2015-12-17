@@ -28,13 +28,11 @@ clusterNodeType := "gateway-microservice"
 //clusterNodeType := "crawler-microservice"
 //clusterNodeType := "query-side-results"
 //clusterNodeType := "query-side-standings"
-//clusterNodeType := "spark-analytics-microservice"
 
 mainJarClass := "configuration.container.GatewayBootstrap"
 //mainJarClass := "configuration.container.CrawlerBootstrap"
 //mainJarClass := "configuration.container.QueryResultsBootstrap"
 //mainJarClass := "configuration.container.QueryStandingBootstrap"
-//mainJarClass := "configuration.container.AnalyticsBootstrap"
 
 assemblyJarName in assembly := s"scenter-${clusterNodeType.value}.jar"
 
@@ -84,7 +82,7 @@ dockerfile in docker := {
 
 imageNames in docker := Seq(
   ImageName(namespace = Some("haghard"),
-    repository = "sport-center-" + clusterNodeType.value, tag = Some("v0.1")))
+    repository = "sport-center-" + clusterNodeType.value, tag = Some("v0.2")))
 
 buildOptions in docker := BuildOptions(cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,

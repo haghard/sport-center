@@ -2,10 +2,13 @@ package microservice.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server._
+import com.softwaremill.session.SessionDirectives._
 import microservice.SystemSettings
 import microservice.api.BootableMicroservice
 import microservice.api.MicroserviceKernel._
-import com.softwaremill.session.{ RememberMeStorage, InMemoryRememberMeStorage, SessionManager, SessionConfig }
+import com.softwaremill.session._
+
+import scala.concurrent.ExecutionContext
 
 trait BootableRestService extends SystemSettings with Directives {
   mixin: BootableMicroservice =>
@@ -20,6 +23,8 @@ trait BootableRestService extends SystemSettings with Directives {
 
   val httpDispatcher = microserviceDispatcher
 
+  def salt = settings.session.sail
+
   def withUri: Directive1[String] = extract(_.request.uri.toString())
 
   def installApi(api: RestApiJunction)(implicit system: ActorSystem, interface: String, httpPort: Int) = {
@@ -33,14 +38,14 @@ trait BootableRestService extends SystemSettings with Directives {
 
   def uninstallApi(api: RestApiJunction) = api.postAction.foreach(action => action())
 
-  implicit val sessionManager = new SessionManager[Session](SessionConfig.default(settings.session.secret)
-    .withClientSessionEncryptData(true)
-    .withClientSessionMaxAgeSeconds(Option(settings.session.ttl))
-    .withRememberMeCookieMaxAge(Option(settings.session.ttl)))
+  implicit val sessionManager = new SessionManager[Session](SessionConfig.default(settings.session.secret))
+  //.withClientSessionEncryptData(true)
+  //.withClientSessionMaxAgeSeconds(Option(settings.session.ttl))
+  //.withRememberMeCookieMaxAge(Option(settings.session.ttl)))
 
-  implicit val rememberMeStorage: RememberMeStorage[Session] = new InMemoryRememberMeStorage[Session] {
-    override def log(msg: String) = system.log.info("remember-me {}", msg)
+  implicit val refreshTokenStorage = new InMemoryRefreshTokenStorage[Session] {
+    def log(msg: String) = system.log.info("Refresh token {}", msg)
   }
 
-  def sail = settings.session.sail
+  def requiredHttpSession(implicit ec: ExecutionContext) = requiredSession(refreshable, usingCookies)
 }

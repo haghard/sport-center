@@ -1,6 +1,7 @@
 package http
 
 import akka.http.scaladsl.server._
+import com.softwaremill.session.CsrfDirectives._
 import http.UsersMicroservices.UserProtocols
 import microservice.SystemSettings
 import microservice.api.BootableMicroservice
@@ -26,12 +27,14 @@ trait UsersMicroservices extends BootableRestService with SystemSettings
     super.configureApi() ~ RestApiJunction(route = Option({ ec: ExecutionContext ⇒ loginRoute(ec) }))
 
   private def loginRoute(implicit ex: ExecutionContext): Route = {
-    randomTokenCsrfProtection() {
-      pathPrefix(pathPref) {
-        (get & path("login")) {
+    pathPrefix(pathPref) {
+      path("login") {
+        get {
           parameters('user.as[String], 'email.as[String]).as(RawUser) { rawUser ⇒
-            val u = s"${rawUser.login}:${microservice.http.User.encryptPassword(rawUser.email, sail)}"
-            setPersistentSession(Session(u)) { ctx => ctx.complete(s"${rawUser.login} has been logged in") }
+            val u = s"${rawUser.login}:${microservice.http.User.encryptPassword(rawUser.email, salt)}"
+            setSession(refreshable, usingCookies, Session(u)) {
+              setNewCsrfToken(checkHeader) { ctx ⇒ ctx.complete(s"${rawUser.login} was logged in") }
+            }
           }
         }
       }

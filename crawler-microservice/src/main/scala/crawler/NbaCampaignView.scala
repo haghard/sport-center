@@ -43,6 +43,6 @@ class NbaCampaignView(dispatcher: String) extends Actor with ActorLogging {
   override def receive: Receive = {
     case q: GetLastCrawlDate              ⇒ sender() ! state
     case CampaignPersistedEvent(_, dt, _) ⇒ state = state.copy(Some(dt))
-    case 'Completed            => log.info("Completed")
+    case 'Completed                       => log.info("Completed")
   }
 }

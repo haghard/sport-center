@@ -13,7 +13,6 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(PreserveDanglingCloseParenthesis, true)
 
 libraryDependencies ++= Seq(
-  logback,
   jsoup,
   akka.testkit,
   scalatest,

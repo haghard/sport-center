@@ -12,7 +12,6 @@ object MicroserviceKernel {
   val CrawlerRole = "Crawler"
   val DomainRole = "Domain" //if you change this value you have to changed it in application.conf too
   val GatewayRole = "Gateway"
-  //val AnalyticRole = "Analytic"
 }
 
 abstract class MicroserviceKernel(override val akkaSystemPort: String,

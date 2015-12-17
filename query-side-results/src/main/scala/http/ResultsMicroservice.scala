@@ -109,11 +109,11 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
         Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was stopped on $httpPrefixAddress ★ ★ ★ ★ ★ ★")))
 
   private def resultsRoute(implicit ec: ExecutionContext): Route = {
-    randomTokenCsrfProtection() {
-      pathPrefix(pathPref) {
-        (get & path(servicePathPostfix / Segment)) { date ⇒
-          requiredPersistentSession() { session =>
-            withUri { uri ⇒
+    pathPrefix(pathPref) {
+      path(servicePathPostfix / Segment) { date ⇒
+        get {
+          withUri { uri ⇒
+            requiredHttpSession(ex) { session ⇒
               complete {
                 system.log.info(s"[$name]:[$session] - incoming request $uri")
                 Thread.sleep(resultsByDateLatency.get) // for testing por
@@ -127,10 +127,12 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
               }
             }
           }
-        } ~
-          (get & path(servicePathPostfix / Segment / "last")) { team ⇒
+        }
+      } ~
+        path(servicePathPostfix / Segment / "last") { team ⇒
+          get {
             parameters('size.as[Int] ?, 'loc ?).as(ResultsParams) { params ⇒
-              requiredPersistentSession() { session =>
+              requiredHttpSession(ex) { session ⇒
                 withUri { uri ⇒
                   complete {
                     import scalaz.Scalaz._
@@ -157,10 +159,12 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
               }
             }
           }
-      }
+        }
     } ~
-      (get & path("showShardRegions")) {
-        withUri(uri ⇒ complete(completeShowRegions(uri)))
+      path("showShardRegions") {
+        get {
+          withUri(uri ⇒ complete(completeShowRegions(uri)))
+        }
       }
   }
 
