@@ -64,7 +64,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
           List(
             curl("GET", s"$hystrixStream"),
             curl("GET", s"$pathPref/crawler"),
-            curl("GET", s"$servicePrefix/$scalarResponce"),
+            curl("GET", s"$servicePrefix/$scalarResponse"),
             curl("GET", s"$servicePrefix/$streamResponse"),
             curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
             curl("""PUT -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),

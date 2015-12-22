@@ -4,17 +4,17 @@ import akka.actor.Actor
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.stream.{ Graph, ClosedShape, SourceShape }
-import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
+import akka.stream.scaladsl.{ Merge, GraphDSL, Source, Sink }
 import domain.TeamAggregate.ResultAdded
 import microservice.crawler.NbaResultView
 
 trait ResultsJournal {
   mixin: Actor =>
 
-  import FlowGraph.Implicits._
+  import GraphDSL.Implicits._
 
   private def flow(teams: Map[String, Int], journal: String) /*(implicit session: CassandraSource#Session)*/ = Source.fromGraph(
-    FlowGraph.create() { implicit b =>
+    GraphDSL.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
         PersistenceQuery(context.system)
@@ -41,7 +41,7 @@ trait ResultsJournal {
   )
 
   def replayGraph(teams: Map[String, Int], journal: String): Graph[ClosedShape, Unit] = {
-    FlowGraph.create() { implicit b =>
+    GraphDSL.create() { implicit b =>
       flow(teams, journal) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
       ClosedShape
     }

@@ -21,12 +21,11 @@ import scala.util.Try
 import spray.json._
 
 import scalaz.{ -\/, \/- }
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
 
 object DiscoveryMicroservice {
   case class KVRequest(key: String, value: String)
 
-  val scalarResponce = "scalar"
+  val scalarResponse = "scalar"
   val streamResponse = "stream"
   val servicePrefix = "discovery"
 
@@ -56,19 +55,26 @@ trait DiscoveryMicroservice extends UsersMicroservices
       .withDispatcher(MicroserviceKernel.microserviceDispatcher))(system)
 
   abstract override def configureApi() =
-    super.configureApi() ~ RestApiJunction(route = Option({ ec: ExecutionContext ⇒ discoveryRoute(ec) }))
+    super.configureApi() ~ RestApiJunction(
+      route = Option({ ec: ExecutionContext ⇒ discoveryRoute(ec) }),
+      preAction = Option { () =>
+        system.log.info(s"\n★ ★ ★ Discovery: [$httpPrefixAddress/$servicePrefix/$streamResponse] [$httpPrefixAddress/$servicePrefix/$scalarResponse] ★ ★ ★")
+      })
 
   private def streamPublisher() = system.actorOf(ServiceRegistryPublisher.props(httpDispatcher))
+
+  implicit val DiscoveryMarshaller = messageToResponseMarshaller[LWWMap[DiscoveryLine], Unit]
 
   private def discoveryRoute(implicit ec: ExecutionContext): Route =
     pathPrefix(servicePrefix) {
       path(streamResponse) {
         get {
           complete {
-            ToResponseMarshallable(Source(ActorPublisher[LWWMap[DiscoveryLine]](streamPublisher())))(messageToResponseMarshaller)
+            //ToResponseMarshallable
+            Source.fromPublisher(ActorPublisher[LWWMap[DiscoveryLine]](streamPublisher()))
           }
         }
-      } ~ path(scalarResponce) {
+      } ~ path(scalarResponse) {
         get { ctx ⇒
           ServiceDiscovery(system)
             .findAll

@@ -10,7 +10,7 @@ import microservice.settings.CustomSettings
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.collection.JavaConverters._
-import FlowGraph.Implicits._
+import GraphDSL.Implicits._
 
 trait CassandraQueriesSupport {
   mixin: Actor {
@@ -22,7 +22,7 @@ trait CassandraQueriesSupport {
   private case class Tick()
 
   def readEvery[T](interval: FiniteDuration)(implicit ex: ExecutionContext) = {
-    FlowGraph.create() { implicit b =>
+    GraphDSL.create() { implicit b =>
       val zip = b.add(ZipWith[T, Tick, T](Keep.left).withAttributes(Attributes.inputBuffer(1, 1)))
       Source.tick(Duration.Zero, interval, Tick()) ~> zip.in1
       FlowShape(zip.in0, zip.out)

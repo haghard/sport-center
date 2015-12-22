@@ -4,18 +4,18 @@ import akka.actor.Actor
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.stream.{ ClosedShape, Graph, SourceShape }
-import akka.stream.scaladsl.{ Merge, FlowGraph, Source, Sink }
+import akka.stream.scaladsl._
 import domain.TeamAggregate.ResultAdded
 import microservice.crawler.NbaResultView
 
 trait StandingStream {
   mixin: Actor =>
 
-  import FlowGraph.Implicits._
+  import GraphDSL.Implicits._
 
   private def flow(teams: Map[String, Int]) = Source.fromGraph(
 
-    FlowGraph.create() { implicit b =>
+    GraphDSL.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
         PersistenceQuery(context.system)
@@ -29,21 +29,11 @@ trait StandingStream {
       }
       SourceShape(merge.out)
 
-      /*
-      teams.foreach { kv =>
-        eventlog.Log[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
-          .source.map(row => serialization.deserialize(Bytes.getArray(row.getBytes("message")), classOf[PersistentRepr]).get.payload)
-          .collect {
-            case e: ResultAdded => NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)
-          } ~> merge
-      }
-      SourceShape(merge.out)
-      */
     }
   )
 
   def replayGraph(teams: Map[String, Int]): Graph[ClosedShape, Unit] = {
-    FlowGraph.create() { implicit b =>
+    GraphDSL.create() { implicit b =>
       flow(teams) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
       ClosedShape
     }

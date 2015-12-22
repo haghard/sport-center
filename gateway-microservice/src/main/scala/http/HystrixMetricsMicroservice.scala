@@ -24,15 +24,22 @@ trait HystrixMetricsMicroservice extends DiscoveryMicroservice with SSEventsMars
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApiJunction(Option { ec: ExecutionContext ⇒ metricsStreamRoute(ec) })
+      RestApiJunction(
+        route = Option { ec: ExecutionContext ⇒ metricsStreamRoute(ec) },
+        preAction = Option { () =>
+          system.log.info(s"\n★ ★ ★ HystrixMetrics: [$httpPrefixAddress/$prefix/$stream] ★ ★ ★")
+        }
+      )
 
   private def metricsPublisher() = system.actorOf(HystrixMetricsPublisher.props.withDispatcher(dispatcher))
+
+  implicit val HystrixMarshaller = messageToResponseMarshaller[Vector[String], Unit]
 
   private def metricsStreamRoute(implicit ec: ExecutionContext): Route = {
     path(prefix / stream) {
       get {
         complete {
-          ToResponseMarshallable(Source(ActorPublisher[Vector[String]](metricsPublisher())))(messageToResponseMarshaller)
+          Source.fromPublisher(ActorPublisher[Vector[String]](metricsPublisher()))
         }
       }
     }

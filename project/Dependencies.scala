@@ -6,7 +6,7 @@ object Dependencies {
   val crossScala = Seq(Scala, "2.10.5")
 
   val Akka = "2.4.1"
-  val AkkaStreamsVersion = "2.0-M2"
+  val AkkaStreamsVersion = "2.0"
   val Hystrix = "1.4.14"
 
   implicit class Exclude(module: ModuleID) {
@@ -67,7 +67,7 @@ object Dependencies {
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
 
-  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.5-SNAPSHOT"
+  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.5"
 
-  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.2" //exclude("ch.qos.logback", "logback-classic")
+  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.2"
 }
