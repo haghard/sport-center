@@ -67,7 +67,7 @@ trait CrawlerMicroservice extends ShardedDomainReadService with AskSupport {
 
   override lazy val endpoints = List(s"$httpPrefixAddress/$pathPref/$servicePathPostfix")
 
-  private val view = system.actorOf(NbaCampaignView.props(httpDispatcher), name = "campaign-view")
+  //private val view = system.actorOf(NbaCampaignView.props(httpDispatcher), name = "campaign-view")
 
   abstract override def configureApi() =
     super.configureApi() ~
@@ -81,10 +81,11 @@ trait CrawlerMicroservice extends ShardedDomainReadService with AskSupport {
         withUri { uri ⇒
           system.log.info(s"[$name] - incoming request $uri")
           complete {
-            fetch[LastUpdateDate](GetLastCrawlDate(uri), view) map {
+            "Ok"
+            /*fetch[LastUpdateDate](GetLastCrawlDate(uri), view) map {
               case \/-(resp)  ⇒ success(CrawlerHttpResponse(uri, view = Option(viewName), body = Option(CrawlerResultsBody(resp))))
               case -\/(error) ⇒ fail(error)
-            }
+            }*/
           }
         }
       }
