@@ -9,7 +9,6 @@ object Project {
   val ivy = "/.ivy2/local/"
   //"/Volumes/Data/dev_build_tools/apache-maven-3.1.1/repository"
 
-
   val settings = Defaults.defaultConfigs ++ Seq(
     name := "scenter",
     organization := "com.github.haghard",
@@ -27,7 +26,7 @@ object Project {
       "spray repo"               at "http://repo.spray.io",
       "krasserm at bintray"      at "http://dl.bintray.com/krasserm/maven",
       "patriknw at bintray"      at "http://dl.bintray.com/patriknw/maven",
-      "Local Maven Repository"   at "file://" + Path.userHome.absolutePath + "/.m2/repository",
+      "Local Maven Repository"   at "file://" + Path.userHome.absolutePath + localMvnRepo,
       "Local Ivy Repository"     at "file:///" + ivy,
       "haghard-bintray"          at "http://dl.bintray.com/haghard/releases",
       Resolver.defaultLocal,
@@ -35,7 +34,7 @@ object Project {
     ),
 
     publishMavenStyle := true,
-    publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath + "/.m2/repository"))),
+    publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath + localMvnRepo))),
     //ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
 
     scalacOptions ++= Seq(
