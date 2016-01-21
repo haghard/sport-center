@@ -43,15 +43,8 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val cassandraPort = env.getConfig("db.cassandra").getString("port")
     val cassandraContactPoints = cassandraEPs.split(",").map(_.trim).mkString("\"", "\",\"", "\"")
 
-    val akkaSeeds = if (clusterRole == GatewayRole) {
-      Option(System.getProperty(SEEDS_ENV_VAR)).map(line => line.split(",").toList)
-          .fold(List(s"$externalAddress:$akkaSystemPort"))(s"$externalAddress:$akkaSystemPort" :: _)
-    } else {
-      Option(System.getProperty(SEEDS_ENV_VAR))
-        .fold(throw new Exception(s"$SEEDS_ENV_VAR env valuable should be defined"))(x => x.split(",").toList)
-    }
-
-    println("******************************" + akkaSeeds)
+    val akkaSeeds = Option(System.getProperty(SEEDS_ENV_VAR))
+      .fold(throw new Exception(s"$SEEDS_ENV_VAR ENV variable should be defined"))(x => x.split(",").toList)
 
     val seedNodesString = akkaSeeds.map { node =>
       val ap = node.split(":")
