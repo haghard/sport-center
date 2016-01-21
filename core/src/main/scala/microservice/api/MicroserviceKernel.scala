@@ -48,6 +48,9 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
         .fold(throw new Exception(s"$SEEDS_ENV_VAR env valuable should be defined"))(x => x.split(",").toList)
     }
 
+    val host = Option(System.getProperty(HOST_VAR))
+      .fold(throw new Exception(s"$HOST_VAR env valuable should be defined"))(identity)
+
     val seedNodesString = akkaSeeds.map { node =>
       val ap = node.split(":")
       s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@${ap(0)}:${ap(1)}""""
@@ -56,8 +59,15 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val seeds = (ConfigFactory parseString seedNodesString).resolve()
 
     val local = ConfigFactory.empty().withFallback(seeds)
+      //.withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
+      //.withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
+
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$host"))
+
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-port=$akkaSystemPort"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-hostname=$la"))
+
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.data-replication.gossip-interval = 1 s"))
       //$CrawlerRole.min-nr-of-members = 1
