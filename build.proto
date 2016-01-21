@@ -1,5 +1,9 @@
 #!/bin/sh
 
+rm -rf domain/src/main/java/
+rm -rf crawler-microservice/src/main/java
+mkdir domain/src/main/java/
+mkdir crawler-microservice/src/main/java
 
 protoc crawler-microservice/src/main/protobuf/*.proto --java_out=crawler-microservice/src/main/java
 protoc domain/src/main/protobuf/*.proto --java_out=domain/src/main/java
