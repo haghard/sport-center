@@ -30,10 +30,15 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
   override lazy val system = ActorSystem(ActorSystemName, config)
 
-  override def localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
+  override def externalAddress = Option(System.getProperty(HOST_VAR))
+    .fold(throw new Exception(s"$HOST_VAR env valuable should be defined"))(identity)
+
+    //seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
+
+  lazy val dockerHost = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
   lazy val config = {
-    val la = localAddress
+    val la = externalAddress
 
     val env = ConfigFactory.load("internals.conf")
     val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
@@ -48,9 +53,6 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
         .fold(throw new Exception(s"$SEEDS_ENV_VAR env valuable should be defined"))(x => x.split(",").toList)
     }
 
-    val host = Option(System.getProperty(HOST_VAR))
-      .fold(throw new Exception(s"$HOST_VAR env valuable should be defined"))(identity)
-
     val seedNodesString = akkaSeeds.map { node =>
       val ap = node.split(":")
       s"""akka.cluster.seed-nodes += "akka.tcp://$ActorSystemName@${ap(0)}:${ap(1)}""""
@@ -59,15 +61,10 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val seeds = (ConfigFactory parseString seedNodesString).resolve()
 
     val local = ConfigFactory.empty().withFallback(seeds)
-      //.withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
-      //.withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
-
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$host"))
-
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-port=$akkaSystemPort"))
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-hostname=$la"))
-
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-hostname=$dockerHost"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.data-replication.gossip-interval = 1 s"))
       //$CrawlerRole.min-nr-of-members = 1
@@ -99,7 +96,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val message = new StringBuilder().append('\n')
       .append("=====================================================================================================================================")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: $localAddress:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: [$dockerHost/$externalAddress]:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
       .append('\n')
       .append(s"★ ★ ★ ★ ★ ★  Cassandra contact points: ${system.settings.config.getStringList("cassandra-journal.contact-points")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
@@ -112,7 +109,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
     system.log.info(message)
 
-    installApi(restApi)(system, localAddress, httpPort)
+    installApi(restApi)(system, externalAddress, httpPort)
   }
 
   override def shutdown(): Unit = {

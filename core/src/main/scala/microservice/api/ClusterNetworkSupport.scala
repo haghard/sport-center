@@ -6,7 +6,7 @@ trait ClusterNetworkSupport {
 
   def ethName: String
 
-  def localAddress: String
+  def externalAddress: String
 
   def clusterRole: String
 
@@ -14,7 +14,7 @@ trait ClusterNetworkSupport {
 
   def jmxPort: Int
 
-  def httpPrefixAddress = s"http://$localAddress:$httpPort"
+  def httpPrefixAddress = s"http://$externalAddress:$httpPort"
 
-  def akkaClusterAddress = s"akka.tcp://${MicroserviceKernel.ActorSystemName}@${localAddress}:${akkaSystemPort}"
+  def akkaClusterAddress = s"akka.tcp://${MicroserviceKernel.ActorSystemName}@${externalAddress}:${akkaSystemPort}"
 }
