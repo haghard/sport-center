@@ -45,7 +45,9 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
     val akkaSeeds = if (clusterRole == GatewayRole) {
       Option(System.getProperty(SEEDS_ENV_VAR)).map(line => line.split(",").toList)
-        .fold(List(s"$la:$akkaSystemPort"))(s"$la:$akkaSystemPort" :: _)
+        .fold(List(s"$la:$akkaSystemPort"))(identity)
+      //(s"$la:$akkaSystemPort" :: _)
+
     } else {
       Option(System.getProperty(SEEDS_ENV_VAR))
         .fold(throw new Exception(s"$SEEDS_ENV_VAR env valuable should be defined"))(x => x.split(",").toList)
