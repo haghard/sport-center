@@ -95,38 +95,43 @@ This commands will run single instance for each cluster node(Gateway, Crawler, H
 
 ##### Sport-center cluster with docker on multiple machine #####
 
-Docker image id can be discovered with `docker images` command. Let's suppose we starting 3 gateway/seed node on 192.168.0.1, 192.168.0.2, 192.168.0.3  
+Docker image id can be discovered with `docker images` command. Let's suppose we starting 3 gateway/seed node on 109.234.39.32, 109.234.39.76, 109.234.39.77  
 
 ##### Run gateway layer #####
 
-on 192.168.0.1
-docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565
+host 109.234.39.32
+docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.2 --HOST=109.234.39.32 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555
 
-on 192.168.0.2
-docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555
+host 109.234.39.76
+docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.2 --HOST=109.234.39.76 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555
 
-on 192.168.0.3
-docker run --net="host" -it `gateway-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555
+host 109.234.39.77
+docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.2 --HOST=109.234.39.77 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555
 
-Now we have 3 http endpoints for underlaying api 192.168.0.1:2565, 192.168.0.2:2565, 192.168.0.3:2565 which are seed nodes for whole akka cluster. It isn't necessary to have all gateway's node as seed.
+Now we have 3 http endpoints for underlaying api 109.234.39.32:2565, 109.234.39.76:2565, 109.234.39.77:2565 which are seed nodes for whole akka cluster. It isn't necessary to have all gateway's node as seed.
 
 
 ##### Run crawler layer #####
 
-docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2556 --HTTP_PORT=2567 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
 
-docker run --net="host" -it `crawler-docker-image-id` --AKKA_PORT=2557 --HTTP_PORT=2568 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
+host 188.166.144.69
+docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-crawler-microservice:v0.2 --HOST=188.166.144.69 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
+
+host 188.166.144.70
+docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-crawler-microservice:v0.2 --HOST=188.166.144.70 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
 
 ...
 
 
 ##### Run query side http layer #####
 
-docker run --net="host" -it `sport-center-query-side-results-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
+host 188.166.144.69 
+docker run -it -p 2571:2571 -p 2568:2568 haghard/sport-center-query-side-results:v0.2 --HOST=188.166.144.69 --AKKA_PORT=2571 --HTTP_PORT=2568 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
 
 ....
 
-docker run --net="host" -it `sport-center-query-side-standings-docker-image-id` --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.1:2555,192.168.0.2:2555,192.168.0.3:2555 --DB_HOSTS=192.168.0.182,192.168.0.134
+host 188.166.144.69
+docker run -it -p 2570:2570 -p 2567:2567 haghard/sport-center-query-side-standings:v0.2 --HOST=188.166.144.69 --AKKA_PORT=2570 --HTTP_PORT=2567 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
 
 ....
 
