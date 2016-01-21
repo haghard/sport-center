@@ -14,12 +14,12 @@ trait JmxAgent extends BootableMicroservice {
     val server = ManagementFactory.getPlatformMBeanServer
     val env = new java.util.HashMap[String, Object]()
 
-    System.setProperty("java.rmi.server.hostname", externalAddress)
+    System.setProperty("java.rmi.server.hostname", localAddress)
     System.setProperty("com.sun.management.jmxremote.port", jmxPort.toString)
     System.setProperty("com.sun.management.jmxremote.authenticate", "false")
     System.setProperty("com.sun.management.jmxremote.ssl", "false")
 
-    val address = new JMXServiceURL(s"service:jmx:rmi:///jndi/rmi://$externalAddress:$jmxPort/jmxrmi")
+    val address = new JMXServiceURL(s"service:jmx:rmi:///jndi/rmi://$localAddress:$jmxPort/jmxrmi")
     val connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(address, env, server)
     Try(connectorServer.start) recover {
       case ex: Throwable ⇒ system.log.info("JMX server start error {}", ex.getMessage)

@@ -23,10 +23,10 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
 
   implicit val proxyTimeout = akka.util.Timeout(3 seconds)
 
-  private val gateway = system.actorOf(ApiGateway.props(externalAddress, httpPort), "gateway")
+  private val gateway = system.actorOf(ApiGateway.props(localAddress, httpPort), "gateway")
 
   private def curl(method: String, resourcePath: String) =
-    s"curl -i -X $method http://$externalAddress:$httpPort/$resourcePath"
+    s"curl -i -X $method http://$localAddress:$httpPort/$resourcePath"
 
   /*
    * If this actor fails we will lost all routes
@@ -52,7 +52,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
               .mapTo[HttpResponse]
               .recover {
                 case ex: Exception ⇒
-                  HttpResponse(InternalServerError, List(Host(HostHeader(externalAddress), httpPort)), ex.getMessage)
+                  HttpResponse(InternalServerError, List(Host(HostHeader(localAddress), httpPort)), ex.getMessage)
               }
           }
       }

@@ -30,15 +30,13 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
   override lazy val system = ActorSystem(ActorSystemName, config)
 
-  override def externalAddress = Option(System.getProperty(HOST_VAR))
+  override def localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
+
+  override lazy val externalAddress = Option(System.getProperty(HOST_VAR))
     .fold(throw new Exception(s"$HOST_VAR env valuable should be defined"))(identity)
 
-    //seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
-
-  lazy val dockerHost = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
-
   lazy val config = {
-    val la = externalAddress
+    val la = localAddress
 
     val env = ConfigFactory.load("internals.conf")
     val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
@@ -62,9 +60,9 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
     val local = ConfigFactory.empty().withFallback(seeds)
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-port=$akkaSystemPort"))
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-hostname=$dockerHost"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.bind-hostname=$localAddress"))
       .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$akkaSystemPort"))
-      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$la"))
+      .withFallback(ConfigFactory.parseString(s"akka.remote.netty.tcp.hostname=$externalAddress"))
       .withFallback(ConfigFactory.parseString(s"akka.cluster.roles = [${clusterRole}]"))
       .withFallback(ConfigFactory.parseString("akka.data-replication.gossip-interval = 1 s"))
       //$CrawlerRole.min-nr-of-members = 1
@@ -96,7 +94,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val message = new StringBuilder().append('\n')
       .append("=====================================================================================================================================")
       .append('\n')
-      .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: [$dockerHost/$externalAddress]:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
+      .append(s"★ ★ ★ ★ ★ ★  Cluster environment: $environment - Akka-System: [docker:$localAddress - ext:$externalAddress]:$akkaSystemPort  ★ ★ ★ ★ ★ ★")
       .append('\n')
       .append(s"★ ★ ★ ★ ★ ★  Cassandra contact points: ${system.settings.config.getStringList("cassandra-journal.contact-points")}  ★ ★ ★ ★ ★ ★")
       .append('\n')
@@ -109,7 +107,7 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
     system.log.info(message)
 
-    installApi(restApi)(system, externalAddress, httpPort)
+    installApi(restApi)(system, localAddress, httpPort)
   }
 
   override def shutdown(): Unit = {

@@ -31,22 +31,22 @@ trait ShardedDomainReadService extends BootableRestService {
 
   def servicePathPostfix: String
 
-  lazy val key = s"akka.tcp://$ActorSystemName@$externalAddress:$akkaSystemPort"
+  lazy val key = s"akka.tcp://$ActorSystemName@$localAddress:$akkaSystemPort"
 
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
         HttpResponse(
           akka.http.scaladsl.model.StatusCodes.BadRequest,
-          List(Host(HostHeader(externalAddress), httpPort)),
+          List(Host(HostHeader(localAddress), httpPort)),
           Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
   protected def fail(error: String) =
-    HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError, List(Host(HostHeader(externalAddress), httpPort)), error)
+    HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError, List(Host(HostHeader(localAddress), httpPort)), error)
 
   protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
     HttpResponse(
       akka.http.scaladsl.model.StatusCodes.OK,
-      List(Host(HostHeader(externalAddress), httpPort)),
+      List(Host(HostHeader(localAddress), httpPort)),
       Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
 }
