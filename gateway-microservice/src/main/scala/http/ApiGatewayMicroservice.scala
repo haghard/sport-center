@@ -1,8 +1,7 @@
 package http
 
-import discovery.ServiceDiscovery
 import gateway.ApiGateway
-import microservice.SystemSettings
+import discovery.ServiceDiscovery
 import microservice.http.RestApiJunction
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
 import akka.http.scaladsl.model.headers.Host
@@ -14,10 +13,13 @@ import scala.concurrent.duration._
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
 
-import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.ExecutionContext
 
 trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
   mixin: ClusterNetworkSupport with BootableMicroservice ⇒
+
+  import DiscoveryMicroservice._
+  import HystrixMetricsMicroservice._
 
   override val name = "ApiGatewayMicroservice"
 
@@ -58,12 +60,9 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
       }
     } ~ path("routes") {
       get { ctx =>
-        import DiscoveryMicroservice._
-        import HystrixMetricsMicroservice._
         ctx.complete {
           List(
             curl("GET", s"$hystrixStream"),
-            curl("GET", s"$pathPref/crawler"),
             curl("GET", s"$servicePrefix/$scalarResponse"),
             curl("GET", s"$servicePrefix/$streamResponse"),
             curl("""POST -d '{"key":"api.results","value":"111"}' -H "Content-Type:application/json" """, servicePrefix),
