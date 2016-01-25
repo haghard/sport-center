@@ -31,7 +31,7 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
     with MustMatchers
     with BeforeAndAfterAll {
 
-  val waitTime = 15 seconds
+  val waitTime = 30 seconds
 
   val teams = asScalaBuffer(system.settings.config
     .getConfig("app-settings")
@@ -46,8 +46,8 @@ class WebGetterSpec extends TestKit(ActorSystem("Crawler", WebGetterSpec.cluster
   "WebGetter" should {
     "collect non empty results for specific page" in {
       val probe = TestProbe()
-      val url =
-        "http://www.nba.com/gameline/20121127/" //recap is absent
+      val url = "http://www.nba.com/gameline/20160123/"
+      //"http://www.nba.com/gameline/20121127/" //recap is absent
       //"http://www.nba.com/gameline/20151027/"
       //"http://www.nba.com/gameline/20140705/"
       //"http://www.nba.com/gameline/20140222/"

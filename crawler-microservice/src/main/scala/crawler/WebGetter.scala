@@ -20,7 +20,7 @@ object WebGetter {
 class WebGetter(teams: Seq[String]) extends Actor with ActorLogging with RegexSupport {
   import crawler.WebGetter._
 
-  private val sep = new DateTime()
+  private val from2012to2015 = new DateTime()
     .withZone(microservice.crawler.JODA_EST)
     .withDate(2015, 10, 26).withTime(23, 59, 59, 0)
 
@@ -38,11 +38,8 @@ class WebGetter(teams: Seq[String]) extends Actor with ActorLogging with RegexSu
       case other => throw new WebGetterException("Parse error date in url", url)
     }
 
-    val acc = if (dateTime isBefore sep) {
-      (Crawler[From2012] crawl (url, teams, log))
-    } else {
-      (Crawler[From2015] crawl (url, teams, log))
-    }
+    val acc = if (dateTime isBefore from2012to2015) (Crawler[From2012] crawl (url, teams, log))
+    else (Crawler[From2015] crawl (url, teams, log))
 
     log.info("WebGetter uri:[{}] has been completed with size: {}", url, acc.size)
     sender ! (url, acc)
