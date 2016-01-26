@@ -82,7 +82,7 @@ dockerfile in docker := {
 
 imageNames in docker := Seq(
   ImageName(namespace = Some("haghard"),
-    repository = "sport-center-" + clusterNodeType.value, tag = Some("v0.2")))
+    repository = "sport-center-" + clusterNodeType.value, tag = Some("v0.3")))
 
 buildOptions in docker := BuildOptions(cache = false,
   removeIntermediateContainers = BuildOptions.Remove.Always,
