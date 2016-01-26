@@ -24,7 +24,6 @@ object Project {
       "Scalaz Bintray Repo"      at "http://dl.bintray.com/scalaz/releases",
       "m2"                       at	"https://repo1.maven.org/maven2/",
       "spray repo"               at "http://repo.spray.io",
-      "krasserm at bintray"      at "http://dl.bintray.com/krasserm/maven",
       "patriknw at bintray"      at "http://dl.bintray.com/patriknw/maven",
       "Local Maven Repository"   at "file://" + Path.userHome.absolutePath + localMvnRepo,
       "Local Ivy Repository"     at "file:///" + ivy,

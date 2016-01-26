@@ -5,8 +5,8 @@ object Dependencies {
   val Scala = "2.11.7"
   val crossScala = Seq(Scala, "2.10.5")
 
-  val Akka = "2.4.1"
-  val AkkaStreamsVersion = "2.0.2"
+  val Akka = "2.4.2-RC1"
+  val AkkaStreamsVersion = "2.0.3"
   val Hystrix = "1.4.14"
 
   implicit class Exclude(module: ModuleID) {
@@ -23,7 +23,7 @@ object Dependencies {
     val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"            %  Akka withSources()
 
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence"              % Akka withSources() intransitive()
-    val persistence_cassandra = "com.github.krasserm"     %%    "akka-persistence-cassandra-3x" % "0.6"
+    val persistence_cassandra = "com.typesafe.akka"       %%    "akka-persistence-cassandra"    % "0.8"
 
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
     
