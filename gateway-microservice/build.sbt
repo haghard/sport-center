@@ -19,5 +19,6 @@ libraryDependencies ++= Seq(
   hystrix,
   hystrix_stream,
   turbine,
-  rxscala
+  rxscala,
+  akka.http
 )

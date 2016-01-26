@@ -26,6 +26,8 @@ object Dependencies {
 
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
 
+    val http                  = "com.typesafe.akka"       %%    "akka-http-experimental"             % Akka
+
     val slf4j                 = "com.typesafe.akka"       %%    "akka-slf4j"                    % Akka
     val testkit               = "com.typesafe.akka"       %%    "akka-testkit"                  % Akka
     val multi_node_testkit    = "com.typesafe.akka"       %%    "akka-multi-node-testkit"       % Akka

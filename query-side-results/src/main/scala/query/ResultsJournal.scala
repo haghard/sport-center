@@ -3,7 +3,7 @@ package query
 import akka.actor.Actor
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
-import akka.stream.{ Graph, ClosedShape, SourceShape }
+import akka.stream.{ ClosedShape, SourceShape }
 import akka.stream.scaladsl.{ Merge, GraphDSL, Source, Sink }
 import domain.TeamAggregate.ResultAdded
 import microservice.crawler.NbaResultView
@@ -40,7 +40,7 @@ trait ResultsJournal {
     }
   )
 
-  def replayGraph(teams: Map[String, Int], journal: String): Graph[ClosedShape, Unit] = {
+  def replayGraph(teams: Map[String, Int], journal: String) = {
     GraphDSL.create() { implicit b =>
       flow(teams, journal) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
       ClosedShape

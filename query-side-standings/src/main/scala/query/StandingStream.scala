@@ -14,7 +14,6 @@ trait StandingStream {
   import GraphDSL.Implicits._
 
   private def flow(teams: Map[String, Int]) = Source.fromGraph(
-
     GraphDSL.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
@@ -28,11 +27,10 @@ trait StandingStream {
           } ~> merge
       }
       SourceShape(merge.out)
-
     }
   )
 
-  def replayGraph(teams: Map[String, Int]): Graph[ClosedShape, Unit] = {
+  def replayGraph(teams: Map[String, Int]) = {
     GraphDSL.create() { implicit b =>
       flow(teams) ~> Sink.actorRef[NbaResultView](self, 'RefreshCompleted)
       ClosedShape

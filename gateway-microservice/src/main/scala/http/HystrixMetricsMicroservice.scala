@@ -33,7 +33,7 @@ trait HystrixMetricsMicroservice extends DiscoveryMicroservice with SSEventsMars
 
   private def metricsPublisher() = system.actorOf(HystrixMetricsPublisher.props.withDispatcher(dispatcher))
 
-  implicit val HystrixMarshaller = messageToResponseMarshaller[Vector[String], Unit]
+  implicit val HystrixMarshaller = messageToResponseMarshaller[Vector[String], akka.NotUsed]
 
   private def metricsStreamRoute(implicit ec: ExecutionContext): Route = {
     path(prefix / stream) {

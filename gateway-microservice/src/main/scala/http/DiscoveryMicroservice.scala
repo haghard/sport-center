@@ -1,11 +1,12 @@
 package http
 
 import akka.cluster.ddata.LWWMap
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.server.{ Route, Directives }
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
-import akka.stream.{ Materializer, ActorMaterializerSettings, ActorMaterializer }
 import akka.stream.actor.ActorPublisher
+import akka.stream.{ Materializer, ActorMaterializerSettings, ActorMaterializer }
 import akka.stream.scaladsl.Source
 import discovery.ServiceDiscovery
 import discovery.ServiceDiscovery._
@@ -63,14 +64,14 @@ trait DiscoveryMicroservice extends UsersMicroservices
 
   private def streamPublisher() = system.actorOf(ServiceRegistryPublisher.props(httpDispatcher))
 
-  implicit val DiscoveryMarshaller = messageToResponseMarshaller[LWWMap[DiscoveryLine], Unit]
+  implicit val DiscoveryMarshaller = messageToResponseMarshaller[LWWMap[DiscoveryLine], akka.NotUsed]
 
   private def discoveryRoute(implicit ec: ExecutionContext): Route =
     pathPrefix(servicePrefix) {
       path(streamResponse) {
         get {
           complete {
-            //ToResponseMarshallable
+            //: ToResponseMarshallable
             Source.fromPublisher(ActorPublisher[LWWMap[DiscoveryLine]](streamPublisher()))
           }
         }
