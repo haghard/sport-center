@@ -3,8 +3,8 @@ package domain.update
 import akka.actor.{ ActorRef, Actor }
 import akka.persistence.PersistentRepr
 import akka.serialization.Serialization
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Sink
+import akka.stream.{ FlowShape, Attributes, ActorMaterializer }
+import akka.stream.scaladsl._
 import com.datastax.driver.core.{ ConsistencyLevel, Row }
 import com.datastax.driver.core.utils.Bytes
 import domain.CrawlerCampaign.CampaignPersistedEvent
@@ -17,7 +17,8 @@ import join.cassandra.CassandraSource
 import microservice.settings.CustomSettings
 
 import scala.collection.immutable.SortedSet
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 import akka.pattern.ask
 
 object ChangesStream {
@@ -25,6 +26,16 @@ object ChangesStream {
     override def compare(x: CreateResult, y: CreateResult) =
       x.result.dt.compareTo(y.result.dt)
   }
+
+  case class Tick()
+
+  def readEvery[T](interval: FiniteDuration)(implicit ex: ExecutionContext) =
+    GraphDSL.create() { implicit builder =>
+      import GraphDSL.Implicits._
+      val zip = builder.add(ZipWith[T, Tick, T](Keep.left).withAttributes(Attributes.inputBuffer(1, 1)))
+      Source.tick(Duration.Zero, interval, Tick()) ~> zip.in1
+      FlowShape(zip.in0, zip.out)
+    }
 
   private val campaignTable = "campaign"
 }
@@ -66,7 +77,7 @@ trait ChangesStream {
 
   def quorumClient = cassandraClient(ConsistencyLevel.QUORUM)
 
-  def changesStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef)(implicit Mat: ActorMaterializer): Unit =
+  def changesStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef)(implicit Mat: ActorMaterializer): Unit = {
     ((fetchChanges(seqNum)(client)) via readEvery(interval))
       .mapAsync(1) { ch => (des.ask(ch)(interval)).mapTo[Long] } //sort of back pressure
       .to(Sink.onComplete { _ =>
@@ -76,5 +87,5 @@ trait ChangesStream {
           })
         }
       }).run()(Mat)
-
+  }
 }

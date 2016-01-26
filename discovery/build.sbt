@@ -22,7 +22,6 @@ libraryDependencies ++= Seq(
   akka.cluster_tools,
   akka.akka_distributed_data,
   akka.multi_node_testkit,
-  //akka.http,
   scalatest
 )
 

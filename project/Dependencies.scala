@@ -65,5 +65,5 @@ object Dependencies {
 
   val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.9"
 
-  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.2"
+  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.3"
 }

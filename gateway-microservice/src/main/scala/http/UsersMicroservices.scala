@@ -1,7 +1,6 @@
 package http
 
 import akka.http.scaladsl.server._
-import com.softwaremill.session.CsrfDirectives._
 import http.UsersMicroservices.UserProtocols
 import microservice.SystemSettings
 import microservice.api.BootableMicroservice
@@ -21,6 +20,8 @@ object UsersMicroservices {
 trait UsersMicroservices extends BootableRestService with SystemSettings
     with UserProtocols { mixin: Directives with BootableMicroservice ⇒
 
+  import com.softwaremill.session.SessionOptions._
+
   implicit val ec = system.dispatchers.lookup(httpDispatcher)
 
   abstract override def configureApi() =
@@ -33,7 +34,7 @@ trait UsersMicroservices extends BootableRestService with SystemSettings
           parameters('user.as[String], 'email.as[String]).as(RawUser) { rawUser ⇒
             val u = s"${rawUser.login}:${microservice.http.User.encryptPassword(rawUser.email, salt)}"
             setSession(refreshable, usingCookies, Session(u)) {
-              setNewCsrfToken(checkHeader) { ctx ⇒ ctx.complete(s"${rawUser.login} was logged in") }
+              complete(s"${rawUser.login} was logged in")
             }
           }
         }

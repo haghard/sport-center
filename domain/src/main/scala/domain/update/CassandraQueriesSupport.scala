@@ -10,7 +10,6 @@ import microservice.settings.CustomSettings
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.collection.JavaConverters._
-import GraphDSL.Implicits._
 
 trait CassandraQueriesSupport {
   mixin: Actor {
@@ -18,16 +17,6 @@ trait CassandraQueriesSupport {
   } =>
 
   implicit val ctx = context.system.dispatchers.lookup("stream-dispatcher")
-
-  private case class Tick()
-
-  def readEvery[T](interval: FiniteDuration)(implicit ex: ExecutionContext) = {
-    GraphDSL.create() { implicit b =>
-      val zip = b.add(ZipWith[T, Tick, T](Keep.left).withAttributes(Attributes.inputBuffer(1, 1)))
-      Source.tick(Duration.Zero, interval, Tick()) ~> zip.in1
-      FlowShape(zip.in0, zip.out)
-    }
-  }
 
   def cassandraClient(cl: ConsistencyLevel): CassandraSource#Client = {
     val qs = new QueryOptions()

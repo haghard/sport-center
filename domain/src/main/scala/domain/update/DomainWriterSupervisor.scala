@@ -1,7 +1,6 @@
 package domain.update
 
 import akka.actor._
-import akka.cluster.sharding.ShardRegion
 import scala.concurrent.duration._
 import microservice.domain.Command
 import domain.TeamAggregate.CreateResult

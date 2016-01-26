@@ -13,6 +13,8 @@ import scala.concurrent.ExecutionContext
 trait BootableRestService extends SystemSettings with Directives {
   mixin: BootableMicroservice =>
 
+  import com.softwaremill.session.SessionOptions._
+
   def name: String
 
   val pathPref = "api"
