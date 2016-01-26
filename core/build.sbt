@@ -15,7 +15,6 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 libraryDependencies ++= Seq(
   akka.cluster,
-  akka.streams.akka_http,
   spray_json,
   json4s,
   scalaz,

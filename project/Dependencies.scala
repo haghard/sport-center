@@ -6,7 +6,6 @@ object Dependencies {
   val crossScala = Seq(Scala, "2.10.5")
 
   val Akka = "2.4.2-RC1"
-  val AkkaStreamsVersion = "2.0.2"
   val Hystrix = "1.4.14"
 
   implicit class Exclude(module: ModuleID) {
@@ -26,11 +25,6 @@ object Dependencies {
     val persistence_cassandra = "com.typesafe.akka"       %%    "akka-persistence-cassandra"    % "0.8"
 
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
-    
-    object streams {
-      val akka_http                = "com.typesafe.akka"    %%    "akka-http-experimental"        % AkkaStreamsVersion withSources()
-      val akka_http_core           = "com.typesafe.akka"    %%    "akka-http-core-experimental"   % AkkaStreamsVersion withSources()
-    }
 
     val slf4j                 = "com.typesafe.akka"       %%    "akka-slf4j"                    % Akka
     val testkit               = "com.typesafe.akka"       %%    "akka-testkit"                  % Akka
