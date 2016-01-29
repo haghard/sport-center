@@ -48,25 +48,17 @@ trait DiscoveryClientSupport extends BootableMicroservice {
             system.log.info(
               new StringBuilder().append("\n")
                 .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error").toString)
-            throw new Exception("Registration hasn't been competed")
+            //TODO exit
         }(discoveryDispatcher)
     }
   }
 
   abstract override def startup() = {
     cluster.registerOnMemberUp {
-      try {
-        system.log.info(new StringBuilder().append("\n")
-          .append(s"★ ★ ★ Microservice endpoints [${endpoints.mkString("\t")}] ★ ★ ★")
-          .toString)
-        registerMyself(endpoints)(set)
-      } catch {
-        case ex: Exception =>
-          system.log.info("***********************************" + ex.getMessage)
-          cluster.leave(cluster.selfAddress)
-          super.shutdown()
-
-      }
+      system.log.info(new StringBuilder().append("\n")
+        .append(s"★ ★ ★ Microservice endpoints [${endpoints.mkString("\t")}] ★ ★ ★")
+        .toString)
+      registerMyself(endpoints)(set)
     }
     super.startup()
   }

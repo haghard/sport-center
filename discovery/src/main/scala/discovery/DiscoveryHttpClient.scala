@@ -15,7 +15,7 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.StatusCodes._
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import akka.stream.{ ActorMaterializerSettings, ActorMaterializer }
-import akka.http.scaladsl.model.{ HttpResponse, HttpEntity, HttpRequest, StatusCode }
+import akka.http.scaladsl.model._
 
 object DiscoveryHttpClient {
 
@@ -70,20 +70,7 @@ trait DiscoveryHttpClient extends DiscoveryClient
     call(req)
   }
 
-  private def call(req: HttpRequest): Future[StatusCode] = {
-    /*
-    val rndGateway = gatewayNodes(ThreadLocalRandom.current().nextInt(gatewayNodes.size) % gatewayNodes.size)
-    val gatewayHttpPort = rndGateway._2 + 10  //+10 is a convention for gateways
-    system.log.info(" Gateway node {}:{} was selected for service registration", rndGateway._1, gatewayHttpPort)
-    (Source.single(req) via Http(system).outgoingConnection(rndGateway._1, gatewayHttpPort))
-      .runWith(Sink.head[HttpResponse])
-      .flatMap { response ⇒
-        response.status match {
-          case OK    ⇒ Future.successful(OK)
-          case other ⇒ Future.failed(new IOException(other.toString))
-        }
-      }*/
-
+  private def call(req: HttpRequest): Future[StatusCode] =
     askForDiscoveryNodeAddresses()
       .flatMap {
         case \/-(nodes) ⇒
@@ -109,5 +96,4 @@ trait DiscoveryHttpClient extends DiscoveryClient
           }
         case -\/(error) ⇒ Future.failed(new IOException(error))
       }
-  }
 }
