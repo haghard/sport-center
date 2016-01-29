@@ -16,15 +16,13 @@ import scalaz.{ -\/, \/, \/- }
 trait DiscoveryClientSupport extends BootableMicroservice {
   self: ShardedDomainReadService with DiscoveryClient ⇒
 
-  private val duration = 5 seconds
   private val cluster = akka.cluster.Cluster(system)
-  val discoveryDispatcherName = "scheduler-dispatcher"
-  private implicit val discoveryTimeout = akka.util.Timeout(duration)
+  private val discoveryDispatcherName = "scheduler-dispatcher"
+  private implicit val discoveryTimeout = akka.util.Timeout(5 seconds)
   private implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
 
   private val clusterMonitor = system.actorOf(
     ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), "cluster-monitor")
-
 
   protected def askForDiscoveryNodeAddresses(): Future[String \/ Vector[Address]] =
     clusterMonitor
@@ -43,8 +41,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
         op(key, endpoint).onComplete {
           case Success(_) ⇒
             system.log.info(
-              new StringBuilder().append("\n")
-                .append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully registered")
+              new StringBuilder().append("\n").append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully registered")
                 .toString)
             registerMyself(tail)(op)
           case Failure(ex) ⇒
