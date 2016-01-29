@@ -72,8 +72,9 @@ trait DiscoveryHttpClient extends DiscoveryClient
 
   private def call(req: HttpRequest): Future[StatusCode] = {
     val rndGateway = gatewayNodes(ThreadLocalRandom.current().nextInt(gatewayNodes.size) % gatewayNodes.size)
-    system.log.info("Gateway node {} was selected for service registration", rndGateway._2)
-    (Source.single(req) via Http(system).outgoingConnection(rndGateway._1, rndGateway._2))
+    val gatewayHttpPort = rndGateway._2 + 10  //+10 is a convention for gateways
+    system.log.info(" Gateway node {}:{} was selected for service registration", rndGateway._1, gatewayHttpPort)
+    (Source.single(req) via Http(system).outgoingConnection(rndGateway._1, gatewayHttpPort))
       .runWith(Sink.head[HttpResponse])
       .flatMap { response ⇒
         response.status match {
