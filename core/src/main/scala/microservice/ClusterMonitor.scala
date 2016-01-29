@@ -18,7 +18,7 @@ class ClusterMonitor private (val role: Option[String], val nodes: mutable.Set[a
   private def read: Receive = {
     case GetHttpNodes =>
       //Convention: http port for gateway nodes is akka system port + 10
-      sender() ! (nodes.map(a => a.copy(port = a.port.map(_ + 10)))).toVector
+      sender() ! (nodes.map(a => a.copy(port = a.port.map(_ + 11)))).toVector
   }
 
   override def receive = withClusterEvents(read)

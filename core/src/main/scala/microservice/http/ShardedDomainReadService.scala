@@ -33,13 +33,6 @@ trait ShardedDomainReadService extends BootableRestService {
 
   lazy val key = s"akka.tcp://$ActorSystemName@$localAddress:$akkaSystemPort"
 
-  lazy val externalKey = s"akka.tcp://$ActorSystemName@$externalAddress:$akkaSystemPort"
-
-  lazy val seeds = akkaSeeds.map{ ipAndPort =>
-    val arr = ipAndPort.split(':')
-    (arr(0), arr(1).toInt)
-  }
-
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(

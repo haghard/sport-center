@@ -36,10 +36,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
         case ex: Exception           ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses error ${ex.getMessage}"))
       }(discoveryDispatcher)
 
-
-  //lazy val gatewayNodes = seeds.toVector
-
-  private def registerSequence(endpoints: List[String])(op: (String, String) ⇒ Future[StatusCode]): Unit = {
+  private def registerMyself(endpoints: List[String])(op: (String, String) ⇒ Future[StatusCode]): Unit = {
     endpoints match {
       case Nil ⇒
       case endpoint :: tail ⇒
@@ -49,13 +46,12 @@ trait DiscoveryClientSupport extends BootableMicroservice {
               new StringBuilder().append("\n")
                 .append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully registered")
                 .toString)
-            registerSequence(tail)(op)
+            registerMyself(tail)(op)
           case Failure(ex) ⇒
             system.log.info(
               new StringBuilder().append("\n")
-                .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error")
-                .toString
-            )
+                .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error").toString)
+            throw new Exception("Registration hasn't been competed")
         }(discoveryDispatcher)
     }
   }
@@ -65,7 +61,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
       system.log.info(new StringBuilder().append("\n")
         .append(s"★ ★ ★ Microservice endpoints [${endpoints.mkString("\t")}] ★ ★ ★")
         .toString)
-      registerSequence(endpoints)(set)
+      registerMyself(endpoints)(set)
     }
     super.startup()
   }
@@ -90,10 +86,10 @@ trait DiscoveryClientSupport extends BootableMicroservice {
     Future.successful(statusCodes)
   }
 
-  private def unregisterSequence = Await.result(cleanup, (duration * endpoints.size))
+  private def unregisterMyself = Await.result(cleanup, (duration * endpoints.size))
 
   abstract override def shutdown() = {
-    unregisterSequence
+    unregisterMyself
     cluster.leave(cluster.selfAddress)
     super.shutdown()
   }
