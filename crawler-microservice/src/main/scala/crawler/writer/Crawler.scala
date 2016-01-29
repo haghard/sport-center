@@ -253,46 +253,55 @@ object Crawler {
         val detailsUri = s"http://www.nba.com$postfix"
         val detailsPage = fetchWebPage(detailsUri)
 
-        val sections = detailsPage.getElementsByAttributeValue("class", "nbaGIScoreTime Final")
-          .get(0)
-          .childNodes()
+        Try {
+          val sections = detailsPage.getElementsByAttributeValue("class", "nbaGIScoreTime Final")
+            .get(0)
+            .childNodes()
 
-        val container = detailsPage.getElementById("nbaGameInfoContainer")
-        val box = container.child(1)
-        val awayBox = box.child(1).child(1)
-        val homeBox = box.child(2).child(1)
+          val container = detailsPage.getElementById("nbaGameInfoContainer")
+          println(detailsUri)
 
-        val homeRows = homeBox.children().toList.tail.tail
-        val (homePlayers, homeTotal) = homeRows.splitAt(homeRows.size - 2)
-        val awayRows = awayBox.children().toList.tail.tail
-        val (awayPlayers, awayTotal) = awayRows.splitAt(awayRows.size - 2)
+          val box = container.child(1)
+          val awayBox = box.child(1).child(1)
+          val homeBox = box.child(2).child(1)
 
-        val hb = extractPlayers(homePlayers)
-        val ab = extractPlayers(awayPlayers)
+          val homeRows = homeBox.children().toList.tail.tail
+          val (homePlayers, homeTotal) = homeRows.splitAt(homeRows.size - 2)
+          val awayRows = awayBox.children().toList.tail.tail
+          val (awayPlayers, awayTotal) = awayRows.splitAt(awayRows.size - 2)
 
-        val ht = extractTotal(homeTotal.head)
-        val at = extractTotal(awayTotal.head)
+          val hb = extractPlayers(homePlayers)
+          val ab = extractPlayers(awayPlayers)
 
-        val dateTime = extractDateTime(sections.get(0), dt)
-        val teams = extractTeams(sections.get(1))
-        val scoreLine = extractScore(sections.get(2))
+          val ht = extractTotal(homeTotal.head)
+          val at = extractTotal(awayTotal.head)
 
-        ((dateTime |@| teams |@| scoreLine |@| hb |@| ab |@| ht |@| at) {
-          (dt, tm, scoreLine, hb, ab, ht, at) =>
-            val tms = tm.split("/")
-            val sc = scoreLine.split("/")
-            val sep0 = sc(0).lastIndexOf('-')
-            val sep1 = sc(1).lastIndexOf('-')
-            NbaResult(awayTeam = tms(0).toLowerCase, homeTeam = tms(1).toLowerCase,
-              homeScore = (sc(1).substring(sep1 + 1)).toInt, awayScore = (sc(0).substring(sep0 + 1)).toInt,
-              dt = dt.toDate,
-              homeScoreBox = sc(1).substring(0, sep1), awayScoreBox = sc(0).substring(0, sep0),
-              homeBox = hb, awayBox = ab, homeTotal = ht, awayTotal = at)
-        }).fold({ fail: NonEmptyList[String] =>
-          log.info("Html parsing errors: {}", fail)
-          //if error return nothing, timeout to rescue
-          throw new CrawlerException(new Exception(fail.toString), detailsUri)
-        }, { _ :: acc })
+          val dateTime = extractDateTime(sections.get(0), dt)
+          val teams = extractTeams(sections.get(1))
+          val scoreLine = extractScore(sections.get(2))
+
+          ((dateTime |@| teams |@| scoreLine |@| hb |@| ab |@| ht |@| at) {
+            (dt, tm, scoreLine, hb, ab, ht, at) =>
+              val tms = tm.split("/")
+              val sc = scoreLine.split("/")
+              val sep0 = sc(0).lastIndexOf('-')
+              val sep1 = sc(1).lastIndexOf('-')
+              NbaResult(awayTeam = tms(0).toLowerCase, homeTeam = tms(1).toLowerCase,
+                homeScore = (sc(1).substring(sep1 + 1)).toInt, awayScore = (sc(0).substring(sep0 + 1)).toInt,
+                dt = dt.toDate,
+                homeScoreBox = sc(1).substring(0, sep1), awayScoreBox = sc(0).substring(0, sep0),
+                homeBox = hb, awayBox = ab, homeTotal = ht, awayTotal = at)
+          }).fold({ fail: NonEmptyList[String] =>
+            log.info("Html parsing errors: {}", fail)
+            //if error return nothing, timeout to rescue
+            throw new CrawlerException(new Exception(fail.toString), detailsUri)
+          }, {
+            _ :: acc
+          })
+        }.getOrElse {
+          log.info(s"Something is wrong with $detailsUri. Skip it for now")
+          acc
+        }
       }
     }
 

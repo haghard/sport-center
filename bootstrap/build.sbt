@@ -105,7 +105,7 @@ addCommandAlias("lstanding0", "bootstrap/run-main configuration.local.QueryStand
 addCommandAlias("lstanding1", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2558 --HTTP_PORT=9013 --DB_HOSTS=" + cassandra)
 
 
-//bootstrap/*:docker
+//bootstrap/docker
 //https://github.com/marcuslonnberg/sbt-docker
 //https://groups.google.com/forum/#!topic/akka-user/PaNIPdyD4ck
 
