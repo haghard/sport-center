@@ -17,7 +17,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   self: ShardedDomainReadService with DiscoveryClient ⇒
   val duration = 5 seconds
   private val cluster = akka.cluster.Cluster(system)
-  private val discoveryDispatcherName = "scheduler-dispatcher"
+  val discoveryDispatcherName = "scheduler-dispatcher"
   private implicit val discoveryTimeout = akka.util.Timeout(duration)
   private implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
 
