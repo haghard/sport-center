@@ -19,7 +19,7 @@ class ClusterMonitor private (val role: Option[String], val nodes: mutable.Set[a
     case GetHttpNodes =>
       //Convention: http port for gateway nodes is akka system port + 10
       val httpGateways = nodes.map(a => a.copy(port = a.port.map(_ + 11))).toVector
-      log.info(httpGateways.mkString(" - "))
+      log.info("**************************************************" + httpGateways.mkString(" - "))
       sender() ! httpGateways
   }
 
