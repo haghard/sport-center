@@ -19,7 +19,7 @@ object DomainWriterSupervisor {
 
 class DomainWriterSupervisor private (val settings: CustomSettings) extends Actor with ActorLogging
     with ChangesStream with CassandraQueriesSupport {
-  val iterationInterval = 3 seconds
+  val iterationInterval = 5 seconds
   val serialization = SerializationExtension(context.system)
 
   var requestor: Option[ActorRef] = None
