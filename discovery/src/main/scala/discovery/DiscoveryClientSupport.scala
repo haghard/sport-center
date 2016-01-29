@@ -22,9 +22,9 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   private implicit val discoveryTimeout = akka.util.Timeout(duration)
   private implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
 
-  private val clusterMonitor =
-    system.actorOf(ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), name = "cluster-monitor")
+  //private val clusterMonitor = system.actorOf(ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), name = "cluster-monitor")
 
+  /*
   protected def askForDiscoveryNodeAddresses(): Future[String \/ Vector[Address]] =
     clusterMonitor
       .ask(GetNodes)(discoveryTimeout)
@@ -34,12 +34,15 @@ trait DiscoveryClientSupport extends BootableMicroservice {
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses timeout ${ex.getMessage}"))
         case ex: Exception           ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses error ${ex.getMessage}"))
       }(discoveryDispatcher)
+  */
+
+  lazy val gatewayNodes = seeds.toVector
 
   private def registerSequence(endpoints: List[String])(op: (String, String) ⇒ Future[StatusCode]): Unit = {
     endpoints match {
       case Nil ⇒
       case endpoint :: tail ⇒
-        op(key, endpoint).onComplete {
+        op(externalKey, endpoint).onComplete {
           case Success(_) ⇒
             system.log.info(
               new StringBuilder().append("\n")

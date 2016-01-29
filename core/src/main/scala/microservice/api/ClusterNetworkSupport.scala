@@ -10,6 +10,8 @@ trait ClusterNetworkSupport {
 
   def externalAddress: String
 
+  def akkaSeeds: List[String]
+
   def clusterRole: String
 
   def httpPort: Int

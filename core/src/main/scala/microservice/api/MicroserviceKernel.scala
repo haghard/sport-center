@@ -35,6 +35,9 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
   override lazy val externalAddress = Option(System.getProperty(HOST_VAR))
     .fold(throw new Exception(s"$HOST_VAR env valuable should be defined"))(identity)
 
+  override lazy val akkaSeeds = Option(System.getProperty(SEEDS_ENV_VAR))
+    .fold(throw new Exception(s"$SEEDS_ENV_VAR ENV variable should be defined"))(x => x.split(",").toList)
+
   lazy val config = {
     val la = localAddress
 
@@ -42,9 +45,6 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
     val cassandraEPs = env.getConfig("db.cassandra").getString("seeds")
     val cassandraPort = env.getConfig("db.cassandra").getString("port")
     val cassandraContactPoints = cassandraEPs.split(",").map(_.trim).mkString("\"", "\",\"", "\"")
-
-    val akkaSeeds = Option(System.getProperty(SEEDS_ENV_VAR))
-      .fold(throw new Exception(s"$SEEDS_ENV_VAR ENV variable should be defined"))(x => x.split(",").toList)
 
     val seedNodesString = akkaSeeds.map { node =>
       val ap = node.split(":")
