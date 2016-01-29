@@ -47,6 +47,9 @@ trait ChangesStream {
   } =>
   import ChangesStream._
 
+  import scala.concurrent.duration._
+  val domainWriteTimeout = 15 seconds
+
   val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ (Any, Long) =
     (outer, inner) ⇒ {
       val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("message")), classOf[PersistentRepr]).get
@@ -79,7 +82,7 @@ trait ChangesStream {
 
   def changesStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef)(implicit Mat: ActorMaterializer): Unit = {
     ((fetchChanges(seqNum)(client)) via readEvery(interval))
-      .mapAsync(1) { ch => (des.ask(ch)(interval)).mapTo[Long] } //sort of back pressure
+      .mapAsync(1) { ch => (des.ask(ch)(domainWriteTimeout)).mapTo[Long] } //sort of back pressure
       .to(Sink.onComplete { _ =>
         (des.ask(GetLastChangeSetOffset)(interval)).mapTo[Long].map { n =>
           context.system.scheduler.scheduleOnce(interval, new Runnable {

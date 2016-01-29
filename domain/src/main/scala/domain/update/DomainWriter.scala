@@ -1,7 +1,6 @@
 package domain.update
 
 import akka.actor._
-import akka.cluster.sharding.ShardRegion
 import domain.ShardedDomain
 import microservice.domain.DomainEvent
 import domain.update.DomainWriterSupervisor.PersistDataChange
@@ -9,6 +8,7 @@ import akka.persistence.{ PersistentActor, RecoveryCompleted }
 
 /*
   import ddd.Shard._
+  import akka.cluster.sharding.ShardRegion
   import ddd.{ PassivationConfig, AggregateRootActorFactory, CustomShardResolution }
   import ddd.ClusteredShard._
   implicit object ShardResolution extends CustomShardResolution[domain.NbaTeam]

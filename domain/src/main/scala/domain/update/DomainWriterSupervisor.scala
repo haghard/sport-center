@@ -19,7 +19,7 @@ object DomainWriterSupervisor {
 
 class DomainWriterSupervisor private (val settings: CustomSettings) extends Actor with ActorLogging
     with ChangesStream with CassandraQueriesSupport {
-  val interval = 15 seconds
+  val iterationInterval = 3 seconds
   val serialization = SerializationExtension(context.system)
 
   var requestor: Option[ActorRef] = None
@@ -44,6 +44,6 @@ class DomainWriterSupervisor private (val settings: CustomSettings) extends Acto
   override def receive: Receive = {
     case offset: Long ⇒
       log.info("Last applied change-set №{}", offset)
-      changesStream(offset, interval, quorumClient, writer)
+      changesStream(offset, iterationInterval, quorumClient, writer)
   }
 }
