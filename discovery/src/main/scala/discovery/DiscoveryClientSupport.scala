@@ -16,10 +16,10 @@ import scalaz.{ -\/, \/, \/- }
 trait DiscoveryClientSupport extends BootableMicroservice {
   self: ShardedDomainReadService with DiscoveryClient ⇒
   val duration = 5 seconds
-  val cluster = akka.cluster.Cluster(system)
-  val discoveryDispatcherName = "scheduler-dispatcher"
-  implicit val discoveryTimeout = akka.util.Timeout(duration)
-  implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
+  private val cluster = akka.cluster.Cluster(system)
+  private val discoveryDispatcherName = "scheduler-dispatcher"
+  private implicit val discoveryTimeout = akka.util.Timeout(duration)
+  private implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
 
   private val clusterMonitor = system.actorOf(
     ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), "cluster-monitor")
