@@ -259,7 +259,7 @@ object Crawler {
             .childNodes()
 
           val container = detailsPage.getElementById("nbaGameInfoContainer")
-          println(detailsUri)
+          log.info(detailsUri)
 
           val box = container.child(1)
           val awayBox = box.child(1).child(1)
