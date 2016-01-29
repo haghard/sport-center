@@ -49,6 +49,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
               new StringBuilder().append("\n")
                 .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error").toString)
             throw new Exception("Registration hasn't been competed")
+            shutdown()
         }(discoveryDispatcher)
     }
   }
