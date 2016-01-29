@@ -1,12 +1,12 @@
 package discovery
 
 import akka.actor.Address
-import akka.http.scaladsl.model.{ StatusCodes, StatusCode }
-import akka.pattern.{ AskTimeoutException, ask }
 import microservice.ClusterMonitor
-import microservice.ClusterMonitor.GetNodes
-import microservice.api.{ MicroserviceKernel, BootableMicroservice }
+import microservice.ClusterMonitor.GetHttpNodes
+import akka.pattern.{ AskTimeoutException, ask }
 import microservice.http.ShardedDomainReadService
+import akka.http.scaladsl.model.{ StatusCodes, StatusCode }
+import microservice.api.{ MicroserviceKernel, BootableMicroservice }
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
@@ -22,27 +22,28 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   private implicit val discoveryTimeout = akka.util.Timeout(duration)
   private implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
 
-  //private val clusterMonitor = system.actorOf(ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), name = "cluster-monitor")
+  private val clusterMonitor = system.actorOf(
+    ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), "cluster-monitor")
 
-  /*
+
   protected def askForDiscoveryNodeAddresses(): Future[String \/ Vector[Address]] =
     clusterMonitor
-      .ask(GetNodes)(discoveryTimeout)
+      .ask(GetHttpNodes)(discoveryTimeout)
       .mapTo[Vector[Address]]
       .map(\/-(_))(discoveryDispatcher)
       .recoverWith {
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses timeout ${ex.getMessage}"))
         case ex: Exception           ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses error ${ex.getMessage}"))
       }(discoveryDispatcher)
-  */
 
-  lazy val gatewayNodes = seeds.toVector
+
+  //lazy val gatewayNodes = seeds.toVector
 
   private def registerSequence(endpoints: List[String])(op: (String, String) ⇒ Future[StatusCode]): Unit = {
     endpoints match {
       case Nil ⇒
       case endpoint :: tail ⇒
-        op(externalKey, endpoint).onComplete {
+        op(key, endpoint).onComplete {
           case Success(_) ⇒
             system.log.info(
               new StringBuilder().append("\n")
@@ -89,8 +90,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
     Future.successful(statusCodes)
   }
 
-  private def unregisterSequence =
-    Await.result(cleanup, (duration * endpoints.size))
+  private def unregisterSequence = Await.result(cleanup, (duration * endpoints.size))
 
   abstract override def shutdown() = {
     unregisterSequence

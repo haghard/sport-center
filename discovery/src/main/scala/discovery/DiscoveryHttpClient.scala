@@ -71,6 +71,7 @@ trait DiscoveryHttpClient extends DiscoveryClient
   }
 
   private def call(req: HttpRequest): Future[StatusCode] = {
+    /*
     val rndGateway = gatewayNodes(ThreadLocalRandom.current().nextInt(gatewayNodes.size) % gatewayNodes.size)
     val gatewayHttpPort = rndGateway._2 + 10  //+10 is a convention for gateways
     system.log.info(" Gateway node {}:{} was selected for service registration", rndGateway._1, gatewayHttpPort)
@@ -81,9 +82,9 @@ trait DiscoveryHttpClient extends DiscoveryClient
           case OK    ⇒ Future.successful(OK)
           case other ⇒ Future.failed(new IOException(other.toString))
         }
-      }
+      }*/
 
-    /*askForDiscoveryNodeAddresses()
+    askForDiscoveryNodeAddresses()
       .flatMap {
         case \/-(nodes) ⇒
           system.log.info("★ ★ ★ {} has been discovered on [{}] ★ ★ ★ ", microservice.api.MicroserviceKernel.GatewayRole, nodes.mkString(";"))
@@ -107,6 +108,6 @@ trait DiscoveryHttpClient extends DiscoveryClient
               }
           }
         case -\/(error) ⇒ Future.failed(new IOException(error))
-      }*/
+      }
   }
 }
