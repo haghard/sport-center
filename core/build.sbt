@@ -21,4 +21,6 @@ libraryDependencies ++= Seq(
   nscala_time,
   guava,
   protobuf,
-  http_session)
+  http_session,
+  akka.http,
+  akka.httpCore)
