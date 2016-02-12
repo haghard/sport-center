@@ -1,6 +1,6 @@
 package microservice
 
-import akka.actor.{ActorLogging, Props, Actor}
+import akka.actor.{ ActorLogging, Props, Actor }
 import microservice.ClusterMonitor.GetHttpNodes
 import microservice.api.ClusterMembershipAware
 import scala.collection.mutable

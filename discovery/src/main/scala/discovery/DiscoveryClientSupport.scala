@@ -48,7 +48,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
             system.log.info(
               new StringBuilder().append("\n")
                 .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error").toString)
-            //TODO exit
+          //TODO exit
         }(discoveryDispatcher)
     }
   }
