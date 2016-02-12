@@ -23,13 +23,6 @@ trait DomainSupport extends BootableMicroservice { this: SystemSettings =>
         .withRole(MicroserviceKernel.DomainRole)
         .withSingletonName("domain")
     ))
-    /*
-    val singletonProxy = system.actorOf(
-      ClusterSingletonProxy.props("/user/domain",
-        ClusterSingletonProxySettings.create(system)
-          .withRole(MicroserviceKernel.DomainRole)
-      ), "domainProxy")
-    */
     super.startup()
   }
 

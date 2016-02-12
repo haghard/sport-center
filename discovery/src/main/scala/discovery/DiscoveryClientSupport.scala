@@ -39,6 +39,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
     endpoints match {
       case Nil ⇒
       case endpoint :: tail ⇒
+        system.log.info("*****{}-{}", key, endpoint)
         op(key, endpoint).onComplete {
           case Success(_) ⇒
             system.log.info(
