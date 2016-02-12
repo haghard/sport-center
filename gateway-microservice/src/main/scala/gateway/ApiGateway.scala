@@ -41,7 +41,7 @@ object ApiGateway {
     Props(classOf[ApiGateway], localAddress, httpPort).withDispatcher(MicroserviceKernel.microserviceDispatcher)
 }
 
-class ApiGateway private (localAddress: String, httpPort: Int) extends Actor with ActorLogging {
+class ApiGateway private (address: String, httpPort: Int) extends Actor with ActorLogging {
   import gateway.ApiGateway._
 
   private var routees: Option[Map[String, List[Route]]] = None

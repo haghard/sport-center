@@ -31,7 +31,8 @@ trait ShardedDomainReadService extends BootableRestService {
 
   def servicePathPostfix: String
 
-  lazy val key = s"akka.tcp://$ActorSystemName@$localAddress:$akkaSystemPort"
+  //localAddress
+  lazy val key = s"akka.tcp://$ActorSystemName@$externalAddress:$akkaSystemPort"
 
   protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>

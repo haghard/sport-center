@@ -15,6 +15,7 @@ import scalaz.{ -\/, \/, \/- }
 
 trait DiscoveryClientSupport extends BootableMicroservice {
   self: ShardedDomainReadService with DiscoveryClient ⇒
+
   val duration = 5 seconds
   private val cluster = akka.cluster.Cluster(system)
   val discoveryDispatcherName = "scheduler-dispatcher"
@@ -56,7 +57,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   abstract override def startup() = {
     cluster.registerOnMemberUp {
       system.log.info(new StringBuilder().append("\n")
-        .append(s"★ ★ ★ Microservice endpoints [${endpoints.mkString("\t")}] ★ ★ ★")
+        .append(s"★ ★ ★ Microservice endpoints [${endpoints.mkString(" ")}] ★ ★ ★")
         .toString)
       registerMyself(endpoints)(set)
     }

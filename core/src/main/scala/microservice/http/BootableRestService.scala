@@ -41,9 +41,6 @@ trait BootableRestService extends SystemSettings with Directives {
   def uninstallApi(api: RestApiJunction) = api.postAction.foreach(action => action())
 
   implicit val sessionManager = new SessionManager[Session](SessionConfig.default(settings.session.secret))
-  //.withClientSessionEncryptData(true)
-  //.withClientSessionMaxAgeSeconds(Option(settings.session.ttl))
-  //.withRememberMeCookieMaxAge(Option(settings.session.ttl)))
 
   implicit val refreshTokenStorage = new InMemoryRefreshTokenStorage[Session] {
     def log(msg: String) = system.log.info("Refresh token {}", msg)
