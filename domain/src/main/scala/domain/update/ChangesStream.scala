@@ -68,7 +68,7 @@ trait ChangesStream {
   val qCampaign = for { q ← select("SELECT campaign_id FROM {0}") } yield q
 
   def qChanges(seqNum: Long)(r: Row) = for {
-    _ ← select(s"select persistence_id, sequence_nr, message from {0} where persistence_id = ? and sequence_nr > $seqNum and partition_nr = 0")
+    _ ← select(s"select persistence_id, sequence_nr, event, ser_id, ser_manifest from {0} where persistence_id = ? and sequence_nr > $seqNum and partition_nr = 0")
     q ← fk[java.lang.String]("persistence_id", r.getString("campaign_id"))
   } yield q
 
