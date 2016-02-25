@@ -49,12 +49,20 @@ trait ChangesStream {
 
   import scala.concurrent.duration._
 
+  //since akka-cassandra-persistence 0.11
+  private def deserializeEvent(serialization: Serialization, row: Row): Any = {
+    serialization.deserialize(
+      row.getBytes("event").array,
+      row.getInt("ser_id"),
+      row.getString("ser_manifest")
+    ).get
+  }
+
   val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ (Any, Long) =
     (outer, inner) ⇒ {
-      val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("event")), classOf[PersistentRepr]).get
-      rep.payload
+      val rep = deserializeEvent(serialization, inner)
       val seqN = inner.getLong("sequence_nr")
-      (rep.payload, seqN)
+      (rep, seqN)
     }
 
   val qCampaign = for { q ← select("SELECT campaign_id FROM {0}") } yield q
