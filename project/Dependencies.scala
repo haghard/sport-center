@@ -5,7 +5,7 @@ object Dependencies {
   val Scala = "2.11.7"
   val crossScala = Seq(Scala, "2.10.5")
 
-  val Akka = "2.4.2-RC2"
+  val Akka = "2.4.2"
   val Hystrix = "1.4.14"
 
   implicit class Exclude(module: ModuleID) {
@@ -22,7 +22,7 @@ object Dependencies {
     val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"            %  Akka withSources()
 
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence"              % Akka withSources() intransitive()
-    val persistence_cassandra = "com.typesafe.akka"       %%    "akka-persistence-cassandra"    % "0.9"
+    val persistence_cassandra = "com.typesafe.akka"       %%    "akka-persistence-cassandra"    % "0.11"
 
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
 
@@ -65,7 +65,7 @@ object Dependencies {
 
   val protobuf         = "com.google.protobuf"    %  "protobuf-java"           % "2.5.0"
 
-  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.13"
+  val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.14"
 
-  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.3"
+  val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.4"
 }
