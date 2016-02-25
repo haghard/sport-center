@@ -8,25 +8,15 @@ import discovery.DiscoveryClientSupport
 import microservice.AskSupport
 import microservice.api.MicroserviceKernel
 import microservice.http.ShardedDomainReadService.DateFormatToJson
-import microservice.http.{ Session, RestApiJunction, ShardedDomainReadService }
+import microservice.http.{ RestApiJunction, ShardedDomainReadService }
 
 import microservice.http.RestService.{ BasicHttpRequest, BasicHttpResponse, ResponseBody }
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scalaz.{ -\/, \/- }
 
 object CrawlerMicroservice {
-
-  /**
-   * Request
-   *
-   */
   case class GetLastCrawlDate(url: String) extends BasicHttpRequest
-
-  /*
-   * Response
-   */
   case class CrawlerHttpResponse(url: String, view: Option[String] = None,
     body: Option[ResponseBody] = None,
     error: Option[String] = None) extends BasicHttpResponse
@@ -57,7 +47,6 @@ object CrawlerMicroservice {
 
 trait CrawlerMicroservice extends ShardedDomainReadService with AskSupport {
   mixin: MicroserviceKernel with DiscoveryClientSupport with CrawlerGuardianSupport =>
-  import _root_.crawler.http.CrawlerMicroservice._
 
   override val name = "CrawlerMicroservice"
 
