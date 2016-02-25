@@ -7,13 +7,18 @@ import microservice.SystemSettings
 import microservice.api.BootableMicroservice
 import microservice.api.MicroserviceKernel._
 import com.softwaremill.session._
+import com.softwaremill.session.SessionOptions._
 
 import scala.concurrent.ExecutionContext
+import scala.util.Try
+import BootableRestService._
+
+object BootableRestService {
+  case class ServerSession(user: String, password: String)
+}
 
 trait BootableRestService extends SystemSettings with Directives {
   mixin: BootableMicroservice =>
-
-  import com.softwaremill.session.SessionOptions._
 
   def name: String
 
@@ -24,8 +29,6 @@ trait BootableRestService extends SystemSettings with Directives {
   def configureApi() = RestApiJunction()
 
   val httpDispatcher = microserviceDispatcher
-
-  def salt = settings.session.sail
 
   def withUri: Directive1[String] = extract(_.request.uri.toString())
 
@@ -40,9 +43,15 @@ trait BootableRestService extends SystemSettings with Directives {
 
   def uninstallApi(api: RestApiJunction) = api.postAction.foreach(action => action())
 
-  implicit val sessionManager = new SessionManager[Session](SessionConfig.default(settings.session.secret))
+  implicit val sessionManager = new SessionManager[ServerSession](SessionConfig.default(settings.session.secret))
 
-  implicit val refreshTokenStorage = new InMemoryRefreshTokenStorage[Session] {
+  implicit def serializer: SessionSerializer[ServerSession, String] =
+    new SingleValueSessionSerializer({ session: ServerSession ⇒ (session.user + "-" + session.password) }, { v: (String) ⇒
+      val kv = v.split("-")
+      Try(ServerSession(kv(0), kv(1)))
+    })
+
+  implicit val refreshTokenStorage = new InMemoryRefreshTokenStorage[ServerSession] {
     def log(msg: String) = system.log.info("Refresh token {}", msg)
   }
 

@@ -68,4 +68,6 @@ object Dependencies {
   val nosql_join       = "com.haghard"            %% "nosql-join-stream"       % "0.1.15"
 
   val http_session     = "com.softwaremill.akka-http-session"  %%  "core"      % "0.2.4"
+
+  val jbcrypt          = "org.mindrot"             %  "jbcrypt"                % "0.3m"
 }

@@ -21,5 +21,6 @@ libraryDependencies ++= Seq(
   turbine,
   rxscala,
   akka.http,
-  akka.httpCore
+  akka.httpCore,
+  jbcrypt
 )

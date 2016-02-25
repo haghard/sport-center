@@ -26,9 +26,7 @@ trait HystrixMetricsMicroservice extends DiscoveryMicroservice with SSEventsMars
     super.configureApi() ~
       RestApiJunction(
         route = Option { ec: ExecutionContext ⇒ metricsStreamRoute(ec) },
-        preAction = Option { () =>
-          system.log.info(s"\n★ ★ ★ HystrixMetrics: [$httpPrefixAddress/$hystrixStream] ★ ★ ★")
-        }
+        preAction = Option { () => system.log.info(s"\n★ ★ ★ HystrixMetrics: [$httpPrefixAddress/$hystrixStream] ★ ★ ★") }
       )
 
   private def metricsPublisher() = system.actorOf(HystrixMetricsPublisher.props.withDispatcher(dispatcher))

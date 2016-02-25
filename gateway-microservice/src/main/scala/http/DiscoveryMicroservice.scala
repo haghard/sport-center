@@ -1,7 +1,6 @@
 package http
 
 import akka.cluster.ddata.LWWMap
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.server.{ Route, Directives }
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
