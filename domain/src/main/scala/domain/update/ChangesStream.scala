@@ -51,7 +51,7 @@ trait ChangesStream {
 
   val deserializer: (CassandraSource#Record, CassandraSource#Record) ⇒ (Any, Long) =
     (outer, inner) ⇒ {
-      val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("message")), classOf[PersistentRepr]).get
+      val rep = serialization.deserialize(Bytes.getArray(inner.getBytes("event")), classOf[PersistentRepr]).get
       rep.payload
       val seqN = inner.getLong("sequence_nr")
       (rep.payload, seqN)
