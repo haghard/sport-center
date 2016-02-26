@@ -4,13 +4,10 @@ import akka.actor._
 import java.util.concurrent.ThreadLocalRandom
 import akka.cluster.ddata.{ LWWMapKey, LWWMap }
 import akka.cluster.ddata.Replicator.Changed
-import akka.http.scaladsl.model.headers.HttpCookiePair
 import discovery.ServiceDiscovery.DiscoveryLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
 import akka.http.scaladsl.model.StatusCodes._
-
-import scala.collection.immutable
 
 object ApiGateway {
   //TODO: add microservice version in url 
@@ -57,11 +54,11 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
     case r: HttpRequest ⇒
       val replyTo = sender()
       findRoute(r).fold {
-        replyTo ! HttpResponse(ServiceUnavailable, entity = "Underling api unavailable cause: The routee was not found")
+        replyTo ! HttpResponse(ServiceUnavailable, entity = s"Underling api unavailable cause: The route ${r.uri.path} was not found")
       } { route: Route ⇒
         val reqUri = r.uri
-        val newUri = reqUri.withHost(route.host).withPort(route.port)
-        services.hystrix.command(route.pathRegex, replyTo, newUri.toString(), r.cookies).queue()
+        val internalUri = reqUri.withHost(route.host).withPort(route.port)
+        services.hystrix.command(route.pathRegex, replyTo, internalUri.toString(), r.headers).queue()
       }
   }
 
