@@ -24,7 +24,8 @@ object LocalShard {
     def getOrCreateChild(props: Props, name: String): ActorRef = getChild(name).getOrElse(createChild(props, name))
   }
 
-  trait LocalMapChildCreationSupport extends CreationSupport { mixin: ActorLogging =>
+  trait LocalMapChildCreationSupport extends CreationSupport {
+    mixin: ActorLogging =>
 
     def context: ActorContext
 

@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.util.ByteString
 import com.netflix.hystrix.HystrixCommand.Setter
 import com.netflix.hystrix._
-import akka.http.scaladsl.model.{HttpHeader, MediaTypes, HttpResponse}
+import akka.http.scaladsl.model.{ HttpHeader, MediaTypes, HttpResponse }
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers._
 

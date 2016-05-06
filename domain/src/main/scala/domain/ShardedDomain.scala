@@ -71,9 +71,9 @@ class ShardedDomain(protected val system: ExtendedActorSystem) extends Extension
       })
 
     implicit val c = atLeastOnceWriter(sender, seqNumber, results)
-    for { (k, orderedTeamResults) ← results } yield {
-      orderedTeamResults foreach (r ⇒ writeEntry(r)(c))
-    }
+    for {
+      (k, orderedTeamResults) ← results
+    } yield { orderedTeamResults foreach (r ⇒ writeEntry(r)(c)) }
   }
 
   def tellWrite[T <: Command](command: T)(implicit sender: ActorRef) =
