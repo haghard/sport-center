@@ -13,7 +13,7 @@ trait ResultsJournal {
 
   import GraphDSL.Implicits._
 
-  private def flow(teams: Map[String, Int], journal: String) /*(implicit session: CassandraSource#Session)*/ = Source.fromGraph(
+  private def flow(teams: Map[String, Int], journal: String) = Source.fromGraph(
     GraphDSL.create() { implicit b =>
       val merge = b.add(Merge[NbaResultView](teams.size))
       teams.foreach { kv =>
@@ -25,16 +25,6 @@ trait ResultsJournal {
               val e = env.event.asInstanceOf[ResultAdded]
               NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)
           } ~> merge
-
-        /*
-        import com.datastax.driver.core.utils.Bytes
-        eventlog.Log[CassandraSource].from(queryByKey(journal), kv._1, kv._2)
-          .source.map { row =>
-            serialization.deserialize(Bytes.getArray(row.getBytes("message")), classOf[PersistentRepr]).get.payload
-          }.collect {
-            case e: ResultAdded => NbaResultView(e.r.homeTeam, e.r.homeScore, e.r.awayTeam, e.r.awayScore, e.r.dt, e.r.homeScoreBox, e.r.awayScoreBox)
-          } ~> merge
-        */
       }
       SourceShape(merge.out)
     }

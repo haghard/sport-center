@@ -91,8 +91,7 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
   private val persistentOps: Receive = {
     case cmd @ CreateResult(team, result) ⇒
       state.lastDate.fold(persistAndAck(team, result)) { lastDate ⇒
-        //Idempotent receiver
-        //Relay on wall clock in events
+        //Idempotent receiver, relays on wall clock in events
         if (result.dt after lastDate) {
           persist(ResultAdded(team, result))(updateState)
         }
