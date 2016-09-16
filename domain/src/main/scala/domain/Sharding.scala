@@ -51,6 +51,7 @@ trait Sharding {
     case m: TeamMessage ⇒ (m.aggregateRootId, m)
   }
 
+  //maybe use division name for ShardId
   private def shardResolver(shardCount: Int): ShardRegion.ExtractShardId = {
     case (m: TeamMessage) ⇒ (m.aggregateRootId.hashCode % shardCount).toString
   }

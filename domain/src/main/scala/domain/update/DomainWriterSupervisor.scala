@@ -22,7 +22,7 @@ class DomainWriterSupervisor private (val settings: CustomSettings) extends Acto
   val iterationInterval = 5 seconds
   val serialization = SerializationExtension(context.system)
 
-  var requestor: Option[ActorRef] = None
+  //var requestor: Option[ActorRef] = None
   val writer = context.system.actorOf(DomainWriter.props, "domain-writer")
 
   val decider: Supervision.Decider = {

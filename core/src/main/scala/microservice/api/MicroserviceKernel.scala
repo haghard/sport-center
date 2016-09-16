@@ -32,8 +32,8 @@ abstract class MicroserviceKernel(override val akkaSystemPort: String,
 
   override def localAddress = seedAddresses.map(_.getHostAddress).getOrElse("0.0.0.0")
 
-  override lazy val externalAddress = Option(System.getProperty(HOST_VAR))
-    .fold(throw new Exception(s"$HOST_VAR env valuable should be defined"))(identity)
+  override lazy val externalAddress = Option(System.getProperty(HOST_ENV_VAR))
+    .fold(throw new Exception(s"$HOST_ENV_VAR env valuable should be defined"))(identity)
 
   override lazy val akkaSeeds = Option(System.getProperty(SEEDS_ENV_VAR))
     .fold(throw new Exception(s"$SEEDS_ENV_VAR ENV variable should be defined"))(x => x.split(",").toList)

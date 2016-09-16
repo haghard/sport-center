@@ -29,7 +29,7 @@ object ChangesStream {
 
   case class Tick()
 
-  def readEvery[T](interval: FiniteDuration)(implicit ex: ExecutionContext) =
+  def every[T](interval: FiniteDuration)(implicit ex: ExecutionContext) =
     GraphDSL.create() { implicit builder =>
       import GraphDSL.Implicits._
       val zip = builder.add(ZipWith[T, Tick, T](Keep.left).withAttributes(Attributes.inputBuffer(1, 1)))
@@ -88,7 +88,7 @@ trait ChangesStream {
   def quorumClient = cassandraClient(ConsistencyLevel.QUORUM)
 
   def changesStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef)(implicit Mat: ActorMaterializer): Unit = {
-    ((fetchChanges(seqNum)(client)) via readEvery(interval))
+    ((fetchChanges(seqNum)(client)) via every(interval))
       .mapAsync(1) { ch => (des.ask(ch)(interval)).mapTo[Long] } //sort of back pressure
       .to(Sink.onComplete { _ =>
         (des.ask(GetLastChangeSetOffset)(interval)).mapTo[Long].map { n =>

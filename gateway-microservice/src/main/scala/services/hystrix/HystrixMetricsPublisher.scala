@@ -15,10 +15,7 @@ class HystrixMetricsPublisher extends ActorPublisher[Vector[String]] with ActorL
   private val listener = new MetricJsonListener(1000)
   private val poller = new HystrixMetricsPoller(listener, delay)
 
-  override def preStart = {
-    log.info("start HystrixMetricsPublisher")
-    poller.start()
-  }
+  override def preStart = poller.start()
 
   override def receive: Receive = {
     case ActorPublisherMessage.Request(n) if (isActive && totalDemand > 0) =>

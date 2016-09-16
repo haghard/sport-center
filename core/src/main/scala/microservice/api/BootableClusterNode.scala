@@ -8,5 +8,5 @@ object BootableClusterNode {
   val LocalEth4 = "en4"
 
   val SEEDS_ENV_VAR = "SEED_NODES"
-  val HOST_VAR = "HOST"
+  val HOST_ENV_VAR = "HOST"
 }

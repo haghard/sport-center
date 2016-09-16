@@ -8,8 +8,7 @@
         </encoder>
     </appender>
 
-    <appender name="FILE"
-              class="ch.qos.logback.ddd.rolling.RollingFileAppender">
+    <appender name="FILE" class="ch.qos.logback.ddd.rolling.RollingFileAppender">
         <encoder>
             <!--<pattern>%d{HH:mm:ss.SSS} [%thread] %-3level %logger{60} - %msg%n</pattern>-->
             <!--<pattern>%d{HH:mm:ss.SSS} [%thread %X{sourceThread}] %-5level %logger{36} %X{akkaSource} – %msg%n</pattern>-->
