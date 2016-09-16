@@ -18,7 +18,7 @@ name := "bootstrap"
 
 scalaVersion := Scala
 
-enablePlugins(DockerPlugin)
+enablePlugins(_root_.sbtdocker.DockerPlugin)
 
 val mainJarClass = settingKey[String]("Main class to run")
 
