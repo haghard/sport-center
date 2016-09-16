@@ -22,7 +22,7 @@ object Dependencies {
     val cluster_tools         = "com.typesafe.akka"       %%    "akka-cluster-tools"            %  Akka withSources()
 
     val persistence           = "com.typesafe.akka"       %%    "akka-persistence"              % Akka withSources() intransitive()
-    val persistence_cassandra = "com.typesafe.akka"       %%    "akka-persistence-cassandra"    % "0.18"
+    val persistence_cassandra = "com.typesafe.akka"       %%    "akka-persistence-cassandra"    % "0.17"
 
     val akka_distributed_data = "com.typesafe.akka"       %%    "akka-distributed-data-experimental" % Akka
 
