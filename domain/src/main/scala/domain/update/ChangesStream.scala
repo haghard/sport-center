@@ -85,7 +85,7 @@ trait ChangesStream {
         }))
       }
 
-  def quorumClient = cassandraClient(ConsistencyLevel.QUORUM)
+  def quorumClient = cassandraClient(ConsistencyLevel.LOCAL_QUORUM)
 
   def changesStream(seqNum: Long, interval: FiniteDuration, client: CassandraSource#Client, des: ActorRef)(implicit Mat: ActorMaterializer): Unit = {
     ((fetchChanges(seqNum)(client)) via every(interval))
