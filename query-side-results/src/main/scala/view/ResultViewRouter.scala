@@ -41,10 +41,12 @@ class ResultViewRouter private (val settings: CustomSettings) extends Actor with
     .withSupervisionStrategy(decider)
     .withInputBuffer(32, 64))(context.system)
 
-  override def preStart() =
+  override def preStart() = {
+    log.info("Start ResultViewRouter from:{} table:{}", offsets, settings.cassandra.table)
     context.system.scheduler.scheduleOnce(tryToRefreshEvery)(
       RunnableGraph.fromGraph(replayGraph(offsets, settings.cassandra.table)).run()(Mat)
     )
+  }
 
   override def receive: Receive = {
     case r: NbaResultView =>
