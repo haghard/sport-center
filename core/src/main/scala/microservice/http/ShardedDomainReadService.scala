@@ -37,24 +37,16 @@ trait ShardedDomainReadService extends BootableRestService {
     error =>
       Future.successful(
         HttpResponse(akka.http.scaladsl.model.StatusCodes.BadRequest,
-          List(Host(HostHeader(localAddress), httpPort)),
+          List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")), //Host(HostHeader(localAddress), httpPort)
           Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
   def fail(error: String) =
-    HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError, List(Host(HostHeader(localAddress), httpPort)), error)
+    HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError,
+      List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")), error)
 
   //Expires
-  def success[T <: BasicHttpResponse](resp: T, token: String)(implicit writer: JsonWriter[T]) =
-    HttpResponse(akka.http.scaladsl.model.StatusCodes.OK,
-      List(
-        //Host(HostHeader(localAddress), httpPort),
-        Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix"),
-        Authorization(OAuth2BearerToken(token))
-      ),
-      Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
-
   def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
       HttpResponse(akka.http.scaladsl.model.StatusCodes.OK,
-        List(Host(HostHeader(localAddress), httpPort), Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")),
+        List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")),
         Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
 }
