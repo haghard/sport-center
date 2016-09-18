@@ -37,9 +37,9 @@ trait UsersMicroservices extends BootableRestService with SystemSettings
     pathPrefix(pathPref) {
       path("login") {
         get {
-          parameters('user.as[String], 'password.as[String]).as(RawUser) { rawUser ⇒
-            setSession(oneOff, usingHeaders, ServerSession(rawUser.login, org.mindrot.jbcrypt.BCrypt.hashpw(rawUser.password, salt))) {
-              setNewCsrfToken(checkHeader) { ctx ⇒ ctx.complete(s"welcome ${rawUser.login}") }
+          parameters('user.as[String], 'password.as[String]).as(RawUser) { user ⇒
+            setSession(oneOff, usingHeaders, ServerSession(user.login, org.mindrot.jbcrypt.BCrypt.hashpw(user.password, salt))) {
+              setNewCsrfToken(checkHeader) { ctx ⇒ ctx.complete(s"welcome ${user.login}") }
             }
           }
         }
