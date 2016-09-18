@@ -94,7 +94,7 @@ trait StandingMicroservice extends ShardedDomainReadService
                 Try {
                   new DateTime(formatter parse date)
                 } match {
-                  case Success(dt)    ⇒ compete(uri, dt)
+                  case Success(dt)    ⇒ queryView(uri, dt)
                   case Failure(error) ⇒ fail(StandingsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
                 }
               }
@@ -109,7 +109,7 @@ trait StandingMicroservice extends ShardedDomainReadService
     }
   }
 
-  private def compete(uri: String, dt: DateTime)(implicit ex: ExecutionContext): Future[HttpResponse] =
+  private def queryView(uri: String, dt: DateTime)(implicit ex: ExecutionContext): Future[HttpResponse] =
     fetch[StandingBody](GetStandingByDate(uri, dt), standingView).map {
       case \/-(body) ⇒
         body.error.fold {

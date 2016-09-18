@@ -65,7 +65,6 @@ package object hystrix {
         connection.setRequestMethod(method)
         connection.setDoInput(true)
         connection.setDoOutput(true)
-        println(s"HystrixCommand for $uri")
         //connection.addRequestProperty("Cookie", s"${c.name}=${c.value}")
         headers.foreach { c => connection.setRequestProperty(c.name, c.value) }
         inputStream = connection.getInputStream

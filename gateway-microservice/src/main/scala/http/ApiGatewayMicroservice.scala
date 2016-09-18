@@ -58,7 +58,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
               }
           }
       }
-    } ~ path("routes") {
+    } ~ path("hystrix-api") {
       get { ctx =>
         ctx.complete {
           List(
