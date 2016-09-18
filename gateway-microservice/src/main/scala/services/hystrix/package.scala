@@ -102,7 +102,7 @@ package object hystrix {
       import scala.collection._
 
       replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(
-        Location(uri) /*RawHeader("Target", uri)*/ , RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
+        Location(uri), RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
         entity = "Underling api unavailable:" + cause())
     }
   }

@@ -30,7 +30,7 @@ object settings {
   case class ItemPaths(proxyName: String, singletonName: String, name: String) extends SingletonPaths
   case class TwitterAuth(apiKey: String, apiSecret: String, accessToken: String, accessTokenSecret: String)
   case class Cassandra(keyspace: String, table: String, address: InetSocketAddress)
-  case class SessionGfg(secret: String, sail: String, ttl: Long)
+  //case class SessionGfg(secret: String, sail: String, ttl: Long)
   case class Intervals(resultsPeriod: FiniteDuration, standingsPeriod: FiniteDuration)
 
   object CustomSettings extends ExtensionKey[CustomSettings]
@@ -117,11 +117,11 @@ object settings {
         config.getString("Access-Token"), config.getString("Access-Token-Secret"))
     }
 
-    lazy val session = {
+    /*lazy val session = {
       SessionGfg(system.settings.config.getString("http.session"),
         system.settings.config.getString("http.salt"),
         system.settings.config.getLong("http.ttl"))
-    }
+    }*/
 
     case class Timeouts(results: java.time.Duration, standings: java.time.Duration)
     lazy val timeouts = {

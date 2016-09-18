@@ -43,7 +43,7 @@ trait BootableRestService extends SystemSettings with Directives {
 
   def uninstallApi(api: RestApiJunction) = api.postAction.foreach(action => action())
 
-  implicit val sessionManager = new SessionManager[ServerSession](SessionConfig.default(settings.session.secret))
+  implicit val sessionManager = new SessionManager[ServerSession](SessionConfig.default())
 
   implicit def serializer: SessionSerializer[ServerSession, String] =
     new SingleValueSessionSerializer({ session: ServerSession ⇒ (session.user + "-" + session.password) }, { v: (String) ⇒
