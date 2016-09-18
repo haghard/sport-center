@@ -29,7 +29,7 @@ package object hystrix {
         }
       }
 
-  private[hystrix] trait BlockingCall {
+  private[hystrix] trait WsCall {
     mixin: HystrixCommand[Unit] {
       def replyTo: ActorRef
       def uri: String
@@ -57,24 +57,26 @@ package object hystrix {
     override def run(): Unit = {
       var connection: HttpURLConnection = null
       var inputStream: InputStream = null
-
+      import scala.io.Source
       try {
         connection = (new URL(uri)).openConnection.asInstanceOf[HttpURLConnection]
         connection.setRequestMethod(method)
         connection.setDoInput(true)
         connection.setDoOutput(true)
-        headers.foreach { c =>
-          connection.setRequestProperty(c.name, c.value)
-          //connection.addRequestProperty("Cookie", s"${c.name}=${c.value}")
-        }
+        println(s"HystrixCommand for $uri")
+        //connection.addRequestProperty("Cookie", s"${c.name}=${c.value}")
+        headers.foreach { c => connection.setRequestProperty(c.name, c.value) }
         inputStream = connection.getInputStream
-        replyTo ! HttpResponse(OK, entity = Strict(MediaTypes.`application/json`,
-          ByteString(scala.io.Source.fromInputStream(inputStream).mkString)))
+
+        //Extract headers ???
+        replyTo ! HttpResponse(OK,
+          entity = Strict(MediaTypes.`application/json`, ByteString(Source.fromInputStream(inputStream).mkString)))
+
       } catch {
         case e: Exception =>
           e.getMessage match {
-            case errorCode(code, url) if (code.trim.toInt == 403) =>
-              replyTo ! HttpResponse(Forbidden, entity = Strict(MediaTypes.`application/json`, ByteString(s"{ forbidden-url: $uri }")))
+            case errorCode(code, url) if (code.trim.toInt == Forbidden.intValue) =>
+              replyTo ! HttpResponse(Forbidden, entity = Strict(MediaTypes.`application/json`, ByteString(s"{forbidden-resource:$uri}")))
           }
 
           //notify hystrix on failure
@@ -90,8 +92,8 @@ package object hystrix {
       import scala.collection._
 
       replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(
-        RawHeader("Target", uri), RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
-        entity = "Underling api unavailable cause: " + cause())
+        Location(uri) /*RawHeader("Target", uri)*/, RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
+        entity = "Underling api unavailable:" + cause())
     }
   }
 
@@ -190,17 +192,17 @@ package object hystrix {
 
   private[hystrix] class GetResultsByDateCommand(val replyTo: ActorRef, val uri: String, val headers: immutable.Seq[HttpHeader])
     extends HystrixCommand[Unit](GetResultsByDateCommand.key)
-    with BlockingCall
+    with WsCall
 
   private[hystrix] class GetStandingsCommand(val replyTo: ActorRef, val uri: String, val headers: immutable.Seq[HttpHeader])
     extends HystrixCommand[Unit](GetStandingsCommand.key)
-    with BlockingCall
+    with WsCall
 
   private[hystrix] class GetResultsLastCommand(val replyTo: ActorRef, val uri: String, val headers: immutable.Seq[HttpHeader])
     extends HystrixCommand[Unit](GetResultsLastCommand.key)
-    with BlockingCall
+    with WsCall
 
   private[hystrix] class GetSomeColdResultsCommand(val replyTo: ActorRef, val uri: String, val headers: immutable.Seq[HttpHeader])
     extends HystrixCommand[Unit](GetSomeColdResultsCommand.key)
-    with BlockingCall
+    with WsCall
 }

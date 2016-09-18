@@ -59,12 +59,14 @@ All docker's configuration can be found in `sportcenter/bootstrap/build.sbt`. Yo
 
 Run [Cassandra](http://http://cassandra.apache.org) cluster with at least 3 nodes. Example for 192.168.0.134 192.168.0.82, 192.168.0.88 
 
->  docker run -it -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.134 -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -p 7000:7000 -p 9042:9042 -p 9160:9160 -p 7199:7199 -v /media/haghard/data2/scenter-cassandra:/var/lib/cassandra cassandra:3.0.1
+> docker run -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.182 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.148 -e CASSANDRA_CLUSTER_NAME="haghard_cluster" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -e CASSANDRA_RACK="wr0" -e CASSANDRA_DC="west" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" -p 7000:7000 -p 7001:7001 -p 9042:9042 -p 9160:9160 -p 7199:7199 -v /home/haghard/Projects/cassandra-db-3.7:/var/lib/cassandra cassandra:3.7
+     
+> docker run -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.38 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.148 -e CASSANDRA_CLUSTER_NAME="haghard_cluster" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -e CASSANDRA_RACK="wr1" -e CASSANDRA_DC="west" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" -p 7000:7000 -p 7001:7001 -p 9042:9042 -p 9160:9160 -p 7199:7199 -v /home/haghard/Projects/cassandra-db-3.7:/var/lib/cassandra cassandra:3.7
+   
+> docker run -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.148 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.148 -e CASSANDRA_CLUSTER_NAME="haghard_cluster" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -e CASSANDRA_RACK="er0" -e CASSANDRA_DC="east" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" -p 7000:7000 -p 9042:9042 -p 9160:9160 -p 7199:7199 -v /home/haghard/Projects/cassandra-db-3.7:/var/lib/cassandra cassandra:3.7
   
->  docker run -it -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.82 -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /media/haghard/data2/scenter-cassandra:/var/lib/cassandra cassandra:3.0.1
-  
->  docker run -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.88 -e CASSANDRA_SEEDS=192.168.0.134 -e CASSANDRA_CLUSTER_NAME="scenter" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -p 7000:7000 -p 9042:9042 -p 9160:9160 -v /media/haghard/data2/scenter-cassandra:/var/lib/cassandra cassandra:3.0.1 
-  
+> docker run -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.0.57 -e CASSANDRA_SEEDS=192.168.0.182,192.168.0.148 -e CASSANDRA_CLUSTER_NAME="haghard_cluster" -e CASSANDRA_HOME="/var/lib/cassandra" -e CASSANDRA_START_RPC="true" -e CASSANDRA_RACK="er1" -e CASSANDRA_DC="east" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" -p 7000:7000 -p 9042:9042 -p 9160:9160 -p 7199:7199 -v /home/haghard/Projects/cassandra-db-3.7:/var/lib/cassandra cassandra:3.7
+
 
 where /home/haghard/Projects/cassandra_docker has this subdirectories:
 
@@ -99,39 +101,36 @@ Docker image id can be discovered with `docker images` command. Let's suppose we
 
 ##### Run gateway layer #####
 
-host 109.234.39.32
-docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.2 --HOST=109.234.39.32 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555
+host 192.168.0.182
+docker run --net="host" -d -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.4 --HOST=192.168.0.182 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555
 
-host 109.234.39.76
-docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.2 --HOST=109.234.39.76 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555
+host 192.168.0.38
+docker run --net="host" -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.4 --HOST=192.168.0.38 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555
 
-host 109.234.39.77
-docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.2 --HOST=109.234.39.77 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555
+host 192.168.0.148
+docker run --net="host" -d -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.4 --HOST=192.168.0.148 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555
 
-Now we have 3 http endpoints for underlaying api 109.234.39.32:2565, 109.234.39.76:2565, 109.234.39.77:2565 which are seed nodes for whole akka cluster. It isn't necessary to have all gateway's node as seed.
+Now, we have 3 http endpoints for underlaying api 192.168.0.182:2565, 192.168.0.38:2565, 192.168.0.148:2565 which are seed nodes for the whole akka cluster.
 
 
 ##### Run crawler layer #####
 
-
-host 188.166.144.69
-docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-crawler-microservice:v0.2 --HOST=188.166.144.69 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
-
-host 188.166.144.70
-docker run -it -p 2555:2555 -p 2565:2565 haghard/sport-center-crawler-microservice:v0.2 --HOST=188.166.144.70 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
+host 192.168.0.57
+docker run --net="host" -it -p 2585:2585 -p 2586:2586 haghard/sport-center-crawler-microservice:v0.4 --HOST=192.168.0.57 --AKKA_PORT=2585 --HTTP_PORT=2586 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555 --DB_HOSTS=192.168.0.182
 
 ...
 
 
 ##### Run query side http layer #####
 
-host 188.166.144.69 
-docker run -it -p 2571:2571 -p 2568:2568 haghard/sport-center-query-side-results:v0.2 --HOST=188.166.144.69 --AKKA_PORT=2571 --HTTP_PORT=2568 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
+host 192.168.0.182 
+docker run  --net="host" -it -p 2571:2571 -p 2568:2568 haghard/sport-center-query-side-results:v0.4 --HOST=192.168.0.182 --AKKA_PORT=2571 --HTTP_PORT=2568 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555 --DB_HOSTS=192.168.0.182
+
 
 ....
 
-host 188.166.144.69
-docker run -it -p 2570:2570 -p 2567:2567 haghard/sport-center-query-side-standings:v0.2 --HOST=188.166.144.69 --AKKA_PORT=2570 --HTTP_PORT=2567 --SEED_NODES=109.234.39.32:2555,109.234.39.76:2555,109.234.39.77:2555 --DB_HOSTS=109.234.39.32
+host 192.168.0.148
+docker run --net="host" -d -p 2571:2571 -p 2568:2568 haghard/sport-center-query-side-standings:v0.4 --HOST=192.168.0.148 --AKKA_PORT=2571 --HTTP_PORT=2568 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555 --DB_HOSTS=192.168.0.182
 
 ....
 
@@ -157,17 +156,21 @@ For testing we can use this:
 ### Command line HTTP client ###
   [Httpie](http://httpie.org/)
 
-  `http GET 192.168.0.62:2561/api/login?"user=lector&password=lector@gmail.com"`
+  `http GET 192.168.0.182:2565/api/login?"user=lector&password=lector@gmail.com"`
   
-  `http GET 192.168.0.62:2561/routes`
+  `http GET 192.168.0.182:2565/routes`
   
-  `http GET http://192.168.0.62:2560/showShardRegions`
+  `http GET 192.168.0.182:2565/discovery/scalar`
   
-  `http GET 192.168.0.62:2561/api/results/2014-01-29 Authorization:...`
+  `http GET 192.168.0.182:2565/discovery/stream`
   
-  `http GET 192.168.0.62:2561/api/results/2014-01-29 Authorization:...`
+  `http GET http://192.168.0.182:2568/showShardRegions`
   
-  `http GET 192.168.0.62:2561/api/results/okc/last Authorization:...`
+  `http GET 192.168.0.38:2565/api/results/2014-01-29 Authorization:...`
   
-  `http GET 192.168.0.62:2561/api/standings/2013-01-28 Authorization:=...`
+  `http GET 192.168.0.38:2565/api/results/2014-01-29 Authorization:...`
+  
+  `http GET 192.168.0.38:2565/api/results/okc/last Authorization:...`
+  
+  `http GET 192.168.0.38:2565/api/standings/2013-01-28 Authorization:=...`
   

@@ -54,7 +54,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
     case r: HttpRequest ⇒
       val replyTo = sender()
       findRoute(r).fold {
-        replyTo ! HttpResponse(ServiceUnavailable, entity = s"Underling api unavailable cause: The route ${r.uri.path} was not found")
+        replyTo ! HttpResponse(NotFound, entity = s"Underling api cannot be found. The route ${r.uri.path} was not found")
       } { route: Route ⇒
         val reqUri = r.uri
         val internalUri = reqUri.withHost(route.host).withPort(route.port)
