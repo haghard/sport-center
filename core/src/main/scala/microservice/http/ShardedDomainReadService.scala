@@ -1,8 +1,8 @@
 package microservice.http
 
 import akka.http.scaladsl.model.HttpEntity.Strict
-import akka.http.scaladsl.model.headers.Host
-import akka.http.scaladsl.model.{ MediaTypes, HttpResponse }
+import akka.http.scaladsl.model.headers.{OAuth2BearerToken, Host, Authorization, Location}
+import akka.http.scaladsl.model.{HttpMethods, MediaTypes, HttpResponse}
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
@@ -33,20 +33,23 @@ trait ShardedDomainReadService extends BootableRestService {
 
   lazy val key = s"akka.tcp://$ActorSystemName@$externalAddress:$akkaSystemPort"
 
-  protected def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
+  def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
-        HttpResponse(
-          akka.http.scaladsl.model.StatusCodes.BadRequest,
+        HttpResponse(akka.http.scaladsl.model.StatusCodes.BadRequest,
           List(Host(HostHeader(localAddress), httpPort)),
           Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
 
-  protected def fail(error: String) =
+  def fail(error: String) =
     HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError, List(Host(HostHeader(localAddress), httpPort)), error)
 
-  protected def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
-    HttpResponse(
-      akka.http.scaladsl.model.StatusCodes.OK,
-      List(Host(HostHeader(localAddress), httpPort)),
+  //Expires
+  def success[T <: BasicHttpResponse](resp: T, token: String)(implicit writer: JsonWriter[T]) =
+    HttpResponse(akka.http.scaladsl.model.StatusCodes.OK,
+      List(
+        Host(HostHeader(localAddress), httpPort),
+        Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix"),
+        Authorization(OAuth2BearerToken(token))
+      ),
       Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
 }

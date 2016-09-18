@@ -163,11 +163,11 @@ For testing we can use this:
   
   `http GET http://192.168.0.62:2560/showShardRegions`
   
-  `http GET 192.168.0.62:2561/api/results/2014-01-29 Authorization:_sessiondata=`
+  `http GET 192.168.0.62:2561/api/results/2014-01-29 Authorization:...`
   
-  `http GET 192.168.0.62:2561/api/results/2014-01-29 Authorization:_sessiondata=...`
+  `http GET 192.168.0.62:2561/api/results/2014-01-29 Authorization:...`
   
-  `http GET 192.168.0.62:2561/api/results/okc/last Authorization:_sessiondata=...`
+  `http GET 192.168.0.62:2561/api/results/okc/last Authorization:...`
   
-  `http GET 192.168.0.62:2561/api/standings/2013-01-28 Authorization:_sessiondata=...`
+  `http GET 192.168.0.62:2561/api/standings/2013-01-28 Authorization:=...`
   
