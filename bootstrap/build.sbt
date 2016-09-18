@@ -89,7 +89,7 @@ buildOptions in docker := BuildOptions(cache = false,
   pullBaseImage = BuildOptions.Pull.Always)
 
 
-val cassandra = "109.234.39.32"
+val cassandra = "192.168.0.182"
 
 addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2551 --HTTP_PORT=2561")
 addCommandAlias("lgateway1", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562")
