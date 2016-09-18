@@ -1,6 +1,7 @@
 package services
 
 import java.io.InputStream
+import java.util.function.Consumer
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.util.ByteString
@@ -17,6 +18,7 @@ package object hystrix {
   def command(prefix: String, replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
     mapper(prefix)(replyTo, uri, headers)
 
+  //put it into config
   private val mapper: (String) => (ActorRef, String, immutable.Seq[HttpHeader]) => HystrixCommand[Unit] =
     prefix =>
       { (replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =>
@@ -68,8 +70,17 @@ package object hystrix {
         headers.foreach { c => connection.setRequestProperty(c.name, c.value) }
         inputStream = connection.getInputStream
 
-        //Extract headers ???
-        replyTo ! HttpResponse(OK,
+        import scala.collection.JavaConverters._
+        val map = connection.getHeaderFields().asScala
+
+        //val server = conn.getHeaderField("Server");
+        val outHeaders = map.foldLeft(immutable.Seq[RawHeader]()) { (acc, c) =>
+          if ((c._1 ne null) && (c._2.get(0) ne null))
+            acc :+ RawHeader(c._1, c._2.get(0))
+          else acc
+        }
+
+        replyTo ! HttpResponse(OK, headers = outHeaders,
           entity = Strict(MediaTypes.`application/json`, ByteString(Source.fromInputStream(inputStream).mkString)))
 
       } catch {
@@ -92,7 +103,7 @@ package object hystrix {
       import scala.collection._
 
       replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(
-        Location(uri) /*RawHeader("Target", uri)*/, RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
+        Location(uri) /*RawHeader("Target", uri)*/ , RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
         entity = "Underling api unavailable:" + cause())
     }
   }

@@ -23,13 +23,11 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(AlignParameters, true)
   .setPreference(AlignSingleLineCaseStatements, true)
 
-
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 lazy val root = project.in(file("."))
   .aggregate(`discovery`, `core`, `bootstrap`, `domain`,
              `gatewayMicroservices`, `querySideResults`, `querySideStandings`, `crawlerMicroservices`)
-
 
 lazy val `core` = project.in(file("core"))
 
