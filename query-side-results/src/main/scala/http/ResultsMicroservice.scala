@@ -121,7 +121,7 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
                 Try {
                   formatter parse date
                 } match {
-                  case Success(dt)    ⇒ competeWithDate(uri, date)
+                  case Success(dt)    ⇒ competeWithDate(uri, date, session.password)
                   case Failure(error) ⇒ fail(ResultsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
                 }
               }
@@ -137,10 +137,9 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
                   complete {
                     import scalaz.Scalaz._
                     import scalaz._
-
                     system.log.info(s"[$name]:[$session] - incoming request $uri")
                     Thread.sleep(lastResultsLatency.get)
-                    val complete = completeWithTeam(uri, team)
+                    val complete = completeWithTeam(uri, team, session.password)
                     val loc = (for { l ← params.loc \/> (validationMessage) } yield l)
                       .flatMap(x ⇒ Location.values.find(_.toString == x) \/> (s"Wrong location $x"))
                       .fold(failbackWithDefaultLocation, { l ⇒ \/-(l) })
@@ -180,17 +179,17 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
       }
   }
 
-  private def completeWithTeam(uri: String, team: String)(implicit ex: ExecutionContext): ((Location.Value, Int)) ⇒ Future[HttpResponse] =
+  private def completeWithTeam(uri: String, team: String, token: String)(implicit ex: ExecutionContext): ((Location.Value, Int)) ⇒ Future[HttpResponse] =
     tuple ⇒ {
       fetch[ResultsByTeamBody](GetResultsByTeam(uri, team, tuple._2, tuple._1), view) map {
-        case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(teamViewName), body = Option(res)))
+        case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(teamViewName), body = Option(res)), token)
         case -\/(error) ⇒ fail(error)
       }
     }
 
-  private def competeWithDate(uri: String, date: String)(implicit ex: ExecutionContext): Future[HttpResponse] =
+  private def competeWithDate(uri: String, date: String, token: String)(implicit ex: ExecutionContext): Future[HttpResponse] =
     fetch[ResultsByDateBody](GetResultsByDate(uri, date), view) map {
-      case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(dtViewName), body = Option(res)))
+      case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(dtViewName), body = Option(res)), token)
       case -\/(error) ⇒ fail(error)
     }
 }

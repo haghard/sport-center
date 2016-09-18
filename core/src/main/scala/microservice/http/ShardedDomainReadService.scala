@@ -52,4 +52,9 @@ trait ShardedDomainReadService extends BootableRestService {
         Authorization(OAuth2BearerToken(token))
       ),
       Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
+
+  def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
+      HttpResponse(akka.http.scaladsl.model.StatusCodes.OK,
+        List(Host(HostHeader(localAddress), httpPort), Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")),
+        Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
 }
