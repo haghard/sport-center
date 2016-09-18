@@ -137,10 +137,6 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
                   complete {
                     import scalaz.Scalaz._
                     import scalaz._
-
-
-
-
                     system.log.info(s"[$name]:[$session] - incoming request $uri")
                     Thread.sleep(lastResultsLatency.get)
                     val complete = completeWithTeam(uri, team)
