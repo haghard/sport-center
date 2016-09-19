@@ -91,14 +91,14 @@ buildOptions in docker := BuildOptions(cache = false,
 
 val cassandra = "192.168.0.182"
 
-addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2551 --HTTP_PORT=2561")
-addCommandAlias("lgateway1", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562")
-addCommandAlias("lgateway2", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2550 --HTTP_PORT=2560")
+addCommandAlias("lgateway0", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2551 --HTTP_PORT=2561 --HOST=192.168.0.62 --SEED_NODES=192.168.0.62:2551,192.168.0.62:2552")
+addCommandAlias("lgateway1", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2552 --HTTP_PORT=2562 --HOST=192.168.0.62 --SEED_NODES=192.168.0.62:2551,192.168.0.62:2552")
+addCommandAlias("lgateway2", "bootstrap/run-main configuration.local.GatewayBootstrap --AKKA_PORT=2550 --HTTP_PORT=2560 --HOST=192.168.0.62 --SEED_NODES=192.168.0.62:2551,192.168.0.62:2552")
 
-addCommandAlias("lcrawler0", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2553 --HTTP_PORT=9001 --DB_HOSTS=" + cassandra)
-addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2554 --HTTP_PORT=9002 --DB_HOSTS=" + cassandra)
+addCommandAlias("lcrawler0", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2553 --HTTP_PORT=9001 --HOST=192.168.0.62 --DB_HOSTS=" + cassandra + " --SEED_NODES=192.168.0.62:2551,192.168.0.62:2552")
+addCommandAlias("lcrawler1", "bootstrap/run-main configuration.local.CrawlerBootstrap --AKKA_PORT=2554 --HTTP_PORT=9002 --HOST=192.168.0.62 --DB_HOSTS=" + cassandra + " --SEED_NODES=192.168.0.62:2551,192.168.0.62:2552")
 
-addCommandAlias("lresults0", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2555 --HTTP_PORT=9010 --DB_HOSTS=" + cassandra)
+addCommandAlias("lresults0", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2555 --HTTP_PORT=9010 --DB_HOSTS=" + cassandra + " --HOST=192.168.0.62 --SEED_NODES=192.168.0.62:2551,192.168.0.62:2552")
 addCommandAlias("lresults1", "bootstrap/run-main configuration.local.QueryResultsBootstrap --AKKA_PORT=2556 --HTTP_PORT=9011 --DB_HOSTS=" + cassandra)
 
 addCommandAlias("lstanding0", "bootstrap/run-main configuration.local.QueryStandingBootstrap --AKKA_PORT=2557 --HTTP_PORT=9012 --DB_HOSTS=" + cassandra)

@@ -11,12 +11,12 @@ object QueryResultsBootstrap extends configuration.SystemPropsSupport with App {
     applySystemProperties(args)
   }
 
-  implicit val cfg = ResultsQuerySideCfg(
+  implicit val cfg = ResultsCfg(
     Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
     Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
     randomJmxPort, "Query-results")
 
-  val node = microservice[ResultsQuerySideCfg]
+  val node = microservice[ResultsCfg]
   node.startup()
 
   Runtime.getRuntime.addShutdownHook(new Thread(() ⇒ node.shutdown))

@@ -6,7 +6,9 @@ object Dependencies {
   val crossScala = Seq(Scala, "2.10.5")
 
   val Akka = "2.4.9"
-  val Hystrix = "1.4.14"
+  val Hystrix = "1.5.5"
+    //"1.4.14" //released this on Aug 6, 2015
+
 
   implicit class Exclude(module: ModuleID) {
     def akkaExclude: ModuleID = module

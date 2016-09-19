@@ -148,7 +148,7 @@ To access [hystrix-dashboard](https://github.com/Netflix/Hystrix/tree/master/hys
 > Running at http://localhost:7979/hystrix-dashboard
   
 Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
-To connect hystrix-dashboard to `Gateway-turbine` use http://{ip}:6500/turbine.stream in hystrix-dashboard UI. 
+To connect hystrix-dashboard to `Gateway-turbine` use http://192.168.0.62:6500/turbine.stream in hystrix-dashboard UI. 
 
 
 For testing we can use this:

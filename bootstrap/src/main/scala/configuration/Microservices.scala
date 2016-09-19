@@ -27,10 +27,8 @@ trait Microservices {
   case class GatewayCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
   case class CrawlerCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
 
-  case class ResultsQuerySideCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
+  case class ResultsCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
   case class StandingCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
-
-  case class AnalyticsCfg(val akkaPort: String, val httpPort: Int, val jmxPort: Int, val env: String) extends MicroserviceCfg
 
   abstract class MicroserviceFactory[T <: NodeIdentity: ClassTag] {
     def apply(desc: T): BootableMicroservice
@@ -97,8 +95,8 @@ object Microservices extends Microservices {
     }
   }
 
-  implicit object ContainerResultsQuerySide extends ContainerClusterNode[ResultsQuerySideCfg] {
-    override def create(cfg: ResultsQuerySideCfg) = {
+  implicit object ContainerResultsQuerySide extends ContainerClusterNode[ResultsCfg] {
+    override def create(cfg: ResultsCfg) = {
       object ResultsQuerySide extends MicroserviceKernel(cfg.akkaPort, cfg.env, cfg.httpPort, cfg.jmxPort, ethName = CloudEth)
         with SeedNodesResolver
         with ResultsMicroservice
@@ -146,8 +144,8 @@ object Microservices extends Microservices {
     }
   }
 
-  implicit object LocalResultsQuerySide extends LocalClusterNode[ResultsQuerySideCfg] {
-    override def create(cfg: ResultsQuerySideCfg) = {
+  implicit object LocalResultsQuerySide extends LocalClusterNode[ResultsCfg] {
+    override def create(cfg: ResultsCfg) = {
       object ResultsQuery extends MicroserviceKernel(cfg.akkaPort, cfg.env, cfg.httpPort, cfg.jmxPort, ethName = LocalMacEth)
         with LocalSeedsResolver
         with ResultsMicroservice
