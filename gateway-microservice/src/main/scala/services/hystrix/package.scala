@@ -70,16 +70,17 @@ package object hystrix {
         inputStream = connection.getInputStream
 
         import scala.collection.JavaConverters._
-        val map = connection.getHeaderFields().asScala
+        //val map = connection.getHeaderFields().asScala
 
-        //val server = conn.getHeaderField("Server");
-        val outHeaders = map.foldLeft(immutable.Seq[RawHeader]()) { (acc, c) =>
+        val location = connection.getHeaderField("Location")
+
+        /*val outHeaders = map.foldLeft(immutable.Seq[RawHeader]()) { (acc, c) =>
           if ((c._1 ne null) && (c._2.get(0) ne null))
             acc :+ RawHeader(c._1, c._2.get(0))
           else acc
-        }
+        }*/
 
-        replyTo ! HttpResponse(OK, headers = outHeaders,
+        replyTo ! HttpResponse(OK, /*headers = immutable.Seq(Location(location)),*/
           entity = Strict(MediaTypes.`application/json`, ByteString(Source.fromInputStream(inputStream).mkString)))
 
       } catch {
