@@ -51,18 +51,21 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
   import com.codahale.metrics.graphite.GraphiteReporter
 
   var routees: Option[Map[String, List[Route]]] = None
+  val host = context.system.settings.config.getString("graphite.host")
+  val port = context.system.settings.config.getInt("graphite.port")
 
+  //new GraphiteUDP()
   val graphite = new GraphiteSender() {
-    val Encoding = "utf-8"
-    val sendBuffer = (ByteBuffer allocate 512)
-    val channel = DatagramChannel.open()
-    val address = new InetSocketAddress(InetAddress.getByName("192.168.0.182"), 8125)
     var failures = 0
+    val Encoding = "utf-8"
+    val sendBuffer = (ByteBuffer allocate 512) //one command in avg takes 34 bytes
+    val channel = DatagramChannel.open()
+    val address = new InetSocketAddress(InetAddress.getByName(host), port)
+
     override def flush(): Unit = ()
 
     override def send(name: String, value: String, timestamp: Long): Unit = {
       try {
-        log.info("send{}:{}", name, value)
         sendBuffer.put(s"$name:$value|c".getBytes("utf-8"))
         sendBuffer.flip()
         channel.send(sendBuffer, address)
@@ -80,7 +83,6 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
     override def close(): Unit = ()
   }
 
-  //new GraphiteUDP()
   val registry = new MetricRegistry()
 
   var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
@@ -90,7 +92,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
     log.info("ApiGateway preStart")
     GraphiteReporter.forRegistry(registry)
       .build(graphite)
-      .start(1, TimeUnit.SECONDS)
+      .start(2, TimeUnit.SECONDS)
   }
 
   override def preRestart(reason: scala.Throwable, message: scala.Option[scala.Any]): scala.Unit = {
