@@ -30,7 +30,7 @@ trait TurbineServer {
   //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
   protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
-    log.info(s"Trying to stop existing Turbine: ${server.isEmpty}")
+    log.info(s"Does it exist: ${server.isEmpty}")
     val uris = toURI(streams)
 
     try {
@@ -39,12 +39,16 @@ trait TurbineServer {
       }
     } catch {
       case ex: InterruptedException => log.error(ex, "Couldn't stop Turbine")
-      case NonFatal(ex) =>
+      case NonFatal(ex) => log.error(ex, "Couldn't stop Turbine. Unexpected error")
     }
 
     log.info("Sleep")
+    val urisLine = streams.foldLeft(new StringBuilder())((acc, c) => acc.append(c.toString).append(","))
+    log.info(s"Create new Hystrix-Turbine server for streams: [$urisLine]")
     Thread.sleep(10000)
+
     val httpHystrixServer = createServer(uris)
+    log.info(s"Hystrix-Turbine server has been created:[$urisLine]")
     Option(httpHystrixServer.start)
     //server = Some(httpHystrixServer)
 
@@ -82,9 +86,6 @@ trait TurbineServer {
   }
 
   private def createServer(streams: Set[URI]): HttpServer[ByteBuf, ByteBuf] = {
-    val uris = streams.foldLeft(new StringBuilder())((acc, c) => acc.append(c.toString).append(","))
-    log.info(s"Create new Hystrix-Turbine server for streams: [$uris]")
-
     import rx.lang.scala.JavaConversions._
     val clients: rx.Observable[_ <: util.Map[String, AnyRef]] = toScalaObservable(Turbine.aggregateHttpSSE(streams.toList: _*))
       .doOnUnsubscribe(() => log.info("Turbine => Unsubscribing aggregation."))
