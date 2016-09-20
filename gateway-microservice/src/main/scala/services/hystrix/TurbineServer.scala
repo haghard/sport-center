@@ -25,9 +25,9 @@ trait TurbineServer {
 
   private val turbinePort = 6500 //put it into config
 
-  private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
+  //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
-  protected def startTurbine(streams: immutable.Set[Address]) = {
+  protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
     log.info("isEmpty: " + server.isEmpty)
     val uris = toURI(streams)
 
@@ -36,8 +36,8 @@ trait TurbineServer {
     }
 
     val httpHystrixServer = createServer(uris)
-    httpHystrixServer.start()
-    server = Some(httpHystrixServer)
+    httpHystrixServer.start
+    //server = Some(httpHystrixServer)
 
 /*
     if (server.isEmpty) {
