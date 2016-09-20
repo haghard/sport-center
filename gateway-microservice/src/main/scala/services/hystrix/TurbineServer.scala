@@ -3,9 +3,8 @@ package hystrix
 import java.net.URI
 import java.nio.charset.Charset
 import java.util
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ Address, ActorLogging }
+import akka.event.LoggingAdapter
 import com.netflix.turbine.Turbine
 import com.netflix.turbine.internal.JsonUtility
 import http.{ SSEvents, HystrixMetricsMicroservice }
@@ -13,13 +12,31 @@ import io.netty.buffer.{ Unpooled, ByteBuf }
 import io.reactivex.netty.RxNetty
 import rx.functions.Action0
 import rx.lang.scala.JavaConversions._
+import scala.annotation.tailrec
 import scala.collection.immutable
 import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse, HttpServerRequest, RequestHandler }
 
 import scala.util.control.NonFatal
 
+
+object TurbineServer {
+  def executeWithRetry[T](n: Int)(f: ⇒ T) = retry(n)(f)
+
+  @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T =
+    try(f) match {
+      case ex: java.lang.IllegalStateException ⇒
+        log.info(ex.getMessage)//already stopped
+        null.asInstanceOf[T]
+      case _ if n > 1 ⇒ retry(n - 1)(log, f)
+      case NonFatal(ex)⇒
+        log.error(ex, "Couldn't stop Turbine")
+        throw ex
+    }
+}
+
 trait TurbineServer {
   mixin: ActorLogging =>
+  import TurbineServer._
 
   implicit def lambda2Acttion(f: () => Unit) = new Action0 {
     override def call(): Unit = f()
@@ -30,40 +47,26 @@ trait TurbineServer {
   //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
   protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
-    log.info(s"Do we have server: ${server.isEmpty}")
+    log.info(s"Don we have turbine on this node: ${server.nonEmpty}")
     val uris = toURI(streams)
 
-    try {
-      server.foreach {
-        _.shutdown()// waitTillShutdown(30, TimeUnit.SECONDS)
-      }
+    executeWithRetry(5)(log, server.foreach(_.shutdown))
+
+    /*try {
+      server.foreach(_.shutdown())
     } catch {
+      case ex: java.lang.IllegalStateException =>
       case ex: InterruptedException => log.error(ex, "Couldn't stop Turbine")
       case NonFatal(ex) => log.error(ex, "Couldn't stop Turbine. Unexpected error")
-    }
+    }*/
 
-    log.info("Sleep")
     val urisLine = streams.foldLeft(new StringBuilder())((acc, c) => acc.append(c.toString).append(","))
     log.info(s"Create new Hystrix-Turbine server for streams: [$urisLine]")
-    Thread.sleep(10000)
+    Thread.sleep(3000) //to make sure
 
     val httpHystrixServer = createServer(uris)
     log.info(s"Hystrix-Turbine server has been created:[$urisLine]")
     Option(httpHystrixServer.start)
-    //server = Some(httpHystrixServer)
-
-/*
-    if (server.isEmpty) {
-      val local = createServer(uris)
-      local.start()
-      server = Some(local)
-    } else {
-
-      server.get.waitTillShutdown(10, TimeUnit.SECONDS)
-      val local = createServer(uris)
-      local.start()
-      server = Some(local)
-    }*/
   }
 
   private def toURI(streams: immutable.Set[Address]) =
