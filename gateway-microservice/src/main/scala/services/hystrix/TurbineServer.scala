@@ -28,9 +28,9 @@ object TurbineServer {
       case Success(_) => null.asInstanceOf[T]
         log.info("Turbine has been stopped") //already stopped
         null.asInstanceOf[T]
-      case Failure(ex) if (ex.isInstanceOf[java.lang.IllegalStateException]) =>
+      /*case Failure(ex) if (ex.isInstanceOf[java.lang.IllegalStateException]) =>
         log.info(ex.getMessage) //already stopped
-        null.asInstanceOf[T]
+        null.asInstanceOf[T]*/
       case Failure(ex) if n > 1 ⇒
         log.error(ex, "Got an error trying to stop Turbine")
         Thread.sleep(3000)
@@ -55,7 +55,7 @@ trait TurbineServer {
   //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
   protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
-    log.info(s"Don we have turbine on this node: ${server.nonEmpty}")
+    log.info(s"Do we have turbine on this node: ${server.nonEmpty}")
     val uris = toURI(streams)
 
     executeWithRetry(5)(log, server.foreach(_.shutdown))
