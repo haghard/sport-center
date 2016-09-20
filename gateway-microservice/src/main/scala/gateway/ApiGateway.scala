@@ -66,7 +66,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
 
     override def send(name: String, value: String, timestamp: Long): Unit = {
       try {
-        sendBuffer.put(s"$name:$value|c".getBytes("utf-8"))
+        sendBuffer.put(s"$name:$value|c".getBytes(Encoding))
         sendBuffer.flip()
         channel.send(sendBuffer, address)
         sendBuffer.limit(sendBuffer.capacity())
