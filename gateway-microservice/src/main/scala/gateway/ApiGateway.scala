@@ -1,13 +1,13 @@
 package gateway
 
-import java.net.InetSocketAddress
+import java.net.{InetAddress, InetSocketAddress}
 
 import akka.actor._
 import java.util.concurrent.{TimeUnit, ThreadLocalRandom}
 import akka.cluster.ddata.{ LWWMapKey, LWWMap }
 import akka.cluster.ddata.Replicator.Changed
 import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.graphite.{GraphiteUDP, GraphiteSender}
+import com.codahale.metrics.graphite.{Graphite, GraphiteUDP, GraphiteSender}
 import discovery.ServiceDiscovery.DiscoveryLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
@@ -49,11 +49,11 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
 
   var routees: Option[Map[String, List[Route]]] = None
 
-  val graphite = new GraphiteUDP(new InetSocketAddress("192.168.0.182", 8125))
+  val graphite = new GraphiteUDP(new InetSocketAddress(InetAddress.getByName("192.168.0.182"), 8125))
   val registry = new MetricRegistry()
 
   var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
-  var counters = Map[String, Counter]("GetResultsByDateCommand" -> registry.counter("GetResultsByDateCommand")) //.withDefault(key=> registry.counter(key))
+  var counters = Map[String, Counter]().withDefault(key => registry.counter(key))
 
   override def preStart = {
     log.info("ApiGateway preStart")
