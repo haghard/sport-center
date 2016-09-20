@@ -1,6 +1,8 @@
 package gateway
 
 import java.net.{InetAddress, InetSocketAddress}
+import java.nio.ByteBuffer
+import java.nio.channels.DatagramChannel
 
 import akka.actor._
 import java.util.concurrent.{TimeUnit, ThreadLocalRandom}
@@ -49,7 +51,32 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
 
   var routees: Option[Map[String, List[Route]]] = None
 
-  val graphite = new GraphiteUDP(new InetSocketAddress(InetAddress.getByName("192.168.0.182"), 8125))
+  val graphite = new GraphiteSender() {
+    val Encoding = "utf-8"
+    val sendBuffer = (ByteBuffer allocate 512)
+    val channel = DatagramChannel.open()
+    val address = new InetSocketAddress(InetAddress.getByName("192.168.0.182"), 8125)
+
+    override def flush(): Unit = ()
+
+    override def send(name: String, value: String, timestamp: Long): Unit = {
+      sendBuffer.put(s"$name:${value}|c".getBytes("utf-8"))
+      sendBuffer.flip()
+      channel.send(sendBuffer, address)
+      sendBuffer.limit(sendBuffer.capacity())
+      sendBuffer.rewind()
+    }
+
+    override def isConnected: Boolean = true
+
+    override def connect(): Unit = {}
+
+    override def getFailures: Int = 0
+
+    override def close(): Unit = ()
+  }
+
+  //GraphiteUDP()
   val registry = new MetricRegistry()
 
   var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
