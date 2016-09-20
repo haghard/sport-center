@@ -84,12 +84,10 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
   }
 
   val registry = new MetricRegistry()
-
-  var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
+  //var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
   var counters = Map[String, Counter]().withDefault(key => registry.counter(key))
 
   override def preStart = {
-    log.info("ApiGateway preStart")
     GraphiteReporter.forRegistry(registry)
       .build(graphite)
       .start(2, TimeUnit.SECONDS)
@@ -112,14 +110,11 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
         val reqUri = r.uri
         val internalUri = reqUri.withHost(route.host).withPort(route.port)
         val cmd = services.hystrix.command(route.pathRegex,
-          replyTo, internalUri.toString,
-          r.headers)
+          replyTo, internalUri.toString, r.headers)
         val key = cmd.getCommandKey.toString
-        //log.info(key)
-        //histograms(key).update(1)
 
+        //histograms(key).update(1)
         counters(key).inc()
-        //log.info("getCount:"  + counters(key).getCount)
 
         cmd.queue()
       }
