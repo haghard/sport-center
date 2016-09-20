@@ -197,6 +197,7 @@ package object hystrix {
     private val circuitBreakerSleepWindow = 5000
     private val circuitBreakerErrorThresholdPercentage = 40
 
+    //~ 15 rps/sec
     private val timeoutInMilliseconds = 200
     private val poolSize = 3
 
