@@ -108,6 +108,7 @@ package object hystrix {
   }
 
   object GetStandingsCommand {
+    private val rollingStatisticalWindowInMills = 30000
     private val circuitBreakerSleepWindow = 5000
     private val circuitBreakerErrorThresholdPercentage = 40
 
@@ -118,19 +119,24 @@ package object hystrix {
     private val key = Setter
       .withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetStandingsCommandKey"))
       .andCommandKey(HystrixCommandKey.Factory.asKey("GetStandingsCommand"))
-      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("get-standings-command-pool"))
+      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("Get-Standings-pool"))
       .andCommandPropertiesDefaults(
         HystrixCommandProperties.Setter()
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
-      .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
+      .andThreadPoolPropertiesDefaults(
+        HystrixThreadPoolProperties.Setter()
+          .withCoreSize(poolSize)
+          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills)
+      )
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetStandingsCommand(replyTo, uri, headers)
   }
 
   object GetResultsLastCommand {
+    private val rollingStatisticalWindowInMills = 30000
     private val circuitBreakerSleepWindow = 5000
     private val circuitBreakerErrorThresholdPercentage = 40
 
@@ -141,20 +147,25 @@ package object hystrix {
     private val key = Setter
       .withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetLastResultsCommandKey"))
       .andCommandKey(HystrixCommandKey.Factory.asKey("GetLastResultsCommand"))
-      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("get-last-results-pool"))
+      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("Get-Last-Results-pool"))
       .andCommandPropertiesDefaults(
         HystrixCommandProperties.Setter()
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
-      .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
+      .andThreadPoolPropertiesDefaults(
+        HystrixThreadPoolProperties.Setter()
+          .withCoreSize(poolSize)
+          .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+      )
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsLastCommand(replyTo, uri, headers)
   }
 
   object GetResultsByDateCommand {
+    private val rollingStatisticalWindowInMills = 30000
     private val circuitBreakerSleepWindow = 5000
     private val circuitBreakerErrorThresholdPercentage = 40
 
@@ -165,20 +176,24 @@ package object hystrix {
     private val key = Setter
       .withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetResultsByDateCommandKey"))
       .andCommandKey(HystrixCommandKey.Factory.asKey("GetResultsByDateCommand"))
-      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("get-results-by-date-pool"))
+      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("Get-Results-By-Date-pool"))
       .andCommandPropertiesDefaults(
         HystrixCommandProperties.Setter()
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
-      .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
+      .andThreadPoolPropertiesDefaults(
+        HystrixThreadPoolProperties.Setter()
+          .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+          .withCoreSize(poolSize))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsByDateCommand(replyTo, uri, headers)
   }
 
   object GetSomeColdResultsCommand {
+    private val rollingStatisticalWindowInMills = 30000
     private val circuitBreakerSleepWindow = 5000
     private val circuitBreakerErrorThresholdPercentage = 40
 
@@ -188,14 +203,18 @@ package object hystrix {
     private val key = Setter
       .withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetCrawlerResultsCommandKey"))
       .andCommandKey(HystrixCommandKey.Factory.asKey("GetCrawlerResultsCommand"))
-      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("get-crawler-results-pool"))
+      .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("Get-Crawler-Results-pool"))
       .andCommandPropertiesDefaults(
         HystrixCommandProperties.Setter()
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
-      .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter().withCoreSize(poolSize))
+      .andThreadPoolPropertiesDefaults(
+        HystrixThreadPoolProperties.Setter()
+          .withCoreSize(poolSize)
+          .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+      )
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetSomeColdResultsCommand(replyTo, uri, headers)
   }

@@ -99,7 +99,9 @@ This commands will run single instance for each cluster node(Gateway, Crawler, H
 
 Docker image id can be discovered with `docker images` command. Let's suppose we starting 3 gateway/seed node on 109.234.39.32, 109.234.39.76, 109.234.39.77  
 
+
 ##### Run gateway layer #####
+Important convention: if AKKA_PORT=x then HTTP_PORT should be AKKA_PORT + 10 because TurbineServer relies on that
 
 host 192.168.0.182
 docker run --net="host" -d -p 2555:2555 -p 2565:2565 haghard/sport-center-gateway-microservice:v0.4 --HOST=192.168.0.182 --AKKA_PORT=2555 --HTTP_PORT=2565 --SEED_NODES=192.168.0.182:2555,192.168.0.38:2555,192.168.0.148:2555

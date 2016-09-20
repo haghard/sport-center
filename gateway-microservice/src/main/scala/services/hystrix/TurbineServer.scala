@@ -63,6 +63,7 @@ trait TurbineServer {
     Option(httpHystrixServer.start)
   }
 
+  //Convention AKKA_PORT=x HTTP_PORT=AKKA_PORT+1
   private def toURI(streams: immutable.Set[Address]) =
     for {
       n <- streams
