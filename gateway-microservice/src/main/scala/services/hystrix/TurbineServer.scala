@@ -22,16 +22,18 @@ import scala.util.control.NonFatal
 object TurbineServer {
   def executeWithRetry[T](n: Int)(f: ⇒ T) = retry(n)(f)
 
-  @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T =
-    try(f) match {
+  @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T = {
+    log.info(s"Attempt to stop Turbine: $n")
+    try (f) catch {
       case ex: java.lang.IllegalStateException ⇒
-        log.info(ex.getMessage)//already stopped
+        log.info(ex.getMessage) //already stopped
         null.asInstanceOf[T]
       case _ if n > 1 ⇒ retry(n - 1)(log, f)
-      case NonFatal(ex)⇒
+      case NonFatal(ex) ⇒
         log.error(ex, "Couldn't stop Turbine")
         throw ex
     }
+  }
 }
 
 trait TurbineServer {
