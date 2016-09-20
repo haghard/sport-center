@@ -28,6 +28,7 @@ trait TurbineServer {
   private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
   protected def startTurbine(streams: immutable.Set[Address]) = {
+    log.info("isEmpty: " + server.isEmpty)
     val uris = toURI(streams)
     if (server.isEmpty) {
       val local = createServer(uris)
@@ -66,11 +67,11 @@ trait TurbineServer {
     log.info(s"Create new Hystrix-Turbine server for streams: [$uris]")
 
     import rx.lang.scala.JavaConversions._
-    val pStreams: rx.Observable[_ <: util.Map[String, AnyRef]] = toScalaObservable(Turbine.aggregateHttpSSE(streams.toList: _*))
+    val clients: rx.Observable[_ <: util.Map[String, AnyRef]] = toScalaObservable(Turbine.aggregateHttpSSE(streams.toList: _*))
       .doOnUnsubscribe(() => log.info("Turbine => Unsubscribing aggregation."))
       .doOnSubscribe(() => log.info("Turbine => Starting aggregation"))
       .flatMap(o => o)
       .publish().refCount()
-    RxNetty.createHttpServer(turbinePort, serverHandler(pStreams))
+    RxNetty.createHttpServer(turbinePort, serverHandler(clients))
   }
 }
