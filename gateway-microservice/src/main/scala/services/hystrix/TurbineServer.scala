@@ -36,7 +36,7 @@ trait TurbineServer {
     }
 
     val httpHystrixServer = createServer(uris)
-    httpHystrixServer.start
+    Option(httpHystrixServer.start)
     //server = Some(httpHystrixServer)
 
 /*
