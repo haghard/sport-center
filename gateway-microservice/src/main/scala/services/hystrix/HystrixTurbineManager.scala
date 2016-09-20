@@ -50,7 +50,7 @@ class HystrixTurbineManager extends Actor with ActorLogging with TurbineServer {
     if (m.hasRole(hystrixRole)) {
       log.info(s"HystrixTurbine MemberRemoved: ${m}" )
       nodes = nodes - m.address
-      startTurbine(nodes, server)
+      server = startTurbine(nodes, server)
     }
 
   private def ++(m: Member) =
