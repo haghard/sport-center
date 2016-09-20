@@ -30,17 +30,27 @@ trait TurbineServer {
   protected def startTurbine(streams: immutable.Set[Address]) = {
     log.info("isEmpty: " + server.isEmpty)
     val uris = toURI(streams)
+
+    server.foreach {
+      _.waitTillShutdown(10, TimeUnit.SECONDS)
+    }
+
+    val httpHystrixServer = createServer(uris)
+    httpHystrixServer.start()
+    server = Some(httpHystrixServer)
+
+/*
     if (server.isEmpty) {
       val local = createServer(uris)
       local.start()
       server = Some(local)
     } else {
+
       server.get.waitTillShutdown(10, TimeUnit.SECONDS)
-      log.info("Hystrix-Turbine server has been stopped")
       val local = createServer(uris)
       local.start()
       server = Some(local)
-    }
+    }*/
   }
 
   private def toURI(streams: immutable.Set[Address]) =

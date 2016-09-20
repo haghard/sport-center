@@ -14,10 +14,10 @@ object HystrixTurbineManager {
 }
 
 class HystrixTurbineManager extends Actor with ActorLogging with TurbineServer {
-
+  val selfAddress = Cluster(context.system).selfAddress
   private var nodes = immutable.Set.empty[Address]
 
-  private val watched = MicroserviceKernel.GatewayRole
+  private val hystrixRole = MicroserviceKernel.GatewayRole
 
   implicit val cluster = Cluster(context.system)
 
@@ -34,19 +34,21 @@ class HystrixTurbineManager extends Actor with ActorLogging with TurbineServer {
   }
 
   private def +++(members: immutable.Set[Member]) = {
-    val members0 = members.filter(_.hasRole(watched)).map(_.address)
+    val members0 = members.filter(_.hasRole(hystrixRole)).map(_.address)
     nodes = nodes ++ members0
     startTurbine(nodes)
   }
 
   private def --(m: Member) =
-    if (m.hasRole(watched)) {
+    if (m.hasRole(hystrixRole)) {
+      log.info(s"HystrixTurbine MemberRemoved: ${m}" )
       nodes = nodes - m.address
       startTurbine(nodes)
     }
 
   private def ++(m: Member) =
-    if (m.hasRole(watched)) {
+    if (m.hasRole(hystrixRole)) {
+      log.info(s"HystrixTurbine MemberUp: ${m}")
       nodes = nodes + m.address
       startTurbine(nodes)
     }
