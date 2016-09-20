@@ -1,5 +1,6 @@
 package gateway
 
+import java.io.IOException
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
@@ -56,27 +57,30 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
     val sendBuffer = (ByteBuffer allocate 512)
     val channel = DatagramChannel.open()
     val address = new InetSocketAddress(InetAddress.getByName("192.168.0.182"), 8125)
-
+    var failures = 0
     override def flush(): Unit = ()
 
     override def send(name: String, value: String, timestamp: Long): Unit = {
-      sendBuffer.put(s"$name:${value}|c".getBytes("utf-8"))
-      sendBuffer.flip()
-      channel.send(sendBuffer, address)
-      sendBuffer.limit(sendBuffer.capacity())
-      sendBuffer.rewind()
+      try {
+        log.info("send{}:{}", name, value)
+        sendBuffer.put(s"$name:$value|c".getBytes("utf-8"))
+        sendBuffer.flip()
+        channel.send(sendBuffer, address)
+        sendBuffer.limit(sendBuffer.capacity())
+        sendBuffer.rewind()
+      } catch { case e: IOException => failures += 1 }
     }
 
     override def isConnected: Boolean = true
 
     override def connect(): Unit = {}
 
-    override def getFailures: Int = 0
+    override def getFailures: Int = failures
 
     override def close(): Unit = ()
   }
 
-  //GraphiteUDP()
+  //new GraphiteUDP()
   val registry = new MetricRegistry()
 
   var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
@@ -113,7 +117,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
         //histograms(key).update(1)
 
         counters(key).inc()
-        log.info("getCount:"  + counters(key).getCount)
+        //log.info("getCount:"  + counters(key).getCount)
 
         cmd.queue()
       }
