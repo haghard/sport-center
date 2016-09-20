@@ -4,7 +4,7 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import hystrix.HystrixMetricsPublisher
 import microservice.http.RestApiJunction
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
+//import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
 import akka.http.scaladsl.server.Route
 

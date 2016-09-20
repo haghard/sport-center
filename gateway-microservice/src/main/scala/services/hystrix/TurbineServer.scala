@@ -69,9 +69,7 @@ trait TurbineServer {
 
   private def createServer(streams: Set[URI]): HttpServer[ByteBuf, ByteBuf] = {
     log.info(s"Create new turbine server with streams: [ ${
-      streams.foldLeft(new StringBuilder()) { (acc, c) =>
-        acc.append(c.toString).append(",")
-      }
+      streams.foldLeft(new StringBuilder()) { (acc, c) => acc.append(c.toString).append(",")  }
     } ]")
 
     import rx.lang.scala.JavaConversions._
