@@ -39,9 +39,11 @@ class HystrixTurbineManager extends Actor with ActorLogging with TurbineServer {
   }
 
   private def +++(members: immutable.Set[Member]) = {
-    //val members0 = members.filter(_.hasRole(hystrixRole)).map(_.address)
-    //nodes = nodes ++ members0
-    //server = startTurbine(nodes, server)
+    val members0 = members.filter(_.hasRole(hystrixRole)).map(_.address)
+    nodes = nodes ++ members0
+    if(server.isEmpty) {
+      server = startTurbine(nodes, server)
+    }
   }
 
   private def --(m: Member) =
