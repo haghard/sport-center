@@ -52,28 +52,14 @@ trait TurbineServer {
 
   private val turbinePort = 6500 //put it into config
 
-  //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
-
   protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
     log.info(s"Do we have turbine on this node: ${server.nonEmpty}")
     val uris = toURI(streams)
-
     executeWithRetry(5)(log, server.foreach(_.shutdown))
-
-    /*try {
-      server.foreach(_.shutdown())
-    } catch {
-      case ex: java.lang.IllegalStateException =>
-      case ex: InterruptedException => log.error(ex, "Couldn't stop Turbine")
-      case NonFatal(ex) => log.error(ex, "Couldn't stop Turbine. Unexpected error")
-    }*/
-
     val urisLine = streams.foldLeft(new StringBuilder())((acc, c) => acc.append(c.toString).append(","))
     log.info(s"Create new Hystrix-Turbine server for streams: [$urisLine]")
-    Thread.sleep(3000) //to make sure
-
     val httpHystrixServer = createServer(uris)
-    log.info(s"Hystrix-Turbine server has been created:[$urisLine]")
+    log.info(s"Hystrix-Turbine server has been created for [$urisLine]")
     Option(httpHystrixServer.start)
   }
 
