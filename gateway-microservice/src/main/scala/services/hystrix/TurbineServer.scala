@@ -17,22 +17,24 @@ import scala.collection.immutable
 import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse, HttpServerRequest, RequestHandler }
 
 import scala.util.{Success, Try, Failure}
-import scala.util.control.NonFatal
 
 
 object TurbineServer {
   def executeWithRetry[T](n: Int)(log: LoggingAdapter, f: ⇒ T) = retry(n)(log, f)
 
   @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T = {
-    log.info(s"Attempt to stop Turbine: $n")
+    log.info(s"Attempt to stop Turbine. Countdown:$n")
     Try(f) match {
       case Success(_) => null.asInstanceOf[T]
         log.info("Turbine has been stopped") //already stopped
         null.asInstanceOf[T]
-      case _ if n > 1 ⇒ retry(n - 1)(log, f)
       case Failure(ex) if (ex.isInstanceOf[java.lang.IllegalStateException]) =>
         log.info(ex.getMessage) //already stopped
         null.asInstanceOf[T]
+      case Failure(ex) if n > 1 ⇒
+        log.error(ex, "Got an error trying to stop Turbine")
+        Thread.sleep(3000)
+        retry(n - 1)(log, f)
       case Failure(ex) ⇒
         log.error(ex, "Couldn't stop Turbine")
         throw ex
