@@ -26,11 +26,11 @@ object TurbineServer {
     log.info(s"Attempt to stop Turbine. Countdown:$n")
     Try(f) match {
       case Success(_) => null.asInstanceOf[T]
-        log.info("Turbine has been stopped") //already stopped
+        log.info("Turbine has been stopped") //stopped
         null.asInstanceOf[T]
-      /*case Failure(ex) if (ex.isInstanceOf[java.lang.IllegalStateException]) =>
+      case Failure(ex) if (ex.isInstanceOf[java.lang.IllegalStateException]) =>
         log.info(ex.getMessage) //already stopped
-        null.asInstanceOf[T]*/
+        null.asInstanceOf[T]
       case Failure(ex) if n > 1 ⇒
         log.error(ex, "Got an error trying to stop Turbine")
         Thread.sleep(3000)
