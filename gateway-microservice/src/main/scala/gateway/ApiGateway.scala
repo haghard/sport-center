@@ -56,9 +56,10 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
   var counters = Map[String, Counter]().withDefault(key=> registry.counter(key))
 
   override def preStart = {
-    log.info("ApiGateway was restarted and lost all routees")
-    GraphiteReporter.forRegistry(registry).build(graphite)
-          .start(3, TimeUnit.SECONDS)
+    log.info("ApiGateway preStart")
+    GraphiteReporter.forRegistry(registry)
+      .build(graphite)
+      .start(1, TimeUnit.SECONDS)
   }
 
   override def preRestart(reason: scala.Throwable, message: scala.Option[scala.Any]): scala.Unit = {

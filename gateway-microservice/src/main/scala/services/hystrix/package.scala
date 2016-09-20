@@ -125,10 +125,10 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize)
+          .withCoreSize(poolSize))
           //.withMaxQueueSize(1 << 8)
-          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills)
-          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills)
+          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetStandingsCommand(replyTo, uri, headers)
   }
@@ -154,9 +154,9 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize)
-          .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize))
+          //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsLastCommand(replyTo, uri, headers)
@@ -183,9 +183,9 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize)
-          .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize))
+          //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsByDateCommand(replyTo, uri, headers)
@@ -212,9 +212,9 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize)
-          .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize))
+          //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetSomeColdResultsCommand(replyTo, uri, headers)
   }
