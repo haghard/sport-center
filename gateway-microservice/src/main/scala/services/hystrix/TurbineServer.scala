@@ -20,7 +20,7 @@ import scala.util.control.NonFatal
 
 
 object TurbineServer {
-  def executeWithRetry[T](n: Int)(f: ⇒ T) = retry(n)(f)
+  def executeWithRetry[T](n: Int)(log: LoggingAdapter, f: ⇒ T) = retry(n)(log, f)
 
   @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T = {
     log.info(s"Attempt to stop Turbine: $n")
