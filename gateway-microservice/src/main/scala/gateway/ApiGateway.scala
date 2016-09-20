@@ -53,7 +53,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
   val registry = new MetricRegistry()
 
   var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
-  var counters = Map[String, Counter]().withDefault(key=> registry.counter(key))
+  var counters = Map[String, Counter]("GetResultsByDateCommand" -> registry.counter("GetResultsByDateCommand")) //.withDefault(key=> registry.counter(key))
 
   override def preStart = {
     log.info("ApiGateway preStart")
@@ -82,9 +82,11 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
           replyTo, internalUri.toString,
           r.headers)
         val key = cmd.getCommandKey.toString
-        log.info(key)
+        //log.info(key)
         //histograms(key).update(1)
+
         counters(key).inc()
+        log.info("getCount:"  + counters(key).getCount)
 
         cmd.queue()
       }
