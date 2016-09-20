@@ -1,10 +1,13 @@
 package hystrix
 
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 import java.nio.charset.Charset
 import java.util
+import java.util.concurrent.TimeUnit
 import akka.actor.{ Address, ActorLogging }
 import akka.event.LoggingAdapter
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.graphite.{GraphiteUDP, Graphite, GraphiteSender}
 import com.netflix.turbine.Turbine
 import com.netflix.turbine.internal.JsonUtility
 import http.{ SSEvents, HystrixMetricsMicroservice }
@@ -45,6 +48,7 @@ object TurbineServer {
 trait TurbineServer {
   mixin: ActorLogging =>
   import TurbineServer._
+
 
   implicit def lambda2Acttion(f: () => Unit) = new Action0 {
     override def call(): Unit = f()

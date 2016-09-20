@@ -18,6 +18,8 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 libraryDependencies ++= Seq(
   hystrix,
   hystrix_stream,
+  hystrix_codahale,
+  metrics_graphite,
   turbine,
   rxscala,
   akka.http,

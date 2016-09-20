@@ -1,7 +1,6 @@
 package services
 
 import java.io.InputStream
-import java.util.function.Consumer
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.util.ByteString
@@ -99,10 +98,8 @@ package object hystrix {
 
     //executed in thread named as HystrixTimer-n
     override def getFallback: Unit = {
-      import scala.collection._
-
-      replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(
-        Location(uri), RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
+      //import scala.collection._
+      replyTo ! HttpResponse(ServiceUnavailable, headers = immutable.Seq(Location(uri), RawHeader("isCircuitBreakerOpen", s"$isCircuitBreakerOpen")),
         entity = "Underling api unavailable:" + cause())
     }
   }
@@ -129,8 +126,9 @@ package object hystrix {
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
           .withCoreSize(poolSize)
+          //.withMaxQueueSize(1 << 8)
           .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills)
-      )
+          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetStandingsCommand(replyTo, uri, headers)
   }
@@ -158,7 +156,7 @@ package object hystrix {
         HystrixThreadPoolProperties.Setter()
           .withCoreSize(poolSize)
           .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-      )
+          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsLastCommand(replyTo, uri, headers)
@@ -185,8 +183,9 @@ package object hystrix {
           .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
+          .withCoreSize(poolSize)
           .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          .withCoreSize(poolSize))
+          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsByDateCommand(replyTo, uri, headers)
@@ -215,7 +214,7 @@ package object hystrix {
         HystrixThreadPoolProperties.Setter()
           .withCoreSize(poolSize)
           .withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-      )
+          .withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetSomeColdResultsCommand(replyTo, uri, headers)
   }

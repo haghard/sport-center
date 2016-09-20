@@ -57,6 +57,10 @@ object Dependencies {
 
   val hystrix          = "com.netflix.hystrix"    %  "hystrix-core"           % Hystrix
 
+  val hystrix_codahale = "com.netflix.hystrix"    %  "hystrix-codahale-metrics-publisher"  % Hystrix
+
+  val metrics_graphite = "io.dropwizard.metrics"  % "metrics-graphite" % "3.1.2"
+
   val hystrix_stream   = "com.netflix.hystrix"    %  "hystrix-metrics-event-stream" % Hystrix
   
   val turbine          = "com.netflix.turbine"    %  "turbine-core"          % "2.0.0-DP.2"

@@ -1,9 +1,13 @@
 package gateway
 
+import java.net.InetSocketAddress
+
 import akka.actor._
-import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.{TimeUnit, ThreadLocalRandom}
 import akka.cluster.ddata.{ LWWMapKey, LWWMap }
 import akka.cluster.ddata.Replicator.Changed
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.graphite.{GraphiteUDP, GraphiteSender}
 import discovery.ServiceDiscovery.DiscoveryLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
@@ -40,16 +44,31 @@ object ApiGateway {
 
 class ApiGateway private (address: String, httpPort: Int) extends Actor with ActorLogging {
   import gateway.ApiGateway._
+  import com.codahale.metrics.{Histogram, Counter}
+  import com.codahale.metrics.graphite.GraphiteReporter
 
-  private var routees: Option[Map[String, List[Route]]] = None
+  var routees: Option[Map[String, List[Route]]] = None
 
-  override def preRestart(reason: scala.Throwable, message: scala.Option[scala.Any]): scala.Unit =
-    log.info("Balancer was restarted and lost all routees {}", reason.getMessage)
+  val graphite = new GraphiteUDP(new InetSocketAddress("192.168.0.182", 8125))
+  val registry = new MetricRegistry()
+
+  var histograms = Map[String, Histogram]().withDefault(key => registry.histogram(key))
+  var counters = Map[String, Counter]().withDefault(key=> registry.counter(key))
+
+  override def preStart = {
+    log.info("ApiGateway was restarted and lost all routees")
+    GraphiteReporter.forRegistry(registry).build(graphite)
+          .start(3, TimeUnit.SECONDS)
+  }
+
+  override def preRestart(reason: scala.Throwable, message: scala.Option[scala.Any]): scala.Unit = {
+    log.info("ApiGateway was restarted and lost all routees {}", reason.getMessage)
+  }
 
   override def receive: Receive = {
     case r @ Changed(LWWMapKey(_)) if r.dataValue.isInstanceOf[LWWMap[DiscoveryLine]] ⇒
       routees = Option(updateRoutees(r.dataValue.asInstanceOf[LWWMap[DiscoveryLine]]))
-      log.info("Cluster configuration has changed {}", routees)
+      log.info("Routees has changed: {}", routees)
 
     case r: HttpRequest ⇒
       val replyTo = sender()
@@ -58,7 +77,14 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
       } { route: Route ⇒
         val reqUri = r.uri
         val internalUri = reqUri.withHost(route.host).withPort(route.port)
-        services.hystrix.command(route.pathRegex, replyTo, internalUri.toString(), r.headers).queue()
+        val cmd = services.hystrix.command(route.pathRegex,
+          replyTo, internalUri.toString,
+          r.headers)
+        val key = cmd.getCommandKey.toString
+        //histograms(key).update(1)
+        counters(key).inc()
+
+        cmd.queue()
       }
   }
 
