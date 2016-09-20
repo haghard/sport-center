@@ -16,6 +16,8 @@ import rx.lang.scala.JavaConversions._
 import scala.collection.immutable
 import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse, HttpServerRequest, RequestHandler }
 
+import scala.util.control.NonFatal
+
 trait TurbineServer {
   mixin: ActorLogging =>
 
@@ -28,13 +30,20 @@ trait TurbineServer {
   //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
   protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
-    log.info("isEmpty: " + server.isEmpty)
+    log.info(s"Trying to stop existing Turbine: ${server.isEmpty}")
     val uris = toURI(streams)
 
-    server.foreach {
-      _.waitTillShutdown(10, TimeUnit.SECONDS)
+    try {
+      server.foreach {
+        _.waitTillShutdown(30, TimeUnit.SECONDS)
+      }
+    } catch {
+      case ex: InterruptedException => log.error(ex, "Couldn't stop Turbine")
+      case NonFatal(ex) =>
     }
 
+    log.info("Sleep")
+    Thread.sleep(10000)
     val httpHystrixServer = createServer(uris)
     Option(httpHystrixServer.start)
     //server = Some(httpHystrixServer)
