@@ -30,12 +30,12 @@ trait TurbineServer {
   //private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
   protected def startTurbine(streams: immutable.Set[Address], server: Option[HttpServer[ByteBuf, ByteBuf]]): Option[HttpServer[ByteBuf, ByteBuf]] = {
-    log.info(s"Does it exist: ${server.isEmpty}")
+    log.info(s"Do we have server: ${server.isEmpty}")
     val uris = toURI(streams)
 
     try {
       server.foreach {
-        _.waitTillShutdown(30, TimeUnit.SECONDS)
+        _.shutdown()// waitTillShutdown(30, TimeUnit.SECONDS)
       }
     } catch {
       case ex: InterruptedException => log.error(ex, "Couldn't stop Turbine")
