@@ -82,6 +82,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
           replyTo, internalUri.toString,
           r.headers)
         val key = cmd.getCommandKey.toString
+        log.info(key)
         //histograms(key).update(1)
         counters(key).inc()
 
