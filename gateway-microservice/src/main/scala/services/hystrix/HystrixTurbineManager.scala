@@ -13,8 +13,7 @@ object HystrixTurbineManager {
     .withDispatcher(MicroserviceKernel.microserviceDispatcher)
 }
 
-class HystrixTurbineManager extends Actor
-    with ActorLogging with TurbineServer {
+class HystrixTurbineManager extends Actor with ActorLogging with TurbineServer {
 
   private var nodes = immutable.Set.empty[Address]
 
@@ -37,18 +36,18 @@ class HystrixTurbineManager extends Actor
   private def +++(members: immutable.Set[Member]) = {
     val members0 = members.filter(_.hasRole(watched)).map(_.address)
     nodes = nodes ++ members0
-    start(nodes)
+    startTurbine(nodes)
   }
 
   private def --(m: Member) =
     if (m.hasRole(watched)) {
       nodes = nodes - m.address
-      start(nodes)
+      startTurbine(nodes)
     }
 
   private def ++(m: Member) =
     if (m.hasRole(watched)) {
       nodes = nodes + m.address
-      start(nodes)
+      startTurbine(nodes)
     }
 }

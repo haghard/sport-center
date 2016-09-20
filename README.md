@@ -173,4 +173,8 @@ For testing we can use this:
   `http GET 192.168.0.38:2565/api/results/okc/last Authorization:...`
   
   `http GET 192.168.0.38:2565/api/standings/2013-01-28 Authorization:=...`
+
+### Apache benchmark example ###
   
+  `ab -n 50 -c 4 -t 30 -H "Authorization:..." 192.168.0.38:2561/api/results/hou/last`
+

@@ -55,7 +55,7 @@ package object hystrix {
     }
 
     //executed in hystrix-api-gateway-pool-n
-    //we don't need timeout since we have hystrix
+    //we don't need to set timeout since we have hystrix
     override def run(): Unit = {
       var connection: HttpURLConnection = null
       var inputStream: InputStream = null
@@ -69,10 +69,9 @@ package object hystrix {
         headers.foreach { c => connection.setRequestProperty(c.name, c.value) }
         inputStream = connection.getInputStream
 
-        import scala.collection.JavaConverters._
+        //import scala.collection.JavaConverters._
         //val map = connection.getHeaderFields().asScala
-
-        val location = connection.getHeaderField("Location")
+        //val location = connection.getHeaderField("Location")
 
         /*val outHeaders = map.foldLeft(immutable.Seq[RawHeader]()) { (acc, c) =>
           if ((c._1 ne null) && (c._2.get(0) ne null))

@@ -3,6 +3,7 @@ package hystrix
 import java.net.URI
 import java.nio.charset.Charset
 import java.util
+import java.util.concurrent.TimeUnit
 
 import akka.actor.{ Address, ActorLogging }
 import com.netflix.turbine.Turbine
@@ -18,28 +19,23 @@ import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse,
 trait TurbineServer {
   mixin: ActorLogging =>
 
-  implicit def f2Act(f: () => Unit) = new Action0 {
+  implicit def lambda2Acttion(f: () => Unit) = new Action0 {
     override def call(): Unit = f()
   }
 
-  private val turbinePort = 6500
+  private val turbinePort = 6500 //put it into config
 
-  protected var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
+  private var server: Option[HttpServer[ByteBuf, ByteBuf]] = None
 
-  /**
-   * Start http server on http://turbine-hostname:port/turbine.stream
-   *
-   * @param streams
-   */
-  protected def start(streams: immutable.Set[Address]) = {
+  protected def startTurbine(streams: immutable.Set[Address]) = {
     val uris = toURI(streams)
     if (server.isEmpty) {
       val local = createServer(uris)
       local.start()
       server = Some(local)
     } else {
-      server.get.shutdown()
-      log.info("Stop current turbine server")
+      server.get.waitTillShutdown(10, TimeUnit.SECONDS)
+      log.info("Hystrix-Turbine server has been stopped")
       val local = createServer(uris)
       local.start()
       server = Some(local)
@@ -58,10 +54,10 @@ trait TurbineServer {
       response.getHeaders.setHeader("Content-Type", "text/event-stream")
       toJavaObservable(toScalaObservable(pStreams)
         .doOnUnsubscribe(() => log.info("Turbine => Unsubscribing RxNetty server connection"))
-        .flatMap((map0: util.Map[String, AnyRef]) => {
-          val event = SSEvents.Element(JsonUtility.mapToJson(map0))
+        .flatMap { data: util.Map[String, AnyRef] =>
+          val event = SSEvents.Element(JsonUtility.mapToJson(data))
           response.writeAndFlush(Unpooled.copiedBuffer(event.toString, Charset.defaultCharset()))
-        })).asInstanceOf[rx.Observable[Void]]
+        }).asInstanceOf[rx.Observable[Void]]
     }
   }
 
