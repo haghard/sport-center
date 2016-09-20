@@ -46,14 +46,12 @@ trait TurbineServer {
     }
   }
 
-  /**
-   * + 10 convention
-   * @param streams
-   * @return
-   */
   private def toURI(streams: immutable.Set[Address]) =
-    for { n <- streams; host <- n.host; port <- n.port }
-      yield URI.create(s"http://$host:${port + 10}${HystrixMetricsMicroservice.hystrixStream}")
+    for {
+      n <- streams
+      host <- n.host
+      port <- n.port
+    } yield URI.create(s"http://$host:${port + 10}/${HystrixMetricsMicroservice.hystrixStream}")
 
   private def serverHandler(pStreams: rx.Observable[_ <: util.Map[String, AnyRef]]) = new RequestHandler[ByteBuf, ByteBuf]() {
     override def handle(request: HttpServerRequest[ByteBuf], response: HttpServerResponse[ByteBuf]): rx.Observable[Void] = {
@@ -68,9 +66,8 @@ trait TurbineServer {
   }
 
   private def createServer(streams: Set[URI]): HttpServer[ByteBuf, ByteBuf] = {
-    log.info(s"Create new turbine server with streams: [ ${
-      streams.foldLeft(new StringBuilder()) { (acc, c) => acc.append(c.toString).append(",")  }
-    } ]")
+    val uris = streams.foldLeft(new StringBuilder())((acc, c) => acc.append(c.toString).append(","))
+    log.info(s"Create new Hystrix-Turbine server for streams: [$uris]")
 
     import rx.lang.scala.JavaConversions._
     val pStreams: rx.Observable[_ <: util.Map[String, AnyRef]] = toScalaObservable(Turbine.aggregateHttpSSE(streams.toList: _*))

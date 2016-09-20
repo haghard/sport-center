@@ -14,7 +14,7 @@ object HystrixMetricsMicroservice {
   private val prefix = "hystrix"
   private val stream = "stream"
 
-  val hystrixStream = s"/$prefix/$stream"
+  val hystrixStream = s"$prefix/$stream"
   val dispatcher = "hystrix-stream-dispatcher"
 }
 
