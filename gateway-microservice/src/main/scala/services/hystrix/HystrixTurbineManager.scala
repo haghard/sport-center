@@ -15,7 +15,7 @@ object HystrixTurbineManager {
     .withDispatcher(MicroserviceKernel.microserviceDispatcher)
 }
 
-class HystrixTurbineManager extends Actor with ActorLogging with TurbineServer {
+class HystrixTurbineManager extends Actor with ActorLogging with HystrixTurbineServer {
 
   private var nodes = immutable.Set.empty[Address]
 

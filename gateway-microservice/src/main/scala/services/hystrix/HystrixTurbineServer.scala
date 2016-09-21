@@ -1,13 +1,10 @@
 package hystrix
 
-import java.net.{InetSocketAddress, URI}
-import java.nio.charset.Charset
 import java.util
-import java.util.concurrent.TimeUnit
+import java.net.URI
+import java.nio.charset.Charset
 import akka.actor.{ Address, ActorLogging }
 import akka.event.LoggingAdapter
-import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.graphite.{GraphiteUDP, Graphite, GraphiteSender}
 import com.netflix.turbine.Turbine
 import com.netflix.turbine.internal.JsonUtility
 import http.{ SSEvents, HystrixMetricsMicroservice }
@@ -21,12 +18,11 @@ import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse,
 
 import scala.util.{Success, Try, Failure}
 
-
-object TurbineServer {
+object HystrixTurbineServer {
   def executeWithRetry[T](n: Int)(log: LoggingAdapter, f: ⇒ T) = retry(n)(log, f)
 
   @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T = {
-    log.info(s"Attempt to stop Turbine. Countdown:$n")
+    log.info(s"Attempt to stop Hystrix-Turbine. Attempt countdown:$n")
     Try(f) match {
       case Success(_) => null.asInstanceOf[T]
         log.info("Turbine has been stopped") //stopped
@@ -39,15 +35,15 @@ object TurbineServer {
         Thread.sleep(3000)
         retry(n - 1)(log, f)
       case Failure(ex) ⇒
-        log.error(ex, "Couldn't stop Turbine")
+        log.error(ex, "Couldn't stop Hystrix-Turbine")
         throw ex
     }
   }
 }
 
-trait TurbineServer {
+trait HystrixTurbineServer {
   mixin: ActorLogging =>
-  import TurbineServer._
+  import HystrixTurbineServer._
 
 
   implicit def lambda2Acttion(f: () => Unit) = new Action0 {
@@ -61,9 +57,9 @@ trait TurbineServer {
     val uris = toURI(streams)
     executeWithRetry(5)(log, server.foreach(_.shutdown))
     val urisLine = streams.foldLeft(new StringBuilder())((acc, c) => acc.append(c.toString).append(","))
-    log.info(s"Create new Hystrix-Turbine server for streams: [$urisLine]")
+    log.info(s"Create new Hystrix-Turbine for streams: [$urisLine]")
     val httpHystrixServer = createServer(uris)
-    log.info(s"Hystrix-Turbine server has been created for [$urisLine]")
+    log.info(s"Hystrix-Turbine has been created for [$urisLine]")
     Option(httpHystrixServer.start)
   }
 
