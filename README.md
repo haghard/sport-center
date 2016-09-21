@@ -151,7 +151,7 @@ To access [hystrix-dashboard](https://github.com/Netflix/Hystrix/tree/master/hys
   
 Once dashboard running, you can open http://localhost:7979/hystrix-dashboard
 To connect Hystrix-Dashboard to `Gateway` please put http://192.168.0.62:6500/turbine.stream in hystrix-dashboard UI. 
-One more note, if Hystrix-Turbine server goes down it will be restarted on another `Gateway` node so that you have to reconnect dashboard to this new node manually.   
+One more note, if Hystrix-Turbine server goes down it will be restarted on another `Gateway` node so that you have to reconnect dashboard to this new node manually. As long as a `Gateway` node with Hystrix-Turbine server is alive, Hystrix-Dashboard works well. However, if this node goes down it will be restarted on another `Gateway` node, so you need to find out, what node it is and reconnect dashboard   
 
 
 For testing we can use this:
