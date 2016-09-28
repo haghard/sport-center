@@ -16,13 +16,13 @@ final class ChangeSetEventSerializer(system: ExtendedActorSystem) extends Serial
     case None => ChangeSetFormat.parseFrom(bytes)
     case Some(c) => c match {
       case EventClass => toDomainEvent(ChangeSetFormat.parseFrom(bytes))
-      case _          => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
+      case _ => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
     }
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: BeginTransaction => eventBuilder(e).build().toByteArray
-    case _                   => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
+    case _ => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
   }
 
   private def eventBuilder(e: BeginTransaction) =

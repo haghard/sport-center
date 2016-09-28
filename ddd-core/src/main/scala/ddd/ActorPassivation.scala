@@ -18,7 +18,7 @@ trait ActorPassivation extends Actor {
   override def unhandled(message: Any) {
     message match {
       case ReceiveTimeout => context.parent ! pc.passivationMsg
-      case _              => super.unhandled(message)
+      case _ => super.unhandled(message)
     }
   }
 }

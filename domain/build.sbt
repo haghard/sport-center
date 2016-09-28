@@ -8,13 +8,6 @@ scalaVersion := Scala
 
 parallelExecution in Test := false
 
-scalariformSettings
-
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(PreserveDanglingCloseParenthesis, true)
-
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 //domain/dependency-Tree
 

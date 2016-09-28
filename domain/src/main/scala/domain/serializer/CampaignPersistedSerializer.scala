@@ -32,7 +32,7 @@ final class CampaignPersistedSerializer(system: ActorSystem) extends Serializer 
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: CampaignPersistedEvent => eventBuilder(e).build().toByteArray
-    case _                         => throw new IllegalArgumentException(s"Can't serialize object of type ${o.getClass}")
+    case _ => throw new IllegalArgumentException(s"Can't serialize object of type ${o.getClass}")
   }
 
   private def buildScoreBox(lines: java.util.List[domain.formats.DomainEventFormats.PlayerLine]): List[PlayerLine] = {
@@ -50,15 +50,15 @@ final class CampaignPersistedSerializer(system: ActorSystem) extends Serializer 
       tf.getTo, tf.getBs, tf.getBa, tf.getPts)
 
   private def toDomainEvent(f: CampaignPersistedFormat): CampaignPersistedEvent =
-    CampaignPersistedEvent(f.getAggregateRootId,
+    CampaignPersistedEvent(
+      f.getAggregateRootId,
       new DateTime(f.getDate).withZone(SCENTER_TIME_ZONE).toDate,
       f.getResultsList.asScala.foldRight(List[NbaResult]()) { (r, acc) =>
         NbaResult(r.getHomeTeam, r.getHomeScore, r.getAwayTeam, r.getAwayScore,
           new DateTime(r.getTime).withZone(SCENTER_TIME_ZONE).toDate,
           r.getHomeScoreLine, r.getAwayScoreLine,
           buildTotal(r.getHomeTotal), buildTotal(r.getAwayTotal),
-          buildScoreBox(r.getHomeScoreBoxList), buildScoreBox(r.getAwayScoreBoxList)
-        ) :: acc
+          buildScoreBox(r.getHomeScoreBoxList), buildScoreBox(r.getAwayScoreBoxList)) :: acc
       }
     )
 
@@ -120,7 +120,8 @@ final class CampaignPersistedSerializer(system: ActorSystem) extends Serializer 
             .setDefReb(r.defReb).setTotalReb(r.totalReb)
             .setAst(r.ast).setPf(r.pf).setSteels(r.steels)
             .setTo(r.to).setBs(r.bs).setBa(r.ba).setPts(r.pts)
-            .build())
+            .build()
+        )
       }
 
       r.awayBox.foreach { r =>
@@ -132,7 +133,8 @@ final class CampaignPersistedSerializer(system: ActorSystem) extends Serializer 
             .setDefReb(r.defReb).setTotalReb(r.totalReb)
             .setAst(r.ast).setPf(r.pf).setSteels(r.steels)
             .setTo(r.to).setBs(r.bs).setBa(r.ba).setPts(r.pts)
-            .build())
+            .build()
+        )
       }
 
       builder.addResults(fr)

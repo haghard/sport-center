@@ -24,7 +24,8 @@ trait ProgrammaticallyCreator extends WebRouterCreator {
       totalInstances = 100,
       maxInstancesPerNode = 5,
       allowLocalRoutees = true,
-      useRole = Some(routerNodeRole))
+      useRole = Some(routerNodeRole)
+    )
   ).props(Props(new WebGetter(teams))).withDispatcher(dispatcher)
 
   override lazy val createRouter = context.actorOf(routerProps, routerName)

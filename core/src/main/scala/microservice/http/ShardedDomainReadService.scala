@@ -1,8 +1,8 @@
 package microservice.http
 
 import akka.http.scaladsl.model.HttpEntity.Strict
-import akka.http.scaladsl.model.headers.{OAuth2BearerToken, Host, Authorization, Location}
-import akka.http.scaladsl.model.{HttpMethods, MediaTypes, HttpResponse}
+import akka.http.scaladsl.model.headers.{ OAuth2BearerToken, Host, Authorization, Location }
+import akka.http.scaladsl.model.{ HttpMethods, MediaTypes, HttpResponse }
 import akka.util.ByteString
 import microservice.api.MicroserviceKernel
 import microservice.api.MicroserviceKernel._
@@ -36,17 +36,24 @@ trait ShardedDomainReadService extends BootableRestService {
   def fail[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]): String => Future[HttpResponse] =
     error =>
       Future.successful(
-        HttpResponse(akka.http.scaladsl.model.StatusCodes.BadRequest,
+        HttpResponse(
+          akka.http.scaladsl.model.StatusCodes.BadRequest,
           List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")), //Host(HostHeader(localAddress), httpPort)
-          Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))))
+          Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))
+        )
+      )
 
   def fail(error: String) =
-    HttpResponse(akka.http.scaladsl.model.StatusCodes.InternalServerError,
-      List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")), error)
+    HttpResponse(
+      akka.http.scaladsl.model.StatusCodes.InternalServerError,
+      List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")), error
+    )
 
   //Expires
   def success[T <: BasicHttpResponse](resp: T)(implicit writer: JsonWriter[T]) =
-      HttpResponse(akka.http.scaladsl.model.StatusCodes.OK,
-        List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")),
-        Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint)))
+    HttpResponse(
+      akka.http.scaladsl.model.StatusCodes.OK,
+      List(Location(s"http://$localAddress:$httpPort/$pathPref/$servicePathPostfix")),
+      Strict(MediaTypes.`application/json`, ByteString(resp.toJson.prettyPrint))
+    )
 }

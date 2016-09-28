@@ -42,7 +42,8 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
     val ht = r.getHomeTotal
     val at = r.getAwayTotal
 
-    ResultAdded(e.getTeamName,
+    ResultAdded(
+      e.getTeamName,
       NbaResult(r.getHomeTeam, r.getHomeScore, r.getAwayTeam, r.getAwayScore,
         new DateTime(r.getTime).withZone(SCENTER_TIME_ZONE).toDate,
         r.getHomeScoreLine,
@@ -58,8 +59,8 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
         r.getAwayScoreBoxList.asScala.foldRight(List.empty[PlayerLine]) { (f, acc) =>
           PlayerLine(f.getName, f.getPos, f.getMin, f.getFgmA, f.getThreePmA, f.getFtmA, f.getMinusSlashPlus, f.getOffReb,
             f.getDefReb, f.getTotalReb, f.getAst, f.getPf, f.getSteels, f.getTo, f.getBs, f.getBa, f.getPts) :: acc
-        }
-      ))
+        })
+    )
   }
 
   private def eventBuilder(e: ResultAdded): ResultAddedEvent.Builder = {
@@ -116,7 +117,8 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
           .setDefReb(r.defReb).setTotalReb(r.totalReb)
           .setAst(r.ast).setPf(r.pf).setSteels(r.steels)
           .setTo(r.to).setBs(r.bs).setBa(r.ba).setPts(r.pts)
-          .build())
+          .build()
+      )
     }
 
     res.awayBox.foreach { r =>
@@ -128,7 +130,8 @@ final class ResultAddedEventSerializer(system: ActorSystem) extends Serializer {
           .setDefReb(r.defReb).setTotalReb(r.totalReb)
           .setAst(r.ast).setPf(r.pf).setSteels(r.steels)
           .setTo(r.to).setBs(r.bs).setBa(r.ba).setPts(r.pts)
-          .build())
+          .build()
+      )
     }
 
     ResultAddedEvent.newBuilder()

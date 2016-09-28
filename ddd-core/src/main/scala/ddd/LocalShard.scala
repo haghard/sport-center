@@ -42,7 +42,8 @@ object LocalShard {
         childName = name,
         minBackoff = 5 second,
         maxBackoff = 10 second,
-        randomFactor = 0.3)
+        randomFactor = 0.3
+      )
 
       val sName = s"supervisor-$name"
       val actor = context.actorOf(sProp, sName)
@@ -69,14 +70,15 @@ object LocalShard {
     }
   }
 
-  final class LocalShardRouter[A <: BusinessEntity](implicit ct: ClassTag[A],
+  final class LocalShardRouter[A <: BusinessEntity](implicit
+    ct: ClassTag[A],
     resolution: IdResolution[A], childFactory: BusinessEntityActorFactory[A]) extends LocalMapChildCreationSupport
       with Actor with ActorLogging {
 
     override def aroundReceive(receive: Receive, msg: Any): Unit = {
       receive.applyOrElse(msg match {
         case c: DomainCommand => CommandMessage(c)
-        case other            => other
+        case other => other
       }, unhandled)
     }
 

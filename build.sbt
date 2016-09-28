@@ -1,9 +1,8 @@
 import sbt._
 import com.scalapenos.sbt.prompt.SbtPrompt.autoImport._
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
-import com.typesafe.sbt.SbtScalariform._
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
 
 name := "sport-center"
 organization := "github.com"
@@ -18,10 +17,8 @@ promptTheme := ScalapenosTheme
 
 scalariformSettings
 
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(RewriteArrowSymbols, true)
-  .setPreference(AlignParameters, true)
-  .setPreference(AlignSingleLineCaseStatements, true)
+ScalariformKeys.preferences in Compile  := formattingPreferences
+ScalariformKeys.preferences in Test     := formattingPreferences
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
@@ -47,6 +44,16 @@ lazy val `crawlerMicroservices` = project.in(file("crawler-microservice")).depen
 
 lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
 
+
+def formattingPreferences = {
+  import scalariform.formatter.preferences._
+  FormattingPreferences()
+    .setPreference(RewriteArrowSymbols, true)
+    .setPreference(AlignParameters, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(SpacesAroundMultiImports, true)
+}
+
 /**
  *
  *  Project sbt commands
@@ -56,7 +63,7 @@ lazy val `dddCore` = project.in(file("ddd-core")).dependsOn(`core`)
  *         nodes: lcrawler0 lcrawler1 lcrawler2       http GET 192.168.0.143:2561/api/crawler
  */
 
- /**
+/**
   *
   * cd /Volumes/Data/Code/Netflix/Hystrix/
   * ./gradlew jettyRun

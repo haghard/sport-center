@@ -1,16 +1,16 @@
 package gateway
 
 import java.io.IOException
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{ InetAddress, InetSocketAddress }
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 
 import akka.actor._
-import java.util.concurrent.{TimeUnit, ThreadLocalRandom}
+import java.util.concurrent.{ TimeUnit, ThreadLocalRandom }
 import akka.cluster.ddata.{ LWWMapKey, LWWMap }
 import akka.cluster.ddata.Replicator.Changed
 import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.graphite.{Graphite, GraphiteUDP, GraphiteSender}
+import com.codahale.metrics.graphite.GraphiteSender
 import discovery.ServiceDiscovery.DiscoveryLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
@@ -47,7 +47,7 @@ object ApiGateway {
 
 class ApiGateway private (address: String, httpPort: Int) extends Actor with ActorLogging {
   import gateway.ApiGateway._
-  import com.codahale.metrics.{Histogram, Counter}
+  import com.codahale.metrics.{ Histogram, Counter }
   import com.codahale.metrics.graphite.GraphiteReporter
 
   var routees: Option[Map[String, List[Route]]] = None
@@ -109,8 +109,10 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
       } { route: Route ⇒
         val reqUri = r.uri
         val internalUri = reqUri.withHost(route.host).withPort(route.port)
-        val cmd = services.hystrix.command(route.pathRegex,
-          replyTo, internalUri.toString, r.headers)
+        val cmd = services.hystrix.command(
+          route.pathRegex,
+          replyTo, internalUri.toString, r.headers
+        )
         val key = cmd.getCommandKey.toString
 
         //histograms(key).update(1)
@@ -125,7 +127,7 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
       routes.keySet.find { route ⇒
         route.r.findFirstIn(r.uri.path.toString) match {
           case Some(_) ⇒ true
-          case None    ⇒ false
+          case None ⇒ false
         }
       }.flatMap(randomNext)
     }.flatten

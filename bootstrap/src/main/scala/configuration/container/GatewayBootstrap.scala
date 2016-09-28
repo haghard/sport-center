@@ -13,7 +13,8 @@ object GatewayBootstrap extends configuration.SystemPropsSupport with App {
   implicit val cfg = GatewayCfg(
     Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
     Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
-    randomJmxPort, "Gateway")
+    randomJmxPort, "Gateway"
+  )
 
   microservice[GatewayCfg].startup()
 }

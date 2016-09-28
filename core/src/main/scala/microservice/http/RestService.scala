@@ -37,7 +37,8 @@ final class RestService private (route: Route, interface: String, port: Int)(imp
 
   implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(context.system)
-      .withDispatcher(MicroserviceKernel.microserviceDispatcher))(context.system)
+      .withDispatcher(MicroserviceKernel.microserviceDispatcher)
+  )(context.system)
 
   Http()(context.system)
     .bindAndHandle(route, interface, port)

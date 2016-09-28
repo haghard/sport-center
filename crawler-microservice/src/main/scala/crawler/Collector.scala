@@ -20,7 +20,7 @@ class Collector(urls: List[String]) extends Actor with ActorLogging {
 
   def running(batchUrls: List[String]): Receive = {
     case results: (String, List[NbaResult]) ⇒ context become dequeue(results, batchUrls)
-    case ReceiveTimeout                     ⇒ context.parent ! TimeOut(batchUrls, batch)
+    case ReceiveTimeout ⇒ context.parent ! TimeOut(batchUrls, batch)
   }
 
   def dequeue(results: (String, List[NbaResult]), batchUrls: List[String]): Receive = {

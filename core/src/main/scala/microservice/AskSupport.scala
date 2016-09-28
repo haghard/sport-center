@@ -17,7 +17,7 @@ trait AskSupport {
       .mapTo[T]
       .map(\/-(_))
       .recoverWith {
-        case ex: ClassCastException  => Future.successful(-\/(ex.getMessage))
+        case ex: ClassCastException => Future.successful(-\/(ex.getMessage))
         case ex: AskTimeoutException => Future.successful(-\/(s"Fetch results operation timeout ${ex.getMessage}"))
       }
 }

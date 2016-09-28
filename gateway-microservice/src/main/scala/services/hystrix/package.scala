@@ -22,11 +22,11 @@ package object hystrix {
     prefix =>
       { (replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =>
         prefix match {
-          case "/api/results/(.*)"      => GetResultsByDateCommand(replyTo, uri, headers)
+          case "/api/results/(.*)" => GetResultsByDateCommand(replyTo, uri, headers)
           case "/api/results/(.*)/last" => GetResultsLastCommand(replyTo, uri, headers)
-          case "/api/standings/(.*)"    => GetStandingsCommand(replyTo, uri, headers)
-          case "/api/crawler"           => GetSomeColdResultsCommand(replyTo, uri, headers)
-          case other                    => GetSomeColdResultsCommand(replyTo, uri, headers) //default
+          case "/api/standings/(.*)" => GetStandingsCommand(replyTo, uri, headers)
+          case "/api/crawler" => GetSomeColdResultsCommand(replyTo, uri, headers)
+          case other => GetSomeColdResultsCommand(replyTo, uri, headers) //default
         }
       }
 
@@ -78,8 +78,10 @@ package object hystrix {
           else acc
         }*/
 
-        replyTo ! HttpResponse(OK, /*headers = immutable.Seq(Location(location)),*/
-          entity = Strict(MediaTypes.`application/json`, ByteString(Source.fromInputStream(inputStream).mkString)))
+        replyTo ! HttpResponse(
+          OK, /*headers = immutable.Seq(Location(location)),*/
+          entity = Strict(MediaTypes.`application/json`, ByteString(Source.fromInputStream(inputStream).mkString))
+        )
 
       } catch {
         case e: Exception =>
@@ -122,13 +124,15 @@ package object hystrix {
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
-          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
+          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage)
+      )
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize))
-          //.withMaxQueueSize(1 << 8)
-          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills)
-          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize)
+      )
+    //.withMaxQueueSize(1 << 8)
+    //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills)
+    //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetStandingsCommand(replyTo, uri, headers)
   }
@@ -151,12 +155,14 @@ package object hystrix {
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
-          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
+          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage)
+      )
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize))
-          //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize)
+      )
+    //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+    //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsLastCommand(replyTo, uri, headers)
@@ -180,12 +186,14 @@ package object hystrix {
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
-          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
+          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage)
+      )
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize))
-          //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize)
+      )
+    //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+    //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) =
       new GetResultsByDateCommand(replyTo, uri, headers)
@@ -209,12 +217,14 @@ package object hystrix {
           .withExecutionTimeoutInMilliseconds(timeoutInMilliseconds)
           .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
           .withCircuitBreakerSleepWindowInMilliseconds(circuitBreakerSleepWindow)
-          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage))
+          .withCircuitBreakerErrorThresholdPercentage(circuitBreakerErrorThresholdPercentage)
+      )
       .andThreadPoolPropertiesDefaults(
         HystrixThreadPoolProperties.Setter()
-          .withCoreSize(poolSize))
-          //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
-          //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
+          .withCoreSize(poolSize)
+      )
+    //.withMetricsRollingStatisticalWindowInMilliseconds(rollingStatisticalWindowInMills)
+    //.withMetricsRollingStatisticalWindowBuckets(rollingStatisticalWindowInMills/1000))
 
     def apply(replyTo: ActorRef, uri: String, headers: immutable.Seq[HttpHeader]) = new GetSomeColdResultsCommand(replyTo, uri, headers)
   }

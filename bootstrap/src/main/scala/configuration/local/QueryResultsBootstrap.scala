@@ -14,7 +14,8 @@ object QueryResultsBootstrap extends configuration.SystemPropsSupport with App {
   implicit val cfg = ResultsCfg(
     Option(System.getProperty(configuration.AKKA_PORT_VAR)).getOrElse(defaultAkkaPort),
     Option(System.getProperty(configuration.HTTP_PORT_VAR)).map(_.toInt).getOrElse(defaultHttpPort),
-    randomJmxPort, "Query-results")
+    randomJmxPort, "Query-results"
+  )
 
   val node = microservice[ResultsCfg]
   node.startup()

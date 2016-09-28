@@ -87,7 +87,7 @@ class ShardedDomain(protected val system: ExtendedActorSystem) extends Extension
       shardRegion ! ShardRegion.GracefulShutdown
       become {
         case Terminated(`shardRegion`) => p.success(())
-        case ReceiveTimeout            => p.failure(new Exception("Timeout to stop local shard region"))
+        case ReceiveTimeout => p.failure(new Exception("Timeout to stop local shard region"))
       }
     })
     p.future

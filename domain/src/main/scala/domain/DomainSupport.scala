@@ -29,7 +29,7 @@ trait DomainSupport extends BootableMicroservice { this: SystemSettings =>
   abstract override def shutdown() = {
     val f = (ShardedDomain(system) gracefulShutdown)
     f.onComplete {
-      case Success(u)  => sys.log.info("★ ★ ★  Local shard has been stopped ★ ★ ★ ")
+      case Success(u) => sys.log.info("★ ★ ★  Local shard has been stopped ★ ★ ★ ")
       case Failure(ex) => sys.log.info("★ ★ ★ Local shard stop error {} ★ ★ ★ ", ex.getMessage)
     }
     Await.result(f, to)

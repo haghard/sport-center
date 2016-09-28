@@ -106,14 +106,14 @@ class ReconcileFrames {
       buffer = buffer.drop(SizeBytes + length)
 
       val updatedT = c match {
-        case "id"             ⇒ acc._2.copy(id = context)
-        case "userId"         ⇒ acc._2.copy(user = Some(User(id = context)))
-        case "userName"       ⇒ acc._2.copy(user = acc._2.user.map(u ⇒ User(u.id, context)))
+        case "id" ⇒ acc._2.copy(id = context)
+        case "userId" ⇒ acc._2.copy(user = Some(User(id = context)))
+        case "userName" ⇒ acc._2.copy(user = acc._2.user.map(u ⇒ User(u.id, context)))
         case "userScreenName" ⇒ acc._2.copy(user = acc._2.user.map(u ⇒ User(u.id, u.screenName, context)))
-        case "userLang"       ⇒ acc._2.copy(user = acc._2.user.map(u ⇒ User(u.id, u.screenName, u.screenName, context)))
-        case "createdAt"      ⇒ acc._2.copy(createdAt = context)
-        case "text"           ⇒ acc._2.copy(text = context)
-        case "topic"          ⇒ acc._2.copy(topic = Option(context))
+        case "userLang" ⇒ acc._2.copy(user = acc._2.user.map(u ⇒ User(u.id, u.screenName, u.screenName, context)))
+        case "createdAt" ⇒ acc._2.copy(createdAt = context)
+        case "text" ⇒ acc._2.copy(text = context)
+        case "topic" ⇒ acc._2.copy(topic = Option(context))
       }
 
       (buffer, updatedT)

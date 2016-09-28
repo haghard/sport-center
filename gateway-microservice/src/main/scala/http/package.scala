@@ -11,7 +11,7 @@ package object http {
   implicit def metrics2Message(metrics: Vector[String]) = {
     metrics.toList match {
       case List(n) => SSEvents.Element(n)
-      case h :: t  => SSEvents.Component(h :: t)
+      case h :: t => SSEvents.Component(h :: t)
     }
   }
 
@@ -54,7 +54,7 @@ package object http {
 
           builder.append(label)
           addLine(index) match {
-            case -1    ⇒ builder.append('\n')
+            case -1 ⇒ builder.append('\n')
             case index ⇒ addLines(builder, label, s, index)
           }
         }
@@ -65,7 +65,7 @@ package object http {
         def addEvent(builder: StringBuilder): StringBuilder =
           event match {
             case Some(e) ⇒ addLines(builder, "event:", e, 0)
-            case None    ⇒ builder
+            case None ⇒ builder
           }
 
         def newBuilder(): StringBuilder = {

@@ -58,7 +58,7 @@ trait ClusterRoleTracker {
         }
       }
 
-    case MemberUp(m)         ⇒ ++(m)
+    case MemberUp(m) ⇒ ++(m)
     case MemberRemoved(m, _) ⇒ --(m)
   }
 }

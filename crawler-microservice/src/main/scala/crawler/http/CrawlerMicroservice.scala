@@ -33,9 +33,11 @@ object CrawlerMicroservice {
         case Some(CrawlerResultsBody(last, count)) ⇒
           last.lastIterationDate.fold(empty) { dt ⇒
             val body = JsObject("lastIterationDate" -> dt.toJson(dtFormat))
-            JsObject("url" -> JsString(obj.url.toString),
+            JsObject(
+              "url" -> JsString(obj.url.toString),
               "view" -> obj.view.fold(JsString("none")) { view ⇒ JsString(view) },
-              "body" -> body)
+              "body" -> body
+            )
           }
         case None => throw new Exception("Empty body for CrawlerResponse")
       }
@@ -60,9 +62,11 @@ trait CrawlerMicroservice extends ShardedDomainReadService with AskSupport {
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApiJunction(route = Option { ec: ExecutionContext ⇒ crawlerRoute(ec) },
+      RestApiJunction(
+        route = Option { ec: ExecutionContext ⇒ crawlerRoute(ec) },
         preAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was deployed $httpPrefixAddress ★ ★ ★")),
-        postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
+        postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★"))
+      )
 
   private def crawlerRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPref) {

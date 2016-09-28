@@ -6,7 +6,8 @@ import akka.http.scaladsl.server.{ Directives, Route }
 case class RestApiJunction(
     route: Option[ExecutionContext => Route] = None,
     preAction: Option[() => Unit] = None,
-    postAction: Option[() => Unit] = None) extends Directives {
+    postAction: Option[() => Unit] = None
+) extends Directives {
 
   private def cmbRoutes(r0: ExecutionContext => Route, r1: ExecutionContext => Route) =
     (ec: ExecutionContext) =>
@@ -17,9 +18,11 @@ case class RestApiJunction(
       { a1(); a2() }
 
   def and(that: RestApiJunction): RestApiJunction =
-    RestApiJunction(route ++ that.route reduceOption cmbRoutes,
+    RestApiJunction(
+      route ++ that.route reduceOption cmbRoutes,
       preAction ++ that.preAction reduceOption cmbActions,
-      postAction ++ that.postAction reduceOption cmbActions)
+      postAction ++ that.postAction reduceOption cmbActions
+    )
 
   /**
    * Alias for ``and`` operation

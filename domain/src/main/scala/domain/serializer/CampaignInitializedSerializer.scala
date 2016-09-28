@@ -43,6 +43,8 @@ final class CampaignInitializedSerializer(system: ActorSystem) extends Serialize
   }
 
   private def toDomainEvent(f: CampaignInitializedFormat) =
-    domain.CrawlerCampaign.CampaignInitialized(f.getAggregateRootId,
-      new DateTime(f.getDate).withZone(SCENTER_TIME_ZONE).toDate)
+    domain.CrawlerCampaign.CampaignInitialized(
+      f.getAggregateRootId,
+      new DateTime(f.getDate).withZone(SCENTER_TIME_ZONE).toDate
+    )
 }

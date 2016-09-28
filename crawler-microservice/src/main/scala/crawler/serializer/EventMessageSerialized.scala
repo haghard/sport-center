@@ -21,13 +21,13 @@ class EventMessageSerialized(system: ExtendedActorSystem) extends Serializer {
     case None => EventMessageFormat.parseFrom(bytes)
     case Some(c) => c match {
       case EventClass => toDomainEvent(EventMessageFormat.parseFrom(bytes))
-      case _          => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
+      case _ => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
     }
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: EventMessage => builder(e).build().toByteArray
-    case _               => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
+    case _ => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
   }
 
   private def toDomainEvent(format: EventMessageFormat): EventMessage = {
@@ -39,7 +39,8 @@ class EventMessageSerialized(system: ExtendedActorSystem) extends Serializer {
 
     new EventMessage(
       CampaignPersistedEvent(e.getOwner, new DateTime(e.getTime).withZone(SCENTER_TIME_ZONE).toDate, list),
-      format.getUuid, new DateTime(format.getTime).withZone(SCENTER_TIME_ZONE))
+      format.getUuid, new DateTime(format.getTime).withZone(SCENTER_TIME_ZONE)
+    )
   }
 
   private def builder(e: EventMessage): EventMessageFormat.Builder = {

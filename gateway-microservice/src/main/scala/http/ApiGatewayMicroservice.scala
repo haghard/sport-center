@@ -36,7 +36,8 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
    */
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApiJunction(Option { ec: ExecutionContext ⇒ gatewayRoute(ec) },
+      RestApiJunction(
+        Option { ec: ExecutionContext ⇒ gatewayRoute(ec) },
         Option { () ⇒
           ServiceDiscovery(system).subscribe(gateway)
           system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress  ★ ★ ★")
@@ -47,16 +48,15 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
   //TODO: try to avoid timeout
   private def gatewayRoute(implicit ec: ExecutionContext): Route =
     pathPrefix(pathPref) {
-      path(Segments) { path ⇒
-        ctx ⇒
-          ctx.complete {
-            gateway.ask(ctx.request)
-              .mapTo[HttpResponse]
-              .recover {
-                case ex: Exception ⇒
-                  HttpResponse(InternalServerError, List(Host(HostHeader(localAddress), httpPort)), ex.getMessage)
-              }
-          }
+      path(Segments) { path ⇒ ctx ⇒
+        ctx.complete {
+          gateway.ask(ctx.request)
+            .mapTo[HttpResponse]
+            .recover {
+              case ex: Exception ⇒
+                HttpResponse(InternalServerError, List(Host(HostHeader(localAddress), httpPort)), ex.getMessage)
+            }
+        }
       }
     } ~ path("hystrix-api") {
       get { ctx =>

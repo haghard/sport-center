@@ -25,7 +25,7 @@ trait OnClusterLeaveKeysCleaner extends ClusterMembershipAware {
     ServiceDiscovery(context.system)
       .deleteAll(UnsetAddress(m.address.toString))
       .map {
-        case \/-(r)     ⇒ log.info(s"Service with key ${m.address} was successfully unregistered")
+        case \/-(r) ⇒ log.info(s"Service with key ${m.address} was successfully unregistered")
         case -\/(error) ⇒ log.info(s"Service ${m.address} unregistered error $error")
       }
   }

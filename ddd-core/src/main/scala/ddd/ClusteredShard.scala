@@ -37,7 +37,8 @@ object ClusteredShard {
             entityProps = EntityProps,
             settings = ClusterShardingSettings(system).withRememberEntities(true),
             sr.idExtractor,
-            sr.shardResolver)
+            sr.shardResolver
+          )
       }
     }
   }

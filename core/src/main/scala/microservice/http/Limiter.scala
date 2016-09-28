@@ -26,7 +26,8 @@ class Limiter(val maxAvailableTokens: Int, val tokenRefreshPeriod: FiniteDuratio
     initialDelay = tokenRefreshPeriod,
     interval = tokenRefreshPeriod,
     receiver = self,
-    Release)
+    Release
+  )
 
   override def receive: Receive = open
 

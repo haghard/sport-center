@@ -41,9 +41,9 @@ object StandingMicroservice {
     override def write(obj: StandingsResponse): JsValue = {
       obj.body match {
         case Some(response) ⇒ response match {
-          case r: SeasonStandingResponse  ⇒ JsObject("west-conf" -> r.west.toJson, "east-conf" -> r.east.toJson, "count" -> JsNumber(r.west.size))
+          case r: SeasonStandingResponse ⇒ JsObject("west-conf" -> r.west.toJson, "east-conf" -> r.east.toJson, "count" -> JsNumber(r.west.size))
           case r: PlayOffStandingResponse ⇒ JsObject("stages" -> r.stages.toMap.toJson, "count" -> JsNumber(r.stages.keySet.size))
-          case r: Shards                  => JsObject("results" -> JsArray(r.results.toJson), "count" -> JsNumber(r.results.size))
+          case r: Shards => JsObject("results" -> JsArray(r.results.toJson), "count" -> JsNumber(r.results.size))
         }
         case None ⇒ JsString(obj.error.get)
       }
@@ -74,12 +74,14 @@ trait StandingMicroservice extends ShardedDomainReadService
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApiJunction(route = Option { ec: ExecutionContext ⇒ standingRoute(ec) },
+      RestApiJunction(
+        route = Option { ec: ExecutionContext ⇒ standingRoute(ec) },
         preAction = Option { () ⇒
           ShardedDomain(system).start()
           system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress ★ ★ ★")
         },
-        postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★")))
+        postAction = Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress ★ ★ ★"))
+      )
 
   private def standingRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPref) {
@@ -94,7 +96,7 @@ trait StandingMicroservice extends ShardedDomainReadService
                 Try {
                   new DateTime(formatter parse date)
                 } match {
-                  case Success(dt)    ⇒ queryView(uri, dt)
+                  case Success(dt) ⇒ queryView(uri, dt)
                   case Failure(error) ⇒ fail(StandingsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
                 }
               }

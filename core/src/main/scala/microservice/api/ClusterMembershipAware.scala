@@ -25,10 +25,10 @@ trait ClusterMembershipAware {
 
   protected val withClusterEvents: Receive = {
     case state: CurrentClusterState ⇒ state.members.foreach { receiveMemberUp }
-    case MemberUp(m)                ⇒ receiveMemberUp(m)
-    case MemberRemoved(m, _)        ⇒ receiveMemberRemoved(m)
-    case ReachableMember(m)         ⇒ receiveMemberUp(m)
-    case UnreachableMember(m)       ⇒ receiveMemberRemoved(m)
+    case MemberUp(m) ⇒ receiveMemberUp(m)
+    case MemberRemoved(m, _) ⇒ receiveMemberRemoved(m)
+    case ReachableMember(m) ⇒ receiveMemberUp(m)
+    case UnreachableMember(m) ⇒ receiveMemberRemoved(m)
   }
 
   private def receiveMemberUp(m: Member): Unit =

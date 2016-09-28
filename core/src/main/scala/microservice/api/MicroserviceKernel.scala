@@ -14,12 +14,14 @@ object MicroserviceKernel {
   val GatewayRole = "Gateway"
 }
 
-abstract class MicroserviceKernel(override val akkaSystemPort: String,
+abstract class MicroserviceKernel(
+  override val akkaSystemPort: String,
   override val environment: String,
   override val httpPort: Int = BootableClusterNode.DefaultCloudHttpPort,
   override val jmxPort: Int = BootableClusterNode.DefaultJmxPort,
   override val clusterRole: String = MicroserviceKernel.DomainRole,
-  override val ethName: String = BootableClusterNode.CloudEth) extends BootableMicroservice
+  override val ethName: String = BootableClusterNode.CloudEth
+) extends BootableMicroservice
     with ClusterNetworkSupport
     with SeedNodesSupport
     with BootableRestService {

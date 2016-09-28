@@ -52,14 +52,16 @@ trait DiscoveryMicroservice extends UsersMicroservices
 
   implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(system)
-      .withDispatcher(MicroserviceKernel.microserviceDispatcher))(system)
+      .withDispatcher(MicroserviceKernel.microserviceDispatcher)
+  )(system)
 
   abstract override def configureApi() =
     super.configureApi() ~ RestApiJunction(
       route = Option({ ec: ExecutionContext ⇒ discoveryRoute(ec) }),
       preAction = Option { () =>
         system.log.info(s"\n★ ★ ★ Discovery: [$httpPrefixAddress/$servicePrefix/$streamResponse] [$httpPrefixAddress/$servicePrefix/$scalarResponse] ★ ★ ★")
-      })
+      }
+    )
 
   private def streamPublisher() = system.actorOf(ServiceRegistryPublisher.props(httpDispatcher))
 
@@ -79,7 +81,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
           ServiceDiscovery(system)
             .findAll
             .flatMap {
-              case \/-(r)     ⇒ ctx.complete((r.items).toMap.toJson.prettyPrint)
+              case \/-(r) ⇒ ctx.complete((r.items).toMap.toJson.prettyPrint)
               case -\/(error) ⇒ ctx.complete(NotFound, error)
             }
         }
@@ -107,7 +109,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
             ServiceDiscovery(system)
               .unsetKey(UnsetKey(KV(kv.key, kv.value)))
               .map {
-                case \/-(r)     ⇒ HttpResponse(OK, entity = s"Service kv ${kv.toJson.prettyPrint} was unregistered")
+                case \/-(r) ⇒ HttpResponse(OK, entity = s"Service kv ${kv.toJson.prettyPrint} was unregistered")
                 case -\/(error) ⇒ HttpResponse(InternalServerError)
               }
           }
@@ -119,7 +121,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
           ServiceDiscovery(system)
             .deleteAll(UnsetAddress(key))
             .map {
-              case \/-(r)     ⇒ HttpResponse(OK, entity = s"Service $key was unregistered")
+              case \/-(r) ⇒ HttpResponse(OK, entity = s"Service $key was unregistered")
               case -\/(error) ⇒ HttpResponse(InternalServerError, entity = error)
             }
         }

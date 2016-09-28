@@ -55,7 +55,7 @@ object StandingMaterializedView {
         val temp = stageHashes.toSeq.sortWith { (l, r) ⇒
           l._2.compareTo(r._2) match {
             case -1 ⇒ true
-            case _  ⇒ false
+            case _ ⇒ false
           }
         }
         val local = temp.foldLeft((mutable.Map[String, List[NbaResultView]](), stageNames.toBuffer)) { (map, c) ⇒
@@ -123,9 +123,9 @@ class StandingMaterializedView private (settings: CustomSettings) extends Actor 
         v
       }).headOption
       viewName foreach (x ⇒ x match {
-        case season(y)  ⇒ view = Some(new SeasonViewBuilder(settings))
+        case season(y) ⇒ view = Some(new SeasonViewBuilder(settings))
         case playoff(y) ⇒ view = Some(new PlayoffViewBuilder)
-        case summer(y)  ⇒ view = Some(new SeasonViewBuilder(settings))
+        case summer(y) ⇒ view = Some(new SeasonViewBuilder(settings))
       })
       context become activate(r)
     }

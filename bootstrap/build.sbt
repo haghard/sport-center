@@ -5,14 +5,7 @@ import com.typesafe.sbt.SbtScalariform._
 import sbtdocker.ImageName
 import scalariform.formatter.preferences._
 
-organization := "github/haghard"
-
-scalariformSettings
-
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(PreserveDanglingCloseParenthesis, true)
+organization := "haghard"
 
 name := "bootstrap"
 

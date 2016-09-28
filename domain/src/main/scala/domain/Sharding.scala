@@ -41,7 +41,7 @@ trait Sharding {
       .mapTo[T]
       .recoverWith {
         case ex: AskTimeoutException ⇒ Future.failed[T](new Exception(ex))
-        case ex: ClassCastException  ⇒ Future.failed[T](new Exception(ex))
+        case ex: ClassCastException ⇒ Future.failed[T](new Exception(ex))
       }
 
   protected def showLocalRegions(implicit timeout: Timeout): Future[CurrentRegions] =

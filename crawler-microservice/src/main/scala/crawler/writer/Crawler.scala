@@ -99,11 +99,11 @@ object Crawler {
           scores.map { els =>
             val away = els._1.getElementsByClass("score").toList.map(_.toString match {
               case field(_, n) => n.toInt
-              case other       => 0
+              case other => 0
             }).mkString("-")
             val home = els._2.getElementsByClass("score").toList.map(_.toString match {
               case field(_, n) => n.toInt
-              case other       => 0
+              case other => 0
             }).mkString("-")
             (home, away)
           }
@@ -176,7 +176,7 @@ object Crawler {
         (if (lines.length > 0) {
           lines(0) match {
             case Details(uri) => uri.successNel
-            case other        => s"Parse error: Regexp for details didn't work out for $el".failureNel
+            case other => s"Parse error: Regexp for details didn't work out for $el".failureNel
           }
         } else s"Parse error: Lines length == 0 for $el".failureNel) :: acc
       }).sequenceU
@@ -220,13 +220,13 @@ object Crawler {
         val awayLine = away.map {
           _.trim match {
             case Score(d) => d
-            case other    => 0
+            case other => 0
           }
         }.mkString("-")
         val homeLine = home.map {
           _.trim match {
             case Score(d) => d
-            case other    => 0
+            case other => 0
           }
         }.mkString("-")
         s"$awayLine/$homeLine".successNel
@@ -315,10 +315,10 @@ object Crawler {
       games.fold(throw new CrawlerException(new Exception("Couldn't find nbaSSOuter/GameLine"), url)) { g =>
         val urls = extractDetailUrls(
           g.flatMap { el =>
-            el.getElementsByAttributeValue("class", "nbaActionBar")
-              .select("a[href]")
-              .filter(_.toString.contains("recapAnc"))
-          }.toList
+          el.getElementsByAttributeValue("class", "nbaActionBar")
+            .select("a[href]")
+            .filter(_.toString.contains("recapAnc"))
+        }.toList
         )
 
         urls match {

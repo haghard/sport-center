@@ -105,7 +105,7 @@ package object ddd {
 
     def deliveryId: Option[Long] = tryGetMetaAttribute[Any](MetaData.DeliveryId).map {
       case bigInt: scala.math.BigInt => bigInt.toLong
-      case l: Long                   => l
+      case l: Long => l
     }
   }
 
@@ -113,9 +113,11 @@ package object ddd {
     def unapply(em: EventMessage): Option[(String, DomainEvent)] = Some(em.id, em.event)
   }
 
-  class EventMessage(val event: DomainEvent,
+  class EventMessage(
+    val event: DomainEvent,
       val id: String = UUID.randomUUID().toString,
-      val timestamp: DateTime = new DateTime) extends Message with EntityMessage {
+      val timestamp: DateTime = new DateTime
+  ) extends Message with EntityMessage {
 
     type MessageImpl = EventMessage
 
@@ -130,10 +132,12 @@ package object ddd {
 
   case class AggregateSnapshotId(aggregateId: EntityId, sequenceNr: Long = 0)
 
-  case class DomainEventMessage(snapshotId: AggregateSnapshotId,
+  case class DomainEventMessage(
+    snapshotId: AggregateSnapshotId,
     override val event: DomainEvent,
     override val id: String = UUID.randomUUID().toString,
-    override val timestamp: DateTime = new DateTime)
+    override val timestamp: DateTime = new DateTime
+  )
       extends EventMessage(event, id, timestamp) {
 
     override def entityId = aggregateId
@@ -201,7 +205,7 @@ package object ddd {
 
     val idExtractor: ExtractEntityId = {
       case em: EntityMessage => (entityIdResolver(em), em)
-      case c: DomainCommand  => (entityIdResolver(c), CommandMessage(c))
+      case c: DomainCommand => (entityIdResolver(c), CommandMessage(c))
     }
   }
 

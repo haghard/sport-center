@@ -78,7 +78,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   private def ++(map: LWWMap[DiscoveryLine], k: KV): LWWMap[DiscoveryLine] =
     map.get(k.address) match {
       case Some(DiscoveryLine(_, existingUrls)) ⇒ map + (k.address -> DiscoveryLine(k.address, existingUrls + k.url))
-      case None                                 ⇒ map + (k.address -> DiscoveryLine(k.address, Set(k.url)))
+      case None ⇒ map + (k.address -> DiscoveryLine(k.address, Set(k.url)))
     }
 
   def subscribe(subscriber: ActorRef): Unit = {
@@ -145,7 +145,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
           }))
       }
     case Replicator.NotFound(LWWMapKey(DataKey), _) ⇒ Future.successful(-\/(s"NotFound registry"))
-    case other                                      ⇒ Future.successful(-\/(s"Find error $other"))
+    case other ⇒ Future.successful(-\/(s"Find error $other"))
   }
 
   private def read: Replicator.Get[LWWMap[DiscoveryLine]] =

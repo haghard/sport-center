@@ -35,7 +35,8 @@ trait DiscoveryHttpClient extends DiscoveryClient
 
   implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(system)
-      .withDispatcher(discoveryDispatcherName))(system)
+      .withDispatcher(discoveryDispatcherName)
+  )(system)
 
   implicit val ec = system.dispatchers.lookup(discoveryDispatcherName)
 
@@ -51,7 +52,8 @@ trait DiscoveryHttpClient extends DiscoveryClient
     val req = HttpRequest(
       POST,
       uri = Path,
-      entity = HttpEntity(`application/json`, data))
+      entity = HttpEntity(`application/json`, data)
+    )
     call(req)
   }
 
@@ -66,7 +68,8 @@ trait DiscoveryHttpClient extends DiscoveryClient
     val req = HttpRequest(
       PUT,
       uri = Path,
-      entity = HttpEntity(`application/json`, data))
+      entity = HttpEntity(`application/json`, data)
+    )
     call(req)
   }
 
@@ -89,7 +92,7 @@ trait DiscoveryHttpClient extends DiscoveryClient
               .runWith(Sink.head[HttpResponse])
               .flatMap { response ⇒
                 response.status match {
-                  case OK    ⇒ Future.successful(OK)
+                  case OK ⇒ Future.successful(OK)
                   case other ⇒ Future.failed(new IOException(other.toString))
                 }
               }

@@ -40,8 +40,10 @@ object settings {
 
     val refreshIntervals = {
       val cfg = system.settings.config.getConfig("app-settings")
-      Intervals(FiniteDuration(cfg.getDuration("refresh.results", TimeUnit.SECONDS), TimeUnit.SECONDS),
-        FiniteDuration(cfg.getDuration("refresh.standings", TimeUnit.SECONDS), TimeUnit.SECONDS))
+      Intervals(
+        FiniteDuration(cfg.getDuration("refresh.results", TimeUnit.SECONDS), TimeUnit.SECONDS),
+        FiniteDuration(cfg.getDuration("refresh.standings", TimeUnit.SECONDS), TimeUnit.SECONDS)
+      )
     }
 
     val cassandra = {
@@ -84,9 +86,11 @@ object settings {
 
     lazy val crawler = {
       val cfg = system.settings.config.getConfig("app-settings")
-      CrawlerSettings(cfg.getInt("crawler.days-in-batch"),
+      CrawlerSettings(
+        cfg.getInt("crawler.days-in-batch"),
         FiniteDuration(cfg.getDuration("crawler.iteration-period", TimeUnit.HOURS), TimeUnit.HOURS),
-        FiniteDuration(cfg.getDuration("crawler.job-timeout", TimeUnit.SECONDS), TimeUnit.SECONDS))
+        FiniteDuration(cfg.getDuration("crawler.job-timeout", TimeUnit.SECONDS), TimeUnit.SECONDS)
+      )
     }
 
     val intervals = {

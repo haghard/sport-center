@@ -15,13 +15,16 @@ trait ServiceRegistryCleanerSupport extends BootableMicroservice {
   abstract override def startup(): Unit = {
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new ServiceDiscoveryGuardian(config.getDuration("ops-timeout", SECONDS).second,
-          Option(MicroserviceKernel.DomainRole), DistributedData(system).replicator) with OnClusterLeaveKeysCleaner),
+        singletonProps = Props(new ServiceDiscoveryGuardian(
+          config.getDuration("ops-timeout", SECONDS).second,
+          Option(MicroserviceKernel.DomainRole), DistributedData(system).replicator
+        ) with OnClusterLeaveKeysCleaner),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
           .withSingletonName("keys-guardian")
           .withRole(MicroserviceKernel.GatewayRole)
-      ))
+      )
+    )
 
     super.startup()
   }

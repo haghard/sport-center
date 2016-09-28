@@ -44,14 +44,20 @@ object ResultsMicroservice {
         val e = obj.error.fold(JsString("none")) { error ⇒ JsString(error) }
         obj.body match {
           case Some(ResultsByDateBody(c, list)) ⇒
-            JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
-              "results" -> JsArray(list.toList.map(r ⇒ r.toJson))), "error" -> e)
+            JsObject("url" -> url, "view" -> v, "body" -> JsObject(
+              "count" -> JsNumber(c),
+              "results" -> JsArray(list.toList.map(r ⇒ r.toJson))
+            ), "error" -> e)
           case Some(ResultsByTeamBody(c, list)) =>
-            JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
-              "results" -> JsArray(list.map(r ⇒ r.toJson))), "error" -> e)
+            JsObject("url" -> url, "view" -> v, "body" -> JsObject(
+              "count" -> JsNumber(c),
+              "results" -> JsArray(list.map(r ⇒ r.toJson))
+            ), "error" -> e)
           case Some(ShardBody(c, addresses)) =>
-            JsObject("url" -> url, "view" -> v, "body" -> JsObject("count" -> JsNumber(c),
-              "results" -> JsArray(addresses.toJson)), "error" -> e)
+            JsObject("url" -> url, "view" -> v, "body" -> JsObject(
+              "count" -> JsNumber(c),
+              "results" -> JsArray(addresses.toJson)
+            ), "error" -> e)
           case None => JsObject("url" -> url, "view" -> v, "error" -> e)
         }
       }
@@ -101,12 +107,14 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
 
   abstract override def configureApi() =
     super.configureApi() ~
-      RestApiJunction(Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
+      RestApiJunction(
+        Option { ec: ExecutionContext ⇒ resultsRoute(ec) },
         Option { () ⇒
           ShardedDomain(system).start()
           system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was started on $httpPrefixAddress ★ ★ ★ ★ ★ ★")
         },
-        Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was stopped on $httpPrefixAddress ★ ★ ★ ★ ★ ★")))
+        Option(() ⇒ system.log.info(s"\n★ ★ ★ ★ ★ ★ [$name] was stopped on $httpPrefixAddress ★ ★ ★ ★ ★ ★"))
+      )
 
   private def resultsRoute(implicit ec: ExecutionContext): Route = {
     pathPrefix(pathPref) {
@@ -121,7 +129,7 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
                 Try {
                   formatter parse date
                 } match {
-                  case Success(dt)    ⇒ competeWithDate(uri, date)
+                  case Success(dt) ⇒ competeWithDate(uri, date)
                   case Failure(error) ⇒ fail(ResultsResponse(uri, error = Option(error.getMessage))).apply(error.getMessage)
                 }
               }
@@ -149,7 +157,8 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
                       .fold(failbackWithDefaultSize, { l ⇒ \/-(l) })
 
                     (for { l ← loc; s ← size } yield (l, s))
-                      .fold(error ⇒
+                      .fold(
+                        error ⇒
                         fail(ResultsResponse(uri, view = Option(teamViewName), error = Option(error))).apply(error),
                         complete(_)
                       )
@@ -182,14 +191,14 @@ trait ResultsMicroservice extends ShardedDomainReadService with Directives
   private def completeWithTeam(uri: String, team: String)(implicit ex: ExecutionContext): ((Location.Value, Int)) ⇒ Future[HttpResponse] =
     tuple ⇒ {
       fetch[ResultsByTeamBody](GetResultsByTeam(uri, team, tuple._2, tuple._1), view) map {
-        case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(teamViewName), body = Option(res)))
+        case \/-(res) ⇒ success(ResultsResponse(uri, view = Option(teamViewName), body = Option(res)))
         case -\/(error) ⇒ fail(error)
       }
     }
 
   private def competeWithDate(uri: String, date: String)(implicit ex: ExecutionContext): Future[HttpResponse] =
     fetch[ResultsByDateBody](GetResultsByDate(uri, date), view) map {
-      case \/-(res)   ⇒ success(ResultsResponse(uri, view = Option(dtViewName), body = Option(res)))
+      case \/-(res) ⇒ success(ResultsResponse(uri, view = Option(dtViewName), body = Option(res)))
       case -\/(error) ⇒ fail(error)
     }
 }

@@ -31,9 +31,9 @@ object TeamAggregate {
   implicit object intervalOrdering extends Ordering[Interval] {
     override def compare(x: Imports.Interval, y: Imports.Interval): Int =
       x.isBefore(y) match {
-        case true                  ⇒ -1
+        case true ⇒ -1
         case false if x.isEqual(y) ⇒ 0
-        case false                 ⇒ 1
+        case false ⇒ 1
       }
   }
 
@@ -98,16 +98,16 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
         sender() ! WriteAck(team)
       }
 
-    case "boom"                               ⇒ throw TestException("TeamAggregate test error")
-    case SaveSnapshotSuccess(metadata)        ⇒ log.info("Team {} have been restored from snapshot {}", state.name, metadata)
+    case "boom" ⇒ throw TestException("TeamAggregate test error")
+    case SaveSnapshotSuccess(metadata) ⇒ log.info("Team {} have been restored from snapshot {}", state.name, metadata)
     case SaveSnapshotFailure(metadata, cause) ⇒ log.info("Failure restore from snapshot {}", cause.getMessage)
-    case MakeSnapshot                         ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate))
+    case MakeSnapshot ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate))
   }
 
   override def receiveRecover: Receive = {
-    case event: ResultAdded                                     ⇒ updateState(event)
+    case event: ResultAdded ⇒ updateState(event)
     case SnapshotOffer(m: SnapshotMetadata, s: SnapshotCreated) ⇒ updateState(s)
-    case RecoveryCompleted                                      ⇒ log.info("RecoveryCompleted for {} up to {}", persistenceId, state.lastDate)
+    case RecoveryCompleted ⇒ log.info("RecoveryCompleted for {} up to {}", persistenceId, state.lastDate)
   }
 
   override def onPersistFailure(cause: Throwable, event: Any, seqNr: Long) = {

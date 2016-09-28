@@ -1,5 +1,4 @@
 import Dependencies._
-import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtMultiJvm
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
@@ -7,12 +6,6 @@ name := "discovery"
 
 scalaVersion := Scala
 
-scalariformSettings
-
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(PreserveDanglingCloseParenthesis, true)
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 //discovery/dependency-graph

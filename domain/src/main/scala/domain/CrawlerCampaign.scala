@@ -45,8 +45,8 @@ object CrawlerCampaign {
   case class CampaignState(name: Option[String] = None, progressDate: Option[Date] = None) extends AggregateState {
     override def apply = {
       case CampaignInitialized(id, dt) => copy(Option(id), Option(dt))
-      case e: CampaignPersistedEvent   => copy(progressDate = Option(e.dt))
-      case r: RequestCampaign          => this
+      case e: CampaignPersistedEvent => copy(progressDate = Option(e.dt))
+      case r: RequestCampaign => this
     }
   }
 
@@ -105,7 +105,7 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
     log.info("Crawl before: {}. Last crawler date: {}", (formatter format crawlLimitDate.toDate), (formatter format lastCrawlDate.toDate))
 
     loop(List.empty[String], lastCrawlDate, crawlLimitDate, localBatchSize) match {
-      case (_, Nil)                     ⇒ replyTo ! CrawlerTask(None)
+      case (_, Nil) ⇒ replyTo ! CrawlerTask(None)
       case (dt, elements: List[String]) ⇒ replyTo ! CrawlerTask(Some(CrawlerJob(dt, elements)))
     }
   }

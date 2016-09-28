@@ -16,7 +16,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable
 import io.reactivex.netty.protocol.http.server.{ HttpServer, HttpServerResponse, HttpServerRequest, RequestHandler }
 
-import scala.util.{Success, Try, Failure}
+import scala.util.{ Success, Try, Failure }
 
 object HystrixTurbineServer {
   def executeWithRetry[T](n: Int)(log: LoggingAdapter, f: ⇒ T) = retry(n)(log, f)
@@ -24,7 +24,8 @@ object HystrixTurbineServer {
   @tailrec private def retry[T](n: Int)(log: LoggingAdapter, f: ⇒ T): T = {
     log.info(s"Attempt to stop Hystrix-Turbine. Attempt countdown:$n")
     Try(f) match {
-      case Success(_) => null.asInstanceOf[T]
+      case Success(_) =>
+        null.asInstanceOf[T]
         log.info("Turbine has been stopped") //stopped
         null.asInstanceOf[T]
       case Failure(ex) if (ex.isInstanceOf[java.lang.IllegalStateException]) =>
@@ -44,7 +45,6 @@ object HystrixTurbineServer {
 trait HystrixTurbineServer {
   mixin: ActorLogging =>
   import HystrixTurbineServer._
-
 
   implicit def lambda2Acttion(f: () => Unit) = new Action0 {
     override def call(): Unit = f()

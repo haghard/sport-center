@@ -38,7 +38,7 @@ class HystrixMetricsPublisher extends ActorPublisher[Vector[String]] with ActorL
     if (n > 0 && poller.isRunning) {
       listener.getJsonMetrics match {
         case Vector() => onNext(Vector("ping: "))
-        case other    => onNext(other)
+        case other => onNext(other)
       }
       loop(poller, listener, n - 1)
     } else ()

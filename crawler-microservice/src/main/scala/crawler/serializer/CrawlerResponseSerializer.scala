@@ -20,20 +20,22 @@ final class CrawlerResponseSerializer(system: ExtendedActorSystem) extends Seria
     case None => CrawlerResponseFormat.parseFrom(bytes)
     case Some(c) => c match {
       case EventClass => toDomainEvent(CrawlerResponseFormat.parseFrom(bytes))
-      case _          => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
+      case _ => throw new IllegalArgumentException(s"can't deserialize object of type ${c}")
     }
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case e: CrawlerResponse => builder(e).build().toByteArray
-    case _                  => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
+    case _ => throw new IllegalArgumentException(s"can't serialize object of type ${o.getClass}")
   }
 
   private def toDomainEvent(format: CrawlerResponseFormat): CrawlerResponse =
-    CrawlerResponse(new DateTime(format.getLogicalTime).withZone(SCENTER_TIME_ZONE),
+    CrawlerResponse(
+      new DateTime(format.getLogicalTime).withZone(SCENTER_TIME_ZONE),
       format.getResultsList.asScala.foldRight(List[NbaResult]()) { (r, acc) =>
         NbaResult(r.getHomeTeam, r.getHomeScore, r.getAwayTeam, r.getAwayScore, new Date(r.getTime)) :: acc
-      })
+      }
+    )
 
   private def builder(e: CrawlerResponse) = {
     var builder = CrawlerResponseFormat.newBuilder()

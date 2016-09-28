@@ -23,7 +23,8 @@ trait DiscoveryClientSupport extends BootableMicroservice {
   private implicit val discoveryDispatcher = system.dispatchers.lookup(discoveryDispatcherName)
 
   private val clusterMonitor = system.actorOf(
-    ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), "cluster-monitor")
+    ClusterMonitor.props(Option(MicroserviceKernel.GatewayRole)), "cluster-monitor"
+  )
 
   protected def askForDiscoveryNodeAddresses(): Future[String \/ Vector[Address]] =
     clusterMonitor
@@ -32,7 +33,7 @@ trait DiscoveryClientSupport extends BootableMicroservice {
       .map(\/-(_))(discoveryDispatcher)
       .recoverWith {
         case ex: AskTimeoutException ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses timeout ${ex.getMessage}"))
-        case ex: Exception           ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses error ${ex.getMessage}"))
+        case ex: Exception ⇒ Future.successful(-\/(s"Fetch discovery nodes addresses error ${ex.getMessage}"))
       }(discoveryDispatcher)
 
   private def registerMyself(endpoints: List[String])(op: (String, String) ⇒ Future[StatusCode]): Unit = {
@@ -43,12 +44,14 @@ trait DiscoveryClientSupport extends BootableMicroservice {
           case Success(_) ⇒
             system.log.info(
               new StringBuilder().append("\n").append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully registered")
-                .toString)
+              .toString
+            )
             registerMyself(tail)(op)
           case Failure(ex) ⇒
             system.log.info(
               new StringBuilder().append("\n")
-                .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error").toString)
+              .append(s"★ ★ ★ Microservice [$key - $endpoint] registration error").toString
+            )
           //TODO exit
         }(discoveryDispatcher)
     }
@@ -71,13 +74,15 @@ trait DiscoveryClientSupport extends BootableMicroservice {
       resp match {
         case StatusCodes.OK ⇒ system.log.info(
           new StringBuilder().append("\n")
-            .append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully unregistered ★ ★ ★")
-            .toString)
+          .append(s"★ ★ ★ Microservice [$key - $endpoint] was successfully unregistered ★ ★ ★")
+          .toString
+        )
 
         case statusCode ⇒ system.log.info(
           new StringBuilder().append("\n")
-            .append(s"★ ★ ★ Microservice [$key - $endpoint] unregistered error $statusCode registered")
-            .toString)
+          .append(s"★ ★ ★ Microservice [$key - $endpoint] unregistered error $statusCode registered")
+          .toString
+        )
       }
       statusCodes = statusCodes :+ resp
     }
