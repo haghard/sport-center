@@ -41,7 +41,7 @@ class WebGetter(teams: Seq[String]) extends Actor with ActorLogging with RegexSu
     val acc = if (dateTime isBefore from2012to2015) (Crawler[From2012] crawl (url, teams, log))
     else (Crawler[From2015] crawl (url, teams, log))
 
-    log.info("WebGetter uri:[{}] has been completed with size: {}", url, acc.size)
+    log.info("WebGetter for [{}] got back with results:{}", url, acc.size)
     sender ! (url, acc)
   }
 }

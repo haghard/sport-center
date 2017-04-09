@@ -7,8 +7,8 @@ import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import akka.stream.actor.ActorPublisher
 import akka.stream.{ Materializer, ActorMaterializerSettings, ActorMaterializer }
 import akka.stream.scaladsl.Source
-import discovery.ServiceDiscovery
-import discovery.ServiceDiscovery._
+import discovery.ReplicatedHttpRoutes
+import discovery.ReplicatedHttpRoutes._
 import microservice.SystemSettings
 import microservice.api.{ MicroserviceKernel, ClusterNetworkSupport, BootableMicroservice }
 import microservice.http.RestApiJunction
@@ -65,7 +65,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
 
   private def streamPublisher() = system.actorOf(ServiceRegistryPublisher.props(httpDispatcher))
 
-  implicit val DiscoveryMarshaller = messageToResponseMarshaller[LWWMap[DiscoveryLine], akka.NotUsed]
+  implicit val DiscoveryMarshaller = messageToResponseMarshaller[LWWMap[HttpRouteLine], akka.NotUsed]
 
   private def discoveryRoute(implicit ec: ExecutionContext): Route =
     pathPrefix(servicePrefix) {
@@ -73,12 +73,12 @@ trait DiscoveryMicroservice extends UsersMicroservices
         get {
           complete {
             //: ToResponseMarshallable
-            Source.fromPublisher(ActorPublisher[LWWMap[DiscoveryLine]](streamPublisher()))
+            Source.fromPublisher(ActorPublisher[LWWMap[HttpRouteLine]](streamPublisher()))
           }
         }
       } ~ path(scalarResponse) {
         get { ctx ⇒
-          ServiceDiscovery(system)
+          ReplicatedHttpRoutes(system)
             .findAll
             .flatMap {
               case \/-(r) ⇒ ctx.complete((r.items).toMap.toJson.prettyPrint)
@@ -91,7 +91,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
         entity(as[KVRequest]) { kv ⇒
           complete {
             system.log.info("Attempt to install {}", kv.toJson.prettyPrint)
-            ServiceDiscovery(system).setKey(SetKey(KV(kv.key, kv.value)))
+            ReplicatedHttpRoutes(system).setKey(SetKey(KV(kv.key, kv.value)))
               .map {
                 case \/-(r) ⇒
                   val message = s"Service kv ${kv.toJson.prettyPrint} was registered"
@@ -106,7 +106,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
       } ~ put {
         entity(as[KVRequest]) { kv ⇒
           complete {
-            ServiceDiscovery(system)
+            ReplicatedHttpRoutes(system)
               .unsetKey(UnsetKey(KV(kv.key, kv.value)))
               .map {
                 case \/-(r) ⇒ HttpResponse(OK, entity = s"Service kv ${kv.toJson.prettyPrint} was unregistered")
@@ -118,7 +118,7 @@ trait DiscoveryMicroservice extends UsersMicroservices
     } ~ path(servicePrefix / Segment) { key ⇒
       delete {
         complete {
-          ServiceDiscovery(system)
+          ReplicatedHttpRoutes(system)
             .deleteAll(UnsetAddress(key))
             .map {
               case \/-(r) ⇒ HttpResponse(OK, entity = s"Service $key was unregistered")

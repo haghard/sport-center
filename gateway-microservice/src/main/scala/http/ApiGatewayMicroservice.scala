@@ -1,7 +1,7 @@
 package http
 
 import gateway.ApiGateway
-import discovery.ServiceDiscovery
+import discovery.ReplicatedHttpRoutes
 import microservice.http.RestApiJunction
 import microservice.api.{ BootableMicroservice, ClusterNetworkSupport }
 import akka.http.scaladsl.model.headers.Host
@@ -39,7 +39,7 @@ trait ApiGatewayMicroservice extends HystrixMetricsMicroservice {
       RestApiJunction(
         Option { ec: ExecutionContext ⇒ gatewayRoute(ec) },
         Option { () ⇒
-          ServiceDiscovery(system).subscribe(gateway)
+          ReplicatedHttpRoutes(system).subscribe(gateway)
           system.log.info(s"\n★ ★ ★  [$name] was started on $httpPrefixAddress  ★ ★ ★")
         },
         Option(() ⇒ system.log.info(s"\n★ ★ ★  [$name] was stopped on $httpPrefixAddress  ★ ★ ★"))

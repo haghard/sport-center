@@ -65,16 +65,12 @@ class CrawlerCampaign(override val pc: PassivationConfig) extends AggregateRoot[
 
   override def handleCommand: Receive = {
     case InitCampaign(dt, id) =>
-      if (initialized) {
-        replyTo ! ddd.amod.EffectlessAck(Success("OK"))
-      } else raise(CampaignInitialized(id, dt))
+      if (initialized) replyTo ! ddd.amod.EffectlessAck(Success("OK"))
+      else raise(CampaignInitialized(id, dt))
 
     case RequestCampaign(size, _) =>
-      if (initialized) {
-        collectBatch(size)
-      } else {
-        replyTo ! CampaignInitializationError("Campaign needs to be initialized first")
-      }
+      if (initialized) collectBatch(size)
+      else replyTo ! CampaignInitializationError("Campaign needs to be initialized first")
 
     case PersistCampaign(dt, results, id) =>
       if (initialized) {

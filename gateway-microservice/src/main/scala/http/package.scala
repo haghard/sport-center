@@ -1,6 +1,6 @@
 import akka.cluster.ddata.LWWMap
 import akka.util.ByteString
-import discovery.ServiceDiscovery.DiscoveryLine
+import discovery.ReplicatedHttpRoutes.HttpRouteLine
 
 import scala.annotation.tailrec
 
@@ -15,7 +15,7 @@ package object http {
     }
   }
 
-  implicit def mapToMessage(replica: LWWMap[DiscoveryLine]) =
+  implicit def mapToMessage(replica: LWWMap[HttpRouteLine]) =
     SSEvents.Element(replica.entries.values.toList.toJson.prettyPrint)
 
   object SSEvents {

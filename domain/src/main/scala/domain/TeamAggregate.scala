@@ -91,7 +91,7 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
   private val persistentOps: Receive = {
     case cmd @ CreateResult(team, result) ⇒
       state.lastDate.fold(persistAndAck(team, result)) { lastDate ⇒
-        //Idempotent receiver, relays on wall clock in events
+        //Idempotent receiver, relays on wall clock
         if (result.dt after lastDate) {
           persist(ResultAdded(team, result))(updateState)
         }
@@ -100,7 +100,7 @@ class TeamAggregate private (var state: TeamState = TeamState()) extends Persist
 
     case "boom" ⇒ throw TestException("TeamAggregate test error")
     case SaveSnapshotSuccess(metadata) ⇒ log.info("Team {} have been restored from snapshot {}", state.name, metadata)
-    case SaveSnapshotFailure(metadata, cause) ⇒ log.info("Failure restore from snapshot {}", cause.getMessage)
+    case SaveSnapshotFailure(metadata, cause) ⇒ log.info("Failure to restore from snapshot {}", cause.getMessage)
     case MakeSnapshot ⇒ saveSnapshot(SnapshotCreated(state.name, state.lastDate))
   }
 

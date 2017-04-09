@@ -9,7 +9,8 @@ import scala.concurrent.duration._
 
 object LocalShard {
 
-  implicit def localShardFactory[T <: BusinessEntity: BusinessEntityActorFactory: ShardResolution: ClassTag](implicit system: ActorSystem): ShardFactory[T] = {
+  implicit def localShardFactory[T <: BusinessEntity: BusinessEntityActorFactory: ShardResolution: ClassTag]
+    (implicit system: ActorSystem): ShardFactory[T] = {
     new ShardFactory[T] {
       override def getOrCreate: ActorRef = {
         system.actorOf(Props(new LocalShardRouter[T]), name = shardName)
@@ -41,7 +42,7 @@ object LocalShard {
         childProps = props,
         childName = name,
         minBackoff = 5 second,
-        maxBackoff = 10 second,
+        maxBackoff = 20 second,
         randomFactor = 0.3
       )
 
@@ -70,8 +71,7 @@ object LocalShard {
     }
   }
 
-  final class LocalShardRouter[A <: BusinessEntity](implicit
-    ct: ClassTag[A],
+  final class LocalShardRouter[A <: BusinessEntity](implicit ct: ClassTag[A],
     resolution: IdResolution[A], childFactory: BusinessEntityActorFactory[A]) extends LocalMapChildCreationSupport
       with Actor with ActorLogging {
 

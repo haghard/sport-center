@@ -354,5 +354,9 @@ trait Crawler[T <: CrawlPeriod] extends RegexSupport {
     case e: Throwable ⇒ throw new CrawlerException(e, url)
   }
 
+  /**
+    *
+    * @throws CrawlerException
+    */
   def crawl(url: String, teams: Seq[String], log: LoggingAdapter): List[NbaResult]
 }

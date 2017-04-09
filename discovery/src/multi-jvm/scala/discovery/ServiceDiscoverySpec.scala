@@ -4,7 +4,7 @@ import akka.cluster.Cluster
 import akka.remote.testconductor.RoleName
 import akka.remote.testkit.{MultiNodeSpec, MultiNodeConfig}
 import com.typesafe.config.ConfigFactory
-import discovery.ServiceDiscovery.{UnsetAddress, Registry, KV, SetKey}
+import discovery.ReplicatedHttpRoutes.{UnsetAddress, Registry, KV, SetKey}
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -62,14 +62,14 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
 
     "handle several updates from one node" in within(5 seconds) {
       runOn(nodeB) {
-        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeB).address.toString, standings(nodeB))))
-        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeB).address.toString, results(nodeB))))
+        ReplicatedHttpRoutes(system).setKey(SetKey(KV(node(nodeB).address.toString, standings(nodeB))))
+        ReplicatedHttpRoutes(system).setKey(SetKey(KV(node(nodeB).address.toString, results(nodeB))))
       }
 
       enterBarrier("updates-done")
 
       awaitAssert {
-        val result = Await.result(ServiceDiscovery(system).findAll, 3 seconds)
+        val result = Await.result(ReplicatedHttpRoutes(system).findAll, 3 seconds)
         result shouldBe \/-(Registry(mutable.HashMap(node(nodeB).address.toString -> Set(standings(nodeB), results(nodeB)))))
       }
       enterBarrier("after-2")
@@ -77,13 +77,13 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
 
     "handle deleteAll from other node" in within(5 seconds) {
       runOn(nodeA) {
-        ServiceDiscovery(system).deleteAll(UnsetAddress(node(nodeB).address.toString))
+        ReplicatedHttpRoutes(system).deleteAll(UnsetAddress(node(nodeB).address.toString))
       }
 
       enterBarrier("updates-done")
 
       awaitAssert {
-        val result = Await.result(ServiceDiscovery(system).findAll, 3 seconds)
+        val result = Await.result(ReplicatedHttpRoutes(system).findAll, 3 seconds)
         result shouldBe \/-(Registry(mutable.HashMap()))
       }
       enterBarrier("after-3")
@@ -91,19 +91,19 @@ class ServiceDiscoverySpec extends MultiNodeSpec(ServiceDiscoverySpec) with STMu
     
     "handle several updates from diff nodes" in within(5 seconds) {
       runOn(nodeA) {
-        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeA).address.toString, standings(nodeA))))
+        ReplicatedHttpRoutes(system).setKey(SetKey(KV(node(nodeA).address.toString, standings(nodeA))))
       }
       runOn(nodeB) {
-        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeB).address.toString, results(nodeB))))
+        ReplicatedHttpRoutes(system).setKey(SetKey(KV(node(nodeB).address.toString, results(nodeB))))
       }
       runOn(nodeA) {
-        ServiceDiscovery(system).setKey(SetKey(KV(node(nodeA).address.toString, results(nodeA))))
+        ReplicatedHttpRoutes(system).setKey(SetKey(KV(node(nodeA).address.toString, results(nodeA))))
       }
 
       enterBarrier("updates-done")
 
       awaitAssert {
-        val result = Await.result(ServiceDiscovery(system).findAll, 3 seconds)
+        val result = Await.result(ReplicatedHttpRoutes(system).findAll, 3 seconds)
         result shouldBe \/-(Registry(mutable.HashMap(node(nodeA).address.toString -> Set(standings(nodeA), results(nodeA)),
                                                      node(nodeB).address.toString -> Set(results(nodeB)))))
       }

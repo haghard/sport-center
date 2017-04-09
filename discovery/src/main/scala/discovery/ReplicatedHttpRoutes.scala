@@ -12,7 +12,7 @@ import scalaz.{ -\/, \/, \/- }
 import akka.cluster.ddata.{ LWWMapKey, Replicator, DistributedData, LWWMap }
 import akka.cluster.ddata.Replicator._
 
-object ServiceDiscovery extends ExtensionKey[ServiceDiscovery] {
+object ReplicatedHttpRoutes extends ExtensionKey[ReplicatedHttpRoutes] {
   val DataKey = "service-discovery"
 
   case class KV(address: String, url: String)
@@ -23,24 +23,24 @@ object ServiceDiscovery extends ExtensionKey[ServiceDiscovery] {
   case class UnsetKey(override val key: KV) extends KeyOps
   case class UnsetAddress(val key: String)
 
-  case class Update(r: UpdateResponse[LWWMap[DiscoveryLine]])
+  case class Update(r: UpdateResponse[LWWMap[HttpRouteLine]])
 
-  case class DiscoveryLine(address: String, urls: Set[String])
-  object DiscoveryLine extends DefaultJsonProtocol { implicit val format = jsonFormat2(apply) }
+  case class HttpRouteLine(address: String, urls: Set[String])
+  object HttpRouteLine extends DefaultJsonProtocol { implicit val format = jsonFormat2(apply) }
 
   case class Registry(items: mutable.HashMap[String, Set[String]])
 
   case class UnknownKey(name: String) extends IllegalStateException(s"Key [$name] doesn't exist!")
 
-  override def get(system: ActorSystem): ServiceDiscovery = super.get(system)
+  override def get(system: ActorSystem): ReplicatedHttpRoutes = super.get(system)
 
-  override def lookup(): ExtensionId[ServiceDiscovery] = ServiceDiscovery
+  override def lookup(): ExtensionId[ReplicatedHttpRoutes] = ReplicatedHttpRoutes
 
-  override def createExtension(system: ExtendedActorSystem) = new ServiceDiscovery(system)
+  override def createExtension(system: ExtendedActorSystem) = new ReplicatedHttpRoutes(system)
 }
 
-class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
-  import discovery.ServiceDiscovery._
+class ReplicatedHttpRoutes(system: ExtendedActorSystem) extends Extension {
+  import discovery.ReplicatedHttpRoutes._
 
   private val config = system.settings.config.getConfig("discovery")
   private val timeout = config.getDuration("ops-timeout", SECONDS).second
@@ -54,39 +54,39 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
 
   private val replicator = DistributedData(system).replicator
 
-  private def --(map: LWWMap[DiscoveryLine], kv: KV): LWWMap[DiscoveryLine] = {
+  private def --(map: LWWMap[HttpRouteLine], kv: KV): LWWMap[HttpRouteLine] = {
     map.get(kv.address) match {
-      case Some(DiscoveryLine(_, urls)) ⇒
+      case Some(HttpRouteLine(_, urls)) ⇒
         val restUrls = urls - kv.url
         if (restUrls.isEmpty) map - kv.address
-        else map + (kv.address -> DiscoveryLine(kv.address, restUrls))
+        else map + (kv.address -> HttpRouteLine(kv.address, restUrls))
       case None ⇒
         system.log.info(s"Service ${kv.address} already has been deleted")
         throw UnknownKey(kv.address)
     }
   }
 
-  private def --(map: LWWMap[DiscoveryLine], key: String): LWWMap[DiscoveryLine] = {
+  private def --(map: LWWMap[HttpRouteLine], key: String): LWWMap[HttpRouteLine] = {
     map.get(key) match {
-      case Some(DiscoveryLine(_, urls)) ⇒ map - key
+      case Some(HttpRouteLine(_, urls)) ⇒ map - key
       case None ⇒
         system.log.info("Service already has been deleted")
         throw UnknownKey(key)
     }
   }
 
-  private def ++(map: LWWMap[DiscoveryLine], k: KV): LWWMap[DiscoveryLine] =
+  private def ++(map: LWWMap[HttpRouteLine], k: KV): LWWMap[HttpRouteLine] =
     map.get(k.address) match {
-      case Some(DiscoveryLine(_, existingUrls)) ⇒ map + (k.address -> DiscoveryLine(k.address, existingUrls + k.url))
-      case None ⇒ map + (k.address -> DiscoveryLine(k.address, Set(k.url)))
+      case Some(HttpRouteLine(_, existingUrls)) ⇒ map + (k.address -> HttpRouteLine(k.address, existingUrls + k.url))
+      case None ⇒ map + (k.address -> HttpRouteLine(k.address, Set(k.url)))
     }
 
   def subscribe(subscriber: ActorRef): Unit = {
-    replicator ! Subscribe(LWWMapKey[DiscoveryLine](DataKey), subscriber)
+    replicator ! Subscribe(LWWMapKey[HttpRouteLine](DataKey), subscriber)
   }
 
   def setKey(op: SetKey)(implicit ec: ExecutionContext): Future[String \/ Update] =
-    replicator.ask(update(map ⇒ ++(map, op.key)))(writeTimeout).mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
+    replicator.ask(update(map ⇒ ++(map, op.key)))(writeTimeout).mapTo[UpdateResponse[LWWMap[HttpRouteLine]]]
       .map {
         case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ \/-(Update(r))
         case response ⇒ -\/(s"SetKey op unexpected response $response")
@@ -100,7 +100,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def unsetKey(op: UnsetKey)(implicit ec: ExecutionContext): Future[String \/ Update] = {
     replicator
       .ask(update(map ⇒ --(map, op.key)))(writeTimeout)
-      .mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
+      .mapTo[UpdateResponse[LWWMap[HttpRouteLine]]]
       .flatMap {
         case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ Future.successful(\/-(Update(r)))
         case r @ Replicator.ModifyFailure(LWWMapKey(DataKey), _, error: UnknownKey, _) ⇒ Future.successful(-\/(s"Delete error $error"))
@@ -111,7 +111,7 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def deleteAll(op: UnsetAddress)(implicit ec: ExecutionContext): Future[String \/ Update] = {
     replicator
       .ask(update(map ⇒ --(map, op.key)))(writeTimeout)
-      .mapTo[UpdateResponse[LWWMap[DiscoveryLine]]]
+      .mapTo[UpdateResponse[LWWMap[HttpRouteLine]]]
       .flatMap {
         case r @ Replicator.UpdateSuccess(LWWMapKey(DataKey), _) ⇒ Future.successful(\/-(Update(r)))
         case r @ Replicator.ModifyFailure(LWWMapKey(DataKey), _, error: UnknownKey, _) ⇒ Future.successful(-\/(s"Delete error $error"))
@@ -122,24 +122,24 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
   def findAll(implicit ec: ExecutionContext): Future[String \/ Registry] = {
     replicator
       .ask(read)(readTimeout)
-      .mapTo[Replicator.GetResponse[LWWMap[DiscoveryLine]]]
+      .mapTo[Replicator.GetResponse[LWWMap[HttpRouteLine]]]
       .flatMap(respond)
       .recoverWith {
         case ex: AskTimeoutException ⇒
           replicator.ask(readLocal)(readTimeout)
-            .mapTo[Replicator.GetResponse[LWWMap[DiscoveryLine]]]
+            .mapTo[Replicator.GetResponse[LWWMap[HttpRouteLine]]]
             .flatMap(respond)
         case ex: Exception ⇒
           replicator.ask(readLocal)(readTimeout)
-            .mapTo[Replicator.GetResponse[LWWMap[DiscoveryLine]]]
+            .mapTo[Replicator.GetResponse[LWWMap[HttpRouteLine]]]
             .flatMap(respond)
       }
   }
 
-  private def respond: PartialFunction[Replicator.GetResponse[LWWMap[DiscoveryLine]], Future[String \/ Registry]] = {
+  private def respond: PartialFunction[Replicator.GetResponse[LWWMap[HttpRouteLine]], Future[String \/ Registry]] = {
     case res @ Replicator.GetSuccess(LWWMapKey(DataKey), _) =>
       Future.successful {
-        \/-(Registry(res.dataValue.entries.values.map { case line: DiscoveryLine ⇒ line }
+        \/-(Registry(res.dataValue.entries.values.map { case line: HttpRouteLine ⇒ line }
           .foldLeft(new mutable.HashMap[String, Set[String]]()) { (acc, c) ⇒
             acc.get(c.address).fold(acc += (c.address -> c.urls)) { existed ⇒ acc += (c.address -> c.urls.++(existed)) }
           }))
@@ -148,16 +148,16 @@ class ServiceDiscovery(system: ExtendedActorSystem) extends Extension {
     case other ⇒ Future.successful(-\/(s"Find error $other"))
   }
 
-  private def read: Replicator.Get[LWWMap[DiscoveryLine]] =
-    Replicator.Get(LWWMapKey[DiscoveryLine](DataKey), Replicator.ReadMajority(readTimeout))
+  private def read: Replicator.Get[LWWMap[HttpRouteLine]] =
+    Replicator.Get(LWWMapKey[HttpRouteLine](DataKey), Replicator.ReadMajority(readTimeout))
 
-  private def readLocal: Replicator.Get[LWWMap[DiscoveryLine]] =
-    Replicator.Get(LWWMapKey[DiscoveryLine](DataKey), Replicator.ReadLocal)
+  private def readLocal: Replicator.Get[LWWMap[HttpRouteLine]] =
+    Replicator.Get(LWWMapKey[HttpRouteLine](DataKey), Replicator.ReadLocal)
 
-  private def update(modify: LWWMap[DiscoveryLine] ⇒ LWWMap[DiscoveryLine]): Replicator.Update[LWWMap[DiscoveryLine]] =
+  private def update(modify: LWWMap[HttpRouteLine] ⇒ LWWMap[HttpRouteLine]): Replicator.Update[LWWMap[HttpRouteLine]] =
     Replicator.Update(
-      LWWMapKey[DiscoveryLine](DataKey),
-      LWWMap.empty[DiscoveryLine],
+      LWWMapKey[HttpRouteLine](DataKey),
+      LWWMap.empty[HttpRouteLine],
       Replicator.WriteMajority(writeTimeout)
     )(modify)
 }

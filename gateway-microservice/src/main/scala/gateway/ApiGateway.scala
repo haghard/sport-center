@@ -11,7 +11,7 @@ import akka.cluster.ddata.{ LWWMapKey, LWWMap }
 import akka.cluster.ddata.Replicator.Changed
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.graphite.GraphiteSender
-import discovery.ServiceDiscovery.DiscoveryLine
+import discovery.ReplicatedHttpRoutes.HttpRouteLine
 import microservice.api.MicroserviceKernel
 import akka.http.scaladsl.model.{ HttpHeader, HttpResponse, HttpRequest }
 import akka.http.scaladsl.model.StatusCodes._
@@ -22,7 +22,7 @@ object ApiGateway {
 
   case class Route(host: String, port: Int, pathRegex: String)
 
-  private def updateRoutees(map: LWWMap[DiscoveryLine]) = {
+  private def updateRoutees(map: LWWMap[HttpRouteLine]) = {
     map.entries.values.toList.map(_.urls)
       .flatten
       .map {
@@ -98,8 +98,8 @@ class ApiGateway private (address: String, httpPort: Int) extends Actor with Act
   }
 
   override def receive: Receive = {
-    case r @ Changed(LWWMapKey(_)) if r.dataValue.isInstanceOf[LWWMap[DiscoveryLine]] ⇒
-      routees = Option(updateRoutees(r.dataValue.asInstanceOf[LWWMap[DiscoveryLine]]))
+    case r @ Changed(LWWMapKey(_)) if r.dataValue.isInstanceOf[LWWMap[HttpRouteLine]] ⇒
+      routees = Option(updateRoutees(r.dataValue.asInstanceOf[LWWMap[HttpRouteLine]]))
       log.info("Routees has changed: {}", routees)
 
     case r: HttpRequest ⇒
