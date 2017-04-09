@@ -3,7 +3,7 @@ package discovery
 import akka.actor.{ Actor, ActorLogging }
 import akka.cluster.Member
 import akka.util.Timeout
-import discovery.ServiceDiscovery.UnsetAddress
+import discovery.ReplicatedHttpRoutes.UnsetAddress
 import microservice.api.ClusterMembershipAware
 
 import scala.collection.mutable
@@ -22,7 +22,7 @@ trait OnClusterLeaveKeysCleaner extends ClusterMembershipAware {
   abstract override def receiveMemberRemoved(m: Member): Unit = {
     super.receiveMemberRemoved(m)
 
-    ServiceDiscovery(context.system)
+    ReplicatedHttpRoutes(context.system)
       .deleteAll(UnsetAddress(m.address.toString))
       .map {
         case \/-(r) ⇒ log.info(s"Service with key ${m.address} was successfully unregistered")
