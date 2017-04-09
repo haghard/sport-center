@@ -13,7 +13,7 @@ import akka.cluster.ddata.{ LWWMapKey, Replicator, DistributedData, LWWMap }
 import akka.cluster.ddata.Replicator._
 
 object ReplicatedHttpRoutes extends ExtensionKey[ReplicatedHttpRoutes] {
-  val DataKey = "service-discovery"
+  val DataKey = "gateway-registed-http-api"
 
   case class KV(address: String, url: String)
 
